@@ -105,7 +105,6 @@ runDiego = function(rse, tissue, reference_condition, path_input, path_output,
   diego.output
 }
 
-
 # to run DIEGO in terminal
 # conda create -n DIEGO_1 numpy=1.9 scipy matplotlib
 # Packages were reinstalled because -e (for drawing dendrograms) wasn't working (numpy 1.9 installed instead, and than other packages reinstalled, in the above code I specified numpy version, idk if it will help)
@@ -114,7 +113,6 @@ runDiego = function(rse, tissue, reference_condition, path_input, path_output,
 # wget http://legacy.bioinf.uni-leipzig.de/Software/DIEGO/DIEGO.tar.gz
 # tar -xzf DIEGO.tar.gz
 # python DIEGO/diego.py -a a.input.file -b b_file -x fetus --minsupp 1 -d 1 -q 1.0 -z 1.0  > DIEGO_output
-
 
 
 #===================================DJexpress==================================
@@ -301,11 +299,7 @@ runSAJR = function(rse, tissue, reference_condition){
   alt.glm
 }
 
-#======================
-# mergeToolsOutpus = function(){
-#   
-# }
-
+#============================Running tools and processing outputs===========================================
 runTools = function(rse, tissue, reference_condition='fetus',
                     path_input = '/home/an/DIEGO_input_files',
                     path_output = '/home/an/DIEGO_output_files',
@@ -351,6 +345,7 @@ mergeOutputs = function(output.list){
 
 # 2. Function to compare and categorize elements
 compareOutputs = function(jxn.ids.list) {
+  jxn.ids.list = lapply(jxn.ids.list, function(x) x[!is.na(x)])
   # 1. Find elements present in all vectors
   all.tools = Reduce(intersect, jxn.ids.list)
   
@@ -372,13 +367,17 @@ compareOutputs = function(jxn.ids.list) {
     pair.name = paste(names(jxn.ids.list)[c(i, j)], collapse = "_and_")
     only.pair.tools[[pair.name]] = common.pair
   }
+  names(jxn.ids.list) = paste0(names(jxn.ids.list),'.all')
+  
+  sign.jxns.info = list(all.tools = list(all.tools = all.tools),
+                        only.pair.tools = only.pair.tools,
+                        unique.to.tool = unique.to.tool)
   
   # 4. Return the results
   return(list(
-    all.tools = list(all.tools = all.tools),
-    only.pair.tools = only.pair.tools,
-    unique.to.tool = unique.to.tool
-  ))
+    all.single.tool = jxn.ids.list,
+    intersections = Reduce(append, sign.jxns.info))
+  )
 }
 
 findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_threshold, dpsi_threshold, abund_change_threshold){
@@ -391,18 +390,12 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
   all.sign.jxns.diego = jxns.significance.df[diego.sign.tf, 'junction_id_sajr']
   all.sign.jxns.dje = jxns.significance.df[dje.sign.tf, 'junction_id_sajr']
   all.sign.jxns.sajr = jxns.significance.df[sajr.sign.tf, 'junction_id_sajr']
-  all.sign.jxns.sajr = all.sign.jxns.sajr[!is.na(all.sign.jxns.sajr)]
   
   all.sign.jxn.ids.tool.list = list(diego = all.sign.jxns.diego, 
                                     dje = all.sign.jxns.dje, 
                                     sajr = all.sign.jxns.sajr)
   
   sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
-  sign.jxns.info = list(intersections = Reduce(append, sign.jxns.info))
-  
-  names(all.sign.jxn.ids.tool.list) = paste0(names(all.sign.jxn.ids.tool.list),'.all')
-  sign.jxns.info[['all.single.tool']] = all.sign.jxn.ids.tool.list
-  
   sign.jxns.info
 }
 
@@ -418,5 +411,5 @@ getJxnSignInfo = function(rse, tissue,
   list(all.jxns.info = all.jxns.info.df, sign.jxns.info.list = sign.jxns.info.list)
 }
 
-#getJxnSignInfo(rse.jxn.cytosk, 'Brain')
+# getJxnSignInfo(rse.jxn.cytosk, 'Brain')
 
