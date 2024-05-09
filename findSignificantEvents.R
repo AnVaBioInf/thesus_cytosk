@@ -2,10 +2,8 @@
 # DIEGO, DJexpress and SAJR tools are used for that (work with junction counts)
 # in this file functions to make input for those tools are gathered
 library(reticulate)
-
 library(SAJR)
 library(DJExpress)
-source('rseAnnotationPreprocessing.R')
 
 rse2countDf = function(rse){
   counts = as.matrix(assay(rse, "counts"))
@@ -408,7 +406,8 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
   sign.jxns.info
 }
 
-#findSignif = 
+#fisher test
+#findSignifDF = ?
 
 getJxnSignInfo = function(rse, tissue, 
                           logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.1, abund_change_threshold=0.1){

@@ -115,7 +115,6 @@ transformCS2weeks = function(rse){
   cs.values = rse@colData$age[cs.idx] # selecting all cs values
   rse@colData$age = replace(rse@colData$age, cs.idx, cs.to.w[cs.values])
   
-  # separating age and measure into two columns
   # replace w (weeks) with wpc (weeks post conseption) (w is wpc according to figure 1 in doi: 10.1038/s41586-019-1338-5)
   rse@colData$age = gsub('w$', 'wpc', rse@colData$age)
   rse
@@ -179,7 +178,7 @@ addConditionColumn = function(rse){
 
 formatAnnotation = function(rse, tissue.pairs.to.replace.list){
   rse = splitSraLibraryCol(rse)
-  ese = combineTissues(rse, tissue.pairs.to.replace.list)
+  rse = combineTissues(rse, tissue.pairs.to.replace.list)
   rse = transformCS2weeks(rse)
   rse = addSpecificAgeGroupColomn(rse)
   rse = addConditionColumn(rse)
@@ -216,5 +215,5 @@ prepareRse = function(project.id = 'ERP109002',
   rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
   rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list)
   rse.jxn = rse.jxn[,rse.jxn@colData$age_group %in% c('adult', 'fetus')]
-  save2RDS(rse.gene, rse.jxn, path='~/')
+  save2RDS(rse.gene, rse.jxn, path='./')
 }
