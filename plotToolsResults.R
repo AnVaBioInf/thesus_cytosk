@@ -16,6 +16,8 @@ library(RColorBrewer)
 # # сделать таблицу значимых во всех методах
 # # сделать реверсед таблицу
 
+library(ggvenn)
+
 setPlotParameters <- function(bottom_page_margin=0, left_page_margin=2, top_page_margin=1, right_page_margin=0,
                               bottom_plot_margin=1, left_plot_margin=3, top_plot_margin=2, right_plot_margin=1,
                               title_axis_distance=2, axis_label_distance=1, axis_line_distance=0,
@@ -42,16 +44,50 @@ setPlotParameters(outputs_tissue = outputs_tissue)
 
 
 library(eulerr)
+library(gridExtra)
 
-plotVienn = function(intersections){
-  layout.show()
-  data = c(sapply(intersections, function(x) length(x)))
+
+
+euler_base <- function(sets, labels = NULL, col = NULL, border = "black", lwd = 2) {
+  # Number of sets
+  n <- length(sets)
   
-  # Example data
-  fit <- euler(data)
-  # Plot with numbers in intersections
-  p = plot(fit, quantities = TRUE)
+  # Default colors if not provided
+  if (is.null(col)) {
+    col <- rainbow(n)
+  }
+  
+  # Default labels if not provided
+  if (is.null(labels)) {
+    labels <- paste("Set", 1:n)
+  }
+  
+  # Circle positions (adjust for different numbers of sets)
+  if (n == 2) {
+    x <- c(0.3, 0.7)
+    y <- c(0.5, 0.5)
+  } else if (n == 3) {
+    x <- c(0.2, 0.8, 0.5)
+    y <- c(0.5, 0.5, 0.8)
+  } # Add more positions for n > 3 as needed
+  
+  # Plot circles
+  plot(0, 0, type = "n", xlim = c(0, 1), ylim = c(0, 1), axes = FALSE, xlab = "", ylab = "")
+  for (i in 1:n) {
+    symbols(x[i], y[i], circles = 0.4, inches = FALSE, add = TRUE, fg = border, bg = col[i], lwd = lwd)
+    text(x[i], y[i], labels[i], cex = 1.2)
+  }
+  
+  # Add intersection areas (manually for simplicity)
+  if (n >= 2) {
+    # Intersection of set 1 and set 2 (example)
+    x_intersect <- (x[1] + x[2]) / 2
+    y_intersect <- (y[1] + y[2]) / 2
+    text(x_intersect, y_intersect, length(intersect(sets[[1]], sets[[2]])), cex = 1)
+  }
+  # ... (add more intersection calculations and text as needed)
 }
+
 
 plot_graphs = function(all.jxns, intersections){
   x_lim_dict = list('dPSI.sajr' = c(-1,1), 'logFC.dje' = c(-4,4), 'abund_change.diego' = c(-3,3))
@@ -65,18 +101,18 @@ plot_graphs = function(all.jxns, intersections){
   metrics_comb = combn(all.jxns[,col.metrics.if], 2, simplify = FALSE)
   
 
-  p = plotVienn(intersections)
-  show(p)
+  #show(p)
   lapply(metrics_comb, function(x) {
     plot(x)
     for (ids in names(intersections)){
-      col = c(diego.unique = "#377EB8",
-              dje.unique = "#A65628",
-              sajr.unique = "#984EA3",
-              diego_and_dje = '#F781BF',
-              diego_and_sajr = '#FFFF33',
-              dje_and_sajr = "#FF7F00",
-              all.tools = "#4DAF4A")
+      print(ids)
+      col = c(diego = "#377EB8",
+              dje = "#A65628",
+              sajr = "#984EA3",
+              'diego&dje' = '#F781BF',
+              'diego&sajr' = '#FFFF33',
+              'dje&sajr' = "#FF7F00",
+              'diego&dje&sajr' = "#4DAF4A")
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
       points(x[i,], col=col[ids], pch = 16)
       }
@@ -87,18 +123,17 @@ plot_graphs = function(all.jxns, intersections){
   lapply(fdr_comb, function(x) {
     plot(x, log='xy')
     for (ids in names(intersections)){
-      col = c(diego.unique = "#377EB8",
-              dje.unique = "#A65628",
-              sajr.unique = "#984EA3",
-              diego_and_dje = '#F781BF',
-              diego_and_sajr = '#FFFF33',
-              dje_and_sajr = "#FF7F00",
-              all.tools = "#4DAF4A")
+      col = c(diego = "#377EB8",
+              dje = "#A65628",
+              sajr = "#984EA3",
+              'diego&dje' = '#F781BF',
+              'diego&sajr' = '#FFFF33',
+              'dje&sajr' = "#FF7F00",
+              'diego&dje&sajr' = "#4DAF4A")
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
       points(x[i,], col=col[ids], pch = 16)
     }
   })
-  
   
 }
 
@@ -111,6 +146,5 @@ plot_graphs = function(all.jxns, intersections){
 
 for (tissue.output in outputs_tissue){
   plot_graphs(tissue.output$all.jxns.info, tissue.output$sign.jxns.info.list$intersections)
-
+  fit = plotVienn
 }
-
