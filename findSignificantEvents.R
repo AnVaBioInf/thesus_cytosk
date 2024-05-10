@@ -86,10 +86,16 @@ readDiegoOutput = function(path_output, tissue){
   diego_output
 }
 
+#' conda environment should be created before running this function and
+#' DIEGO should be installed
+#' conda create -n DIEGO_1 numpy=1.9 scipy matplotlib
+#' wget http://legacy.bioinf.uni-leipzig.de/Software/DIEGO/DIEGO.tar.gz
+#' tar -xzf DIEGO.tar.gz
 runDiego = function(rse, tissue, reference_condition, path_input, path_output, 
                     min_support, min_samples, FC_threshold, FDR_threshold){
   rse.filtered = filterRse(rse, tissue)
   makeDiegoInputFiles(rse.filtered, tissue, path_input)
+  use_condaenv("DIEGO_1")
   system2(py_exe(), c("/home/an/DIEGO/diego.py", 
                       paste0('-a ', path_input, '/junction_table_', tissue, '.txt'), 
                       paste0('-b ', path_input, '/group_table_', tissue, '.txt'), 
@@ -104,16 +110,6 @@ runDiego = function(rse, tissue, reference_condition, path_input, path_output,
   diego.output = readDiegoOutput(path_output, tissue)
   diego.output
 }
-
-# to run DIEGO in terminal
-# conda create -n DIEGO_1 numpy=1.9 scipy matplotlib
-# Packages were reinstalled because -e (for drawing dendrograms) wasn't working (numpy 1.9 installed instead, and than other packages reinstalled, in the above code I specified numpy version, idk if it will help)
-# conda activate DIEGO_1
-# cp /home/an/DIEGO_input_files/a.input.file /home/an/DIEGO_input_files/b_file /home/an/anaconda3/envs/DIEGO_1
-# wget http://legacy.bioinf.uni-leipzig.de/Software/DIEGO/DIEGO.tar.gz
-# tar -xzf DIEGO.tar.gz
-# python DIEGO/diego.py -a a.input.file -b b_file -x fetus --minsupp 1 -d 1 -q 1.0 -z 1.0  > DIEGO_output
-
 
 #===================================DJexpress==================================
 # replace +/- strand with 1/2 (0: undefined, 1: +, 2: -)
@@ -301,8 +297,8 @@ runSAJR = function(rse, tissue, reference_condition){
 
 #============================Running tools and processing outputs===========================================
 runTools = function(rse, tissue, reference_condition='fetus',
-                    path_input = '/home/an/DIEGO_input_files',
-                    path_output = '/home/an/DIEGO_output_files',
+                    path_input = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_input',
+                    path_output = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_output',
                     min_support = 1, # minimum jxn count for a splice site to be considered.
                     min_samples = 1, #  minimum number of samples that must show the minimum support
                     FC_threshold = 1, # ? ratio of read counts of a splice junction in one condition compared to another
@@ -343,8 +339,10 @@ mergeOutputs = function(output.list){
                       'abund_change_diego', 'FDR_diego', 'gene_id', 'gene_name')]
 }
 
-# 2. Function to compare and categorize elements
-compareOutputs = function(jxn.ids.list) {
+#=================================================================================
+#=================================================================================
+#=================================================================================
+compareOutputs = function(jxn.sign.df, jxn.ids.list) {
   jxn.ids.list = lapply(jxn.ids.list, function(x) x[!is.na(x)])
   # 1. Find elements present in all vectors
   all.tools = Reduce(intersect, jxn.ids.list)
@@ -354,7 +352,7 @@ compareOutputs = function(jxn.ids.list) {
     unique = setdiff(jxn.ids.list[[i]], unname(unlist(jxn.ids.list[-i])))
     return(unique)
   })
-  names(unique.to.tool) = paste0(names(jxn.ids.list), '.unique')
+  names(unique.to.tool) = names(jxn.ids.list)
   
   # 3. Find elements unique to subsets of jxn.ids.list (excluding those in all)
   only.pair.tools = list()
@@ -364,16 +362,28 @@ compareOutputs = function(jxn.ids.list) {
     j = pair[[2]]
     common.pair = intersect(jxn.ids.list[[i]], jxn.ids.list[[j]])
     common.pair = setdiff(common.pair, all.tools)
-    pair.name = paste(names(jxn.ids.list)[c(i, j)], collapse = "_and_")
+    pair.name = paste(names(jxn.ids.list)[c(i, j)], collapse = "&")
     only.pair.tools[[pair.name]] = common.pair
   }
+  all.tools = list(all.tools)
+  names(all.tools) = paste(names(jxn.ids.list), collapse = "&")
+  
   names(jxn.ids.list) = paste0(names(jxn.ids.list),'.all')
   
-  sign.jxns.info = list(all.tools = list(all.tools = all.tools),
-                        only.pair.tools = only.pair.tools,
-                        unique.to.tool = unique.to.tool)
+  # ids2df = function(ids) jxn.sign.df[jxn.sign.df$junction_id_sajr %in% ids, ]
   
-  # 4. Return the results
+  # sign.jxns.info = 
+  #   list(list(all.tools = all.tools),
+  #        only.pair.tools = only.pair.tools,
+  #        unique.to.tool = unique.to.tool)
+  
+  sign.jxns.info =
+    list(all.tools = all.tools,
+        only.pair.tools = only.pair.tools,
+        unique.to.tool = unique.to.tool)
+  
+  # jxn.ids.list = lapply(jxn.ids.list, ids2df)
+
   return(list(
     all.single.tool = jxn.ids.list,
     intersections = Reduce(append, sign.jxns.info))
@@ -395,12 +405,13 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
                                     dje = all.sign.jxns.dje, 
                                     sajr = all.sign.jxns.sajr)
   
-  sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
+  sign.jxns.info = compareOutputs(jxns.significance.df, all.sign.jxn.ids.tool.list)
   sign.jxns.info
 }
 
 #fisher test
 #findSignifDF = ?
+
 
 getJxnSignInfo = function(rse, tissue, 
                           logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.1, abund_change_threshold=0.1){

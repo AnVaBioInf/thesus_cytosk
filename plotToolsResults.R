@@ -12,324 +12,105 @@ library(RColorBrewer)
 # дубликаты значимые только в djexpress? раздваиваются?
 # corr coef для p value
 # дать название всему графику
+# 
+# # сделать таблицу значимых во всех методах
+# # сделать реверсед таблицу
 
-# сделать таблицу значимых во всех методах
-# сделать реверсед таблицу
+setPlotParameters <- function(bottom_page_margin=0, left_page_margin=2, top_page_margin=1, right_page_margin=0,
+                              bottom_plot_margin=1, left_plot_margin=3, top_plot_margin=2, right_plot_margin=1,
+                              title_axis_distance=2, axis_label_distance=1, axis_line_distance=0,
+                              font_size = 0.7, tick_length=-0.2,
+                              outputs_tissue) {
+  par(tcl=-tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
+      mar = (c(bottom_plot_margin, left_plot_margin, top_plot_margin, right_plot_margin) + 0.1),  # mar = c(bottom, left, top, right)
+      oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
+      mgp = c(title_axis_distance, axis_label_distance, axis_line_distance),  # Title, label, and line distances
+      xpd=TRUE,
+      pty = "s", # square plots
+      cex.axis = font_size)
 
-# Install and load the package
-# Install and load the package
-#install.packages("eulerr")
+  # Create the plot matrix
+  nrow = length(outputs_tissue)+1
+  cols = colnames(outputs_tissue[[1]]$all.jxns.info)
+  ncol = length(cols[-c(1,2, length(cols)-1,length(cols))])+1  # Remove first two columns
+  total_numb_of_plots = nrow*ncol
+  layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
+  layout(mat = layout_matrix)
+}
+
+setPlotParameters(outputs_tissue = outputs_tissue)
+
+
 library(eulerr)
 
-setPlotParameters <- function() {
-  #Units: Margins are specified in lines of text, which can vary depending on the font size and graphical device.
-  par(tcl=-0.2)
+plotVienn = function(intersections){
+  layout.show()
+  data = c(sapply(intersections, function(x) length(x)))
   
-  # Purpose: mar controls the margins around the plot region itself. These margins define the empty space between the plot area (where data is plotted) and the edges of the plotting device or figure region.
-  par(mar = c(2, 0, 0, 0) + 0.1)  # mar = c(bottom, left, top, right)
-  
-  #Purpose: par(oma) controls the outer margins around the entire figure region, including all plots and axes when you have multiple plots arranged in a grid.
-  par(oma = c(0, 2, 1, 0) + 0.1)  # Bottom, left, top, right
-  
-  #Purpose: mgp controls the distance between the axis title, axis labels, and the axis line. This indirectly affects the space around the plot area, especially when you have long axis labels or titles.
-  # Values: mgp takes a numeric vector of length 3:
-  #  mgp = c(axis title distance, axis label distance, axis line distance)
-  par(mgp = c(2, 1, 0))  # Title, label, and line distances 
-  
-  # Purpose: plt defines the plot region within the figure region as fractions of the device's width and height. By adjusting these fractions, you can indirectly control the spacing around the plot area.
-  # plt = c(x1, x2, y1, y2)
-  # where x1 and x2 are the horizontal limits (left and right) and y1 and y2 are the vertical limits (bottom and top) of the plot region.
-  
-  # Set up multi-plot layout
-  #par(mfrow = c(n_rows, n_cols))
-  par(xpd=TRUE)
-  
-  par(pty = "s")
-  
-  par(cex.axis = 0.7)  # Increase font size by 50%
-  
-  # Create the initial matrix
-  layout_matrix = matrix(1:42, nrow = 6, ncol = 7, byrow = TRUE)
-  # Combine the matrix and the new row
-  layout_matrix = rbind(layout_matrix, c(43, 43, 43))
-  layout(mat = layout_matrix)
-  
+  # Example data
+  fit <- euler(data)
+  # Plot with numbers in intersections
+  p = plot(fit, quantities = TRUE)
 }
 
-makeViennDiagram = function(tissue,
-                       sign.all.tools, 
-                       sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-                       sajr.only.sign, dje.only.sign, diego.only.sign){
+plot_graphs = function(all.jxns, intersections){
+  x_lim_dict = list('dPSI.sajr' = c(-1,1), 'logFC.dje' = c(-4,4), 'abund_change.diego' = c(-3,3))
+  x_ticks_dict = list('dPSI.sajr' = seq(-1,1,by=0.5), 'logFC.dje'=seq(-4,4,by=2), 'abund_change.diego' = seq(-3,3,by=1.5))
   
-  # Example data (adjust according to your needs)
-  fit <- euler(c("DJE" = nrow(dje.only.sign), "SAJR" = nrow(sajr.only.sign), "DIEGO" = nrow(diego.only.sign), 
-                 "DJE&SAJR" = nrow(sajr.dje.sign), "DJE&DIEGO" =  nrow(dje.diego.sign), "SAJR&DIEGO" = nrow(sajr.diego.sign), 
-                 "DJE&SAJR&DIEGO" = nrow(sign.all.tools)))
-  # Plot the diagram
-  plot(fit)
-  mtext(tissue, side = 2, line = 3, las = 0)  
+  col.fdr.if = grepl("FDR", colnames(outputs_tissue[[1]]$all.jxns))
+  col.metrics.if = !grepl("FDR|gene|id", colnames(outputs_tissue[[1]]$all.jxns))
   
-}
-  
-  # 
-  # 
-  # # Create the vector of colors for each quarter
-  # data = t(as.matrix(df[, -1]))
-  # 
-  # print(cbind(data[,1], c(0,0), c(0,0)))
-  # 
-  # bp = barplot(
-  #   cbind(data[,1], c(0,0), c(0,0)), 
-  #   # main = pair.name,
-  #   ylab = "# jxns",
-  #   col = c("#4DAF4A", "#377EB8", '#F781BF', "#A65628","#984EA3"),
-  #   beside = F,
-  #   ylim = c(0, 350),
-  #            # max(sapply(output, 
-  #            #            function(tissue) {
-  #            #              sapply(
-  #            #                tissue[c('sajr.only.significant.events', 
-  #            #                              'dje.only.significant.events')], 
-  #            #                     nrow
-  #            #                )}
-  #            #              ))),
-  #            # 
-  #   legend = FALSE  # Disable the legend creation within each subplot
-  # )
-  # 
-  # barplot(
-  #   cbind(c(0,0), data[,2], c(0,0)), 
-  #   # main = pair.name,
-  #   col = c("#4DAF4A", "#377EB8", '#F781BF', "#A65628", "#FF7F00"),
-  #   beside = F,
-  #   add=TRUE,
-  # )
-  # 
-  # barplot(
-  #   cbind(c(0,0), c(0,0), data[,3]), 
-  #   # main = pair.name,
-  #   col = c("#4DAF4A", "#377EB8", '#F781BF', "#A65628",'#FFFF33' ),
-  #   beside = F,
-  #   add=TRUE,
-  # )
-  # 
-  # if (par("mfg")[1]==6){
-  #   axis(1, at = bp, labels = df$software, cex=0.8,las=3)
-  # }
-  # assigns tissue name for each row of graphs
-
-plot_graphs = function(all.common.jxns, sign.all.tools, 
-                       sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-                       sajr.only.sign, dje.only.sign, diego.only.sign,
-                       par.1, par.2){
-  # dpsi vs logFC
-  dict = list('dPSI' = c(-1,1), 
-              'logFC' = c(-4,4), 
-              'abundance_change' = c(-3,3))
-  
-  dict.ticks = list('dPSI' = seq(-1,1,by=0.5), 
-                    'logFC'=seq(-4,4,by=2),
-                    'abundance_change' = seq(-3,3,by=1.5))
-  
-  # ??? как то переписать красиво
-  if (par.1 %in% names(dict.ticks)) log='' else log='xy'
-  
-  # как от этого избавиться?
-  plot(all.common.jxns[,par.1], all.common.jxns[,par.2],
-       xaxt = "n", yaxt='n',    # Suppress x-axis ticks and labels
-       xlab = '', ylab = par.2,
-       xlim=dict[[par.1]], ylim=dict[[par.2]],
-       
-       log=log,
-       type = 'p', col = 'lightgrey',
-       pch = 16 , cex = 0.7, lwd = 1,
-       bty = "L" # Set bty = "L" for left and bottom lines only
-       ) 
-  
-  # Calculate Spearman correlation
-  # result = cor.test(all.common.jxns[,par.1], all.common.jxns[,par.2], method = "spearman")
-  # corr.coef = round(result$estimate, digits=2)
-  # text(1, -3, corr.coef, col = "black", cex=0.8)
-  
-  
-  # Order data by x ranks
-  #ordered_data <- data.frame(x = all.common.jxns[,par.1], 
-                            # y = all.common.jxns[,par.2])[order(all.common.jxns[,par.1]), ]
-  #print(ordered_data)
-  
-  #lines(lowess(ordered_data$x, ordered_data$y), col = "red")
+  # 1. Using negation with grep
+  fdr_comb = combn(all.jxns[,col.fdr.if], 2, simplify = FALSE)
+  metrics_comb = combn(all.jxns[,col.metrics.if], 2, simplify = FALSE)
   
 
-  # axis. Only for last row of graphs x axis is assigned with values and axis name
-  # axcept for p.values - x axis values are assigned for each row, but not the name
-  if(par.1 %in% names(dict.ticks)){
-    axis(1, at=dict.ticks[[par.1]], labels = FALSE)
-    axis(2, at=dict.ticks[[par.2]], labels = TRUE)
-    if (par("mfg")[1]==6){
-      axis(1, at=dict.ticks[[par.1]], labels = TRUE)
-      axis(2, at=dict.ticks[[par.2]], labels = TRUE)
-      title(xlab = par.1, xpd = NA)
+  p = plotVienn(intersections)
+  show(p)
+  lapply(metrics_comb, function(x) {
+    plot(x)
+    for (ids in names(intersections)){
+      col = c(diego.unique = "#377EB8",
+              dje.unique = "#A65628",
+              sajr.unique = "#984EA3",
+              diego_and_dje = '#F781BF',
+              diego_and_sajr = '#FFFF33',
+              dje_and_sajr = "#FF7F00",
+              all.tools = "#4DAF4A")
+      i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
+      points(x[i,], col=col[ids], pch = 16)
       }
-  } else {
-    axis(1, labels = TRUE)
-    axis(2, labels = TRUE)
-    if (par("mfg")[1]==6) {
-      title(xlab = par.1, xpd = NA)
-      }
-  }
-  
-  # Highlight points belonging to "common"
-  
-  # only sajr significant events
-  points(
-    sajr.only.sign[,par.1],
-    sajr.only.sign[,par.2],
-    col = "#FF7F00",
-    pch = 16)
-
-  # only dje significant events
-  points(
-    dje.only.sign[,par.1],
-    dje.only.sign[,par.2],
-    col = "#984EA3",
-    pch = 16)
-  
-  points(
-    diego.only.sign[,par.1],
-    diego.only.sign[,par.2],
-    col = '#FFFF33',
-    pch = 16)
-  
-  points(
-    sajr.dje.sign[,par.1],
-    sajr.dje.sign[,par.2],
-    col = "#377EB8",
-    pch = 16)
-  
-  # only dje significant events
-  points(
-    sajr.diego.sign[,par.1],
-    sajr.diego.sign[,par.2],
-    col = "#F781BF",
-    pch = 16)
-  
-  points(
-    dje.diego.sign[,par.1],
-    dje.diego.sign[,par.2],
-    col = '#A65628',
-    pch = 16)
-  
-  points(sign.all.tools[,par.1], 
-         sign.all.tools[,par.2],
-         col = "#4DAF4A",
-         pch = 16)
-  
-  
-  labels <- sign.all.tools$GeneID
-  # Add text labels to the points
-  n_labels <- min(5, nrow(sign.all.tools))
-  
-  # if (n_labels > 0) {
-  #   # Determine label positions based on row number (odd/even)
-  #   label_positions <- ifelse(seq_len(n_labels) %% 2 == 1, 4, 3)  # 4 for right, 3 for above
-  #   text(sign.both.tools[1:n_labels, par.1], sign.both.tools[1:n_labels, par.2], 
-  #        labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
-  # }
-  
-  if (n_labels > 0) {
-    # Calculate label positions based on modulo 3
-    label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
-    label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
-
-    text(sign.all.tools[1:n_labels, par.1], sign.all.tools[1:n_labels, par.2],
-         labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
-  }
-
-}
-
-# SUBSETTING?
-
-
-# addGeneNames = function(all.common.jxns){
-#   print(all.common.jxns)
-#   
-# }
-
-
-#makePlots = function(){
-setPlotParameters()
-
-Map(function(output.tissue, tissue) {
-    all.common.jxns = output.tissue$all.common.jxns
-    sajr.dje.sign = output.tissue$sajr.dje.significant.events
-    sajr.diego.sign = output.tissue$sajr.diego.significant.events
-    dje.diego.sign = output.tissue$dje.diego.significant.events
-    sajr.only.sign = output.tissue$sajr.only.significant.events
-    dje.only.sign = output.tissue$dje.only.significant.events
-    diego.only.sign = output.tissue$diego.only.significant.events
-    sign.all.tools = output.tissue$sign.all.tools
-  
-    makeViennDiagram(tissue,
-                sign.all.tools, 
-                sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-                sajr.only.sign, dje.only.sign, diego.only.sign)
-    
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'dPSI', 'logFC')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'dPSI', 'abundance_change')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'logFC', 'abundance_change')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'p.value.sajr', 'P.Value')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'p.value.sajr', 'p_val')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-    # plot_graphs(all.common.jxns, sign.all.tools, 
-    #             sajr.dje.sign, sajr.diego.sign, dje.diego.sign,
-    #             sajr.only.sign, dje.only.sign, diego.only.sign, 'P.Value', 'p_val')   #, xlim==c(-1,1), ylim=c(-4,4))
-    # 
-
-    
-  },
-  output,
-  names(output)
+    }
   )
 
-plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-legend('center', inset = c(0, 0),  # Adjust inset as needed
-         legend = c(
-                    "signigicant in DJE and SAJR", "signigicant SAJR and DIEGO","signigicant DJE and DIEGO", 
-                    'significant only in DJE', 'significant only in SAJR', 'significant only in DIEGO',
-                    "significant in all tools", 
-                    "number - spearman correlation"),
-         xpd=TRUE,
-         col = c("#377EB8", '#F781BF', "#A65628","#984EA3", "#FF7F00",'#FFFF33',"#4DAF4A",  NA),
-         pch=20,
-         bty='n',
-       horiz = FALSE,
-       ncol=3,
-       pt.cex=3)
 
-#}
+  lapply(fdr_comb, function(x) {
+    plot(x, log='xy')
+    for (ids in names(intersections)){
+      col = c(diego.unique = "#377EB8",
+              dje.unique = "#A65628",
+              sajr.unique = "#984EA3",
+              diego_and_dje = '#F781BF',
+              diego_and_sajr = '#FFFF33',
+              dje_and_sajr = "#FF7F00",
+              all.tools = "#4DAF4A")
+      i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
+      points(x[i,], col=col[ids], pch = 16)
+    }
+  })
+  
+  
+}
 
-# подписать гены
-# подписать корреляции
-# подписать число джанкшенов в барплотах
-# добавить легенды
-# можно ли в барплотах сделать разные раскраски для разных столбцов?
-# проверить что с дубликатами в значимых
+# all = outputs_tissue[[1]]$all.jxns.info
+# inter = outputs_tissue[[1]]$sign.jxns.info.list$intersections[[1]]
+# 
+# which(all$junction_id_sajr %in% inter)
 
 
-# setPlotParameters()
-# makePlots()
+
+for (tissue.output in outputs_tissue){
+  plot_graphs(tissue.output$all.jxns.info, tissue.output$sign.jxns.info.list$intersections)
+
+}
 

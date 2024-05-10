@@ -7,7 +7,7 @@ source("findSignificantEvents.R")
 rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+unique.tissues = unique(rse.jxn.cytosk@colData$tissue)[1:2]
 
 outputs_tissue = list()
 for (tissue in unique.tissues){
