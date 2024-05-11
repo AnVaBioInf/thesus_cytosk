@@ -317,15 +317,15 @@ runTools = function(rse, tissue, reference_condition='fetus',
 downloadExternalOutputs = function(path = './',
                                    file.name,
                                    extenction='.csv'){
-  gtex2tum <- read.csv(paste0(path, file.name, extenction), header = TRUE, sep = ",")
-  gtex2tum = gtex2tum[,c('X', 'dpsi', 'qv')]
-  names(gtex2tum) = c('junction_id_sajr', 
+  tum <- read.csv(paste0(path, file.name, extenction), header = TRUE, sep = ",")
+  tum = tum[,c('X', 'dpsi', 'qv')]
+  names(tum) = c('junction_id_sajr', 
                       paste0('dPSI_', file.name), 
                       paste0('FDR_', file.name))
-  gtex2tum
+  tum
 }
 
-mergeOutputs = function(output.list, add_external_data){
+mergeOutputs = function(output.list, add_external_data, file){
   diego.output = output.list$diego.output 
   dje.output = output.list$dje.output 
   sajr.output = output.list$sajr.output
@@ -350,13 +350,8 @@ mergeOutputs = function(output.list, add_external_data){
                       'abund_change_diego', 'FDR_diego')]
   
   if (add_external_data){
-    gtex2tum = download_external_data(file.name='gtex2tum')
-    norm2tum = download_external_data(file.name='norm2tum')
-    
-    output.merged.df = merge(output.merged.df, gtex2tum, by = "junction_id", all = TRUE)
-    output.merged.df = merge(output.merged.df, norm2tum, by = "junction_id", all = TRUE)
-    
-    
+    tum = downloadExternalOutputs(file.name=file)
+    output.merged.df = merge(output.merged.df, tum, by = "junction_id_sajr", all = TRUE)
   }
   return(output.merged.df) 
 }
@@ -404,14 +399,15 @@ compareOutputs = function(jxn.ids.list) {
   
   # jxn.ids.list = lapply(jxn.ids.list, ids2df)
 
-  return(list(intersections = Reduce(append, sign.jxns.info))
-  )
+  return(list(
+    all.single.tool =  jxn.ids.list,
+    intersections = Reduce(append, sign.jxns.info)) )
 }
 
 # сделать ее универсальной и все сохранить в список
 # то есть на вход один параметр за раз
 findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_threshold, dpsi_threshold, abund_change_threshold,
-                                  add_external_data){
+                                  add_external_data, file.name){
   # 1. Define filtering conditions for each tool
   diego.sign.tf = abs(jxns.significance.df$abund_change_diego) >= abund_change_threshold & jxns.significance.df$FDR_diego <= fdr_threshold
   dje.sign.tf = abs(jxns.significance.df$logFC_dje) >= logfc_threshold & jxns.significance.df$FDR_dje <= fdr_threshold
@@ -427,18 +423,19 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
                                     sajr = all.sign.jxns.sajr)
   
   sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
-  
   if (add_external_data){
-    norm2tum.sign.tf = abs(jxns.significance.df$dPSI_norm2tum) >= dpsi_threshold & jxns.significance.df$FDR_norm2tum <= fdr_threshold  
-    gtex2tum.sign.tf = abs(jxns.significance.df$dPSI_gtex2tum) >= dpsi_threshold & jxns.significance.df$FDR_gtex2tum <= fdr_threshold  
-
-    all.sign.jxns.norm2tum = jxns.significance.df[norm2tum.sign.tf, 'junction_id_sajr']
-    all.sign.jxns.gtex2tum = jxns.significance.df[gtex2tum.sign.tf, 'junction_id_sajr']
+    dpsi_file = paste0('dPSI_', file.name)
+    fdr_file = paste0('FDR_', file.name)
     
-    sign.jxns.info = lapply(sign.jxns.info, function(x) intersect(x, sign.jxns.info))
-    
+    tum.sign.tf = abs(jxns.significance.df[, dpsi_file]) >= dpsi_threshold & jxns.significance.df[, fdr_file] <= fdr_threshold  
+    all.sign.jxns.tum = jxns.significance.df[tum.sign.tf, 'junction_id_sajr']
+    all.sign.jxns.tum = all.sign.jxns.tum[!is.na(all.sign.jxns.tum)]
+    sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(x) intersect(x, all.sign.jxns.tum))
+    sign.jxns.info$intersections = sign.jxns.info.d
+    sign.jxns.info$all.single.tool[['sajr.norm.tumor']] = all.sign.jxns.tum
   } 
   return(sign.jxns.info)
+  
 }
 
 #fisher test
@@ -447,12 +444,12 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
 
 getJxnSignInfo = function(rse.jxn.cytosk, tissue, 
                           logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.2, abund_change_threshold=1,
-                          add_external_data=FALSE){
+                          add_external_data=FALSE, file=''){
   tools.outputs.list = runTools(rse.jxn.cytosk, tissue)
-  all.jxns.info.df = mergeOutputs(tools.outputs.list, add_external_data)
+  all.jxns.info.df = mergeOutputs(tools.outputs.list, add_external_data, file)
   sign.jxns.info.list = findSignificantJxnsIds(all.jxns.info.df, logfc_threshold, 
                                                fdr_threshold, dpsi_threshold, abund_change_threshold, 
-                                               add_external_data)
+                                               add_external_data, file)
   list(all.jxns.info = all.jxns.info.df, sign.jxns.info.list = sign.jxns.info.list)
 }
 
