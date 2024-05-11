@@ -1,103 +1,166 @@
-#source('ages_comparison.R')
-#install.packages("RColorBrewer")
-#dev.off()
-library(RColorBrewer)
-# display.brewer.pal(n = 8, name = "Spectral")
-# set2_colors <- brewer.pal(n = 8, name = "Spectral")
-# set2_colors
-
-
-# легенда
-# корреляционная кривая ?
-# группы в djexpress?
-# дубликаты значимые только в djexpress? раздваиваются?
-# corr coef для p value
-# дать название всему графику
-# 
-# # сделать таблицу значимых во всех методах
-# # сделать реверсед таблицу
-
+# install.packages("ggVennDiagram")
+library(ggplot2)
+library(ggVennDiagram)
+library(grid)
+library(gridExtra)
 library(eulerr)
 
-setPlotParameters <- function(bottom_page_margin=0, left_page_margin=2, top_page_margin=1, right_page_margin=0,
-                              bottom_plot_margin=1, left_plot_margin=1, top_plot_margin=2, right_plot_margin=1,
-                              title_axis_distance=2, axis_label_distance=1, axis_line_distance=0,
+getNrowsNcols = function(outputs_tissue){
+  nrow = length(outputs_tissue)
+  cols = colnames(outputs_tissue[[1]]$all.jxns.info)
+  cols = length(cols[-c(1,2, length(cols)-1,length(cols))])  # Remove first two columns
+  list(nrow=nrow, ncol=cols)
+}
+
+setPlotParameters <- function(bottom_page_margin=2, left_page_margin=2, top_page_margin=1, right_page_margin=0,
+                              bottom_plot_margin=1.5, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
+                              title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
-                              outputs_tissue) {
+                              nrow, ncol) {
   par(tcl=tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
       mar = (c(bottom_plot_margin, left_plot_margin, top_plot_margin, right_plot_margin) + 0.1),  # mar = c(bottom, left, top, right)
       oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
       mgp = c(title_axis_distance, axis_label_distance, axis_line_distance),  # Title, label, and line distances
       xpd=TRUE,
-      pty = "s", # square plots
-      cex.axis = font_size)
-
+      pty = "s" # square plots
+      #cex.axis = font_size)
+  )
   # Create the plot matrix
-  nrow = length(outputs_tissue)+1
-  cols = colnames(outputs_tissue[[1]]$all.jxns.info)
-  ncol = length(cols[-c(1,2, length(cols)-1,length(cols))])  # Remove first two columns
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
   layout(mat = layout_matrix)
 }
 
-setPlotParameters(outputs_tissue = outputs_tissue)
+col = c(diego = "#377EB8",
+        dje = "#A65628",
+        sajr = "#984EA3",
+        'diego&dje' = '#F781BF',
+        'diego&sajr' = '#FFFF33',
+        'dje&sajr' = "#FF7F00",
+        'diego&dje&sajr' = "#4DAF4A")
 
-makeDotplots = function(tf, all.jxns, intersections){
-  x_lim_dict = list('dPSI_sajr' = c(-1,1), 'logFC_dje' = c(-4,4), 'abund_change_diego' = c(-3,3))
-  x_ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 'logFC_dje'=seq(-4,4,by=2), 'abund_change_diego' = seq(-3,3,by=1.5))
-  
+
+makeDotplots = function(tf, all.jxns, intersections, log = ''){
+  x_lim_dict = list('dPSI_sajr' = c(-1,1), 
+                    'logFC_dje' = c(-4,4), 
+                    'abund_change_diego' = c(-3,3))
+  ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 'logFC_dje'=seq(-4,4,by=2), 'abund_change_diego' = seq(-3,3,by=1.5))
+  grid = getNrowsNcols(outputs_tissue)
+
   comb = combn(all.jxns[,tf], 2, simplify = FALSE)
-  
   lapply(comb, function(x) {
-    print(colnames(x))
-    print(x_lim_dict[colnames(x)[1]])
-    plot(x)
-         # xlim = x_lim_dict[colnames(x)[1]],
-         # ylim = x_lim_dict[colnames(x)[2]])
+    par.1 = colnames(x)[1]
+    par.2 = colnames(x)[2]
+    plot(x,
+         xaxt = "n", yaxt='n',    # Suppress x-axis ticks and labels
+         xlab = '', 
+         log=log,
+         xlim=x_lim_dict[[par.1]], ylim=x_lim_dict[[par.2]],
+         type = 'p', col = 'lightgrey',
+         pch = 16 , cex = 0.7, lwd = 1,
+         bty = "L")
+    
+    # tick axis + titles
+    if(all(colnames(x) %in% names(ticks_dict))){
+      axis(1, at=ticks_dict[[par.1]], labels = FALSE)
+      axis(2, at=ticks_dict[[par.2]], labels = TRUE)
+      if (par("mfg")[1]==grid[[1]]){
+        axis(1, at=ticks_dict[[par.1]], labels = TRUE)
+        axis(2, at=ticks_dict[[par.2]], labels = TRUE)
+        title(xlab = par.1, xpd = TRUE)
+      }
+    } else {
+      axis(1, labels = TRUE)
+      axis(2, labels = TRUE)
+    }
+      if (par("mfg")[1]==grid[[1]]) {
+        title(xlab = par.1, xpd = TRUE)
+      }
+    
+    # points
     for (ids in names(intersections)){
-      col = c(diego = "#377EB8",
-              dje = "#A65628",
-              sajr = "#984EA3",
-              'diego&dje' = '#F781BF',
-              'diego&sajr' = '#FFFF33',
-              'dje&sajr' = "#FF7F00",
-              'diego&dje&sajr' = "#4DAF4A")
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
       points(x[i,], col=col[ids], pch = 16)
     }
-  }
-  )
+    
+    
+    
+  })
 }
+    # gene labels 
+    
+    # labels <- sign.all.tools$GeneID
+    # # Add text labels to the points
+    # n_labels <- min(5, nrow(sign.all.tools))
+    # 
+    # # if (n_labels > 0) {
+    # #   # Determine label positions based on row number (odd/even)
+    # #   label_positions <- ifelse(seq_len(n_labels) %% 2 == 1, 4, 3)  # 4 for right, 3 for above
+    # #   text(sign.both.tools[1:n_labels, par.1], sign.both.tools[1:n_labels, par.2], 
+    # #        labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
+    # # }
+    # 
+    # if (n_labels > 0) {
+    #   # Calculate label positions based on modulo 3
+    #   label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
+    #   label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
+    #   
+    #   text(sign.all.tools[1:n_labels, par.1], sign.all.tools[1:n_labels, par.2],
+    #        labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
+#     }
+#     
+#   })
+# }
 
-plot_graphs = function(all.jxns, intersections){
+
+plotGraphs = function(all.jxns, intersections){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
   col.metrics.if = !grepl("FDR|gene|id", colnames(all.jxns))
   
   makeDotplots(col.metrics.if, all.jxns, intersections)
-  makeDotplots(col.fdr.if, all.jxns, intersections)
+  makeDotplots(col.fdr.if, all.jxns, intersections, log='xy')
 
 }
 
+plotEulerDiagram = function(outputs_tissue){
+  p=list()
+  for (tissue in names(outputs_tissue)){
+    data = sapply(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, 
+                  function(x) length(x))
+    fit = euler(data,
+                shape = "circle",  # Force circles
+                control = list(area.prop = TRUE))
+    
+    p[[tissue]] = plot(fit,
+                       quantities = TRUE,
+                       fills = list(fill = col), newpage = FALSE,
+                       main = tissue) 
+  }
+  rc = ceiling(sqrt(length(outputs_tissue)))
+  do.call(grid.arrange, c(p, ncol = rc, nrow = rc))  
+}
 
-plotVienn = function(intersections){
-  data = sapply(intersections, function(x) length(x))
-  fit = euler(data)
-  plot(fit,
-       quantities = TRUE)
+plotVennDiagram = function(outputs_tissue){
+  p=list()
+  for (tissue in names(outputs_tissue)){
+    p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
+      labs(title = tissue) # Add title labels to each plot
+  }
+  rc = ceiling(sqrt(length(outputs_tissue)))
+  do.call(grid.arrange, c(p, ncol = rc, nrow = rc))  
+}
+
+plotResultsRepot = function(outputs_tissue){
+  grid = getNrowsNcols(outputs_tissue)
+  setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
+  for (output in outputs_tissue){
+    plotGraphs(output$all.jxns.info, output$sign.jxns.info.list$intersections)
+  }  
+  
+  #plotVennDiagram(outputs_tissue)
+  #plotEulerDiagram(outputs_tissue)
 }
 
 
-for (tissue.output in outputs_tissue){
-  plot_graphs(tissue.output$all.jxns.info, tissue.output$sign.jxns.info.list$intersections)
-}
-# 
-# plots = list()
-# for (tissue in names(outputs_tissue)){
-#   plots[[tissue]] = plotVienn(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
-# }
-# 
-# library(gridExtra)
-# 
-# grid.arrange(plots[[1]], plots[[2]], ncol=6)
+plotResultsRepot(outputs_tissue)
 

@@ -368,8 +368,6 @@ compareOutputs = function(jxn.sign.df, jxn.ids.list) {
   all.tools = list(all.tools)
   names(all.tools) = paste(names(jxn.ids.list), collapse = "&")
   
-  names(jxn.ids.list) = paste0(names(jxn.ids.list),'.all')
-  
   # ids2df = function(ids) jxn.sign.df[jxn.sign.df$junction_id_sajr %in% ids, ]
   
   # sign.jxns.info = 
