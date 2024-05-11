@@ -12,7 +12,7 @@ getNrowsNcols = function(outputs_tissue){
   list(nrow=nrow, ncol=cols)
 }
 
-setPlotParameters <- function(bottom_page_margin=2, left_page_margin=2, top_page_margin=1, right_page_margin=0,
+setPlotParameters <- function(bottom_page_margin=1.5, left_page_margin=1, top_page_margin=0.5, right_page_margin=0,
                               bottom_plot_margin=1.5, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
@@ -40,7 +40,7 @@ col = c(diego = "#377EB8",
         'diego&dje&sajr' = "#4DAF4A")
 
 
-makeDotplots = function(tf, all.jxns, intersections, log = ''){
+makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
   x_lim_dict = list('dPSI_sajr' = c(-1,1), 
                     'logFC_dje' = c(-4,4), 
                     'abund_change_diego' = c(-3,3))
@@ -67,58 +67,51 @@ makeDotplots = function(tf, all.jxns, intersections, log = ''){
       if (par("mfg")[1]==grid[[1]]){
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
-        title(xlab = par.1, xpd = TRUE)
       }
     } else {
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
     }
-      if (par("mfg")[1]==grid[[1]]) {
-        title(xlab = par.1, xpd = TRUE)
-      }
-    
+
+    if (par("mfg")[1]==grid[[1]]) {
+      mtext(side=1, text = par.1, line = 2, cex= 0.7)  
+    }
+    if (par("mfg")[2]==1) {
+      mtext(side=2, text = tissue, line = 3.5, cex= 1)  
+    }
     # points
     for (ids in names(intersections)){
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
       points(x[i,], col=col[ids], pch = 16)
+      
+      # gene labeles
+      if (ids=='diego&dje&sajr'){
+        jxns = x[i,]
+        labels = all.jxns[i,'gene_name']
+
+        # Add text labels to the points
+        n_labels = min(5, length(labels))
+        
+        if (n_labels > 0) {
+          # Calculate label positions based on modulo 3
+          label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
+          label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
+          
+          text(jxns[1:n_labels, par.1], jxns[1:n_labels, par.2],
+               labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
+        }
+      }
     }
-    
-    
-    
   })
 }
-    # gene labels 
-    
-    # labels <- sign.all.tools$GeneID
-    # # Add text labels to the points
-    # n_labels <- min(5, nrow(sign.all.tools))
-    # 
-    # # if (n_labels > 0) {
-    # #   # Determine label positions based on row number (odd/even)
-    # #   label_positions <- ifelse(seq_len(n_labels) %% 2 == 1, 4, 3)  # 4 for right, 3 for above
-    # #   text(sign.both.tools[1:n_labels, par.1], sign.both.tools[1:n_labels, par.2], 
-    # #        labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
-    # # }
-    # 
-    # if (n_labels > 0) {
-    #   # Calculate label positions based on modulo 3
-    #   label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
-    #   label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
-    #   
-    #   text(sign.all.tools[1:n_labels, par.1], sign.all.tools[1:n_labels, par.2],
-    #        labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
-#     }
-#     
-#   })
-# }
 
 
-plotGraphs = function(all.jxns, intersections){
+plotGraphs = function(all.jxns, intersections, tissue){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
   col.metrics.if = !grepl("FDR|gene|id", colnames(all.jxns))
   
-  makeDotplots(col.metrics.if, all.jxns, intersections)
-  makeDotplots(col.fdr.if, all.jxns, intersections, log='xy')
+  makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue)
+  makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy')
 
 }
 
@@ -128,7 +121,7 @@ plotEulerDiagram = function(outputs_tissue){
     data = sapply(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, 
                   function(x) length(x))
     fit = euler(data,
-                shape = "circle",  # Force circles
+                shape = "circle",   # Force circles
                 control = list(area.prop = TRUE))
     
     p[[tissue]] = plot(fit,
@@ -136,8 +129,8 @@ plotEulerDiagram = function(outputs_tissue){
                        fills = list(fill = col), newpage = FALSE,
                        main = tissue) 
   }
-  rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = rc, nrow = rc))  
+  # rc = ceiling(sqrt(length(outputs_tissue)))
+  do.call(grid.arrange, c(p, ncol = 1))  
 }
 
 plotVennDiagram = function(outputs_tissue){
@@ -147,14 +140,24 @@ plotVennDiagram = function(outputs_tissue){
       labs(title = tissue) # Add title labels to each plot
   }
   rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = rc, nrow = rc))  
+  do.call(grid.arrange, c(p, ncol = rc))  
 }
 
 plotResultsRepot = function(outputs_tissue){
   grid = getNrowsNcols(outputs_tissue)
   setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
-  for (output in outputs_tissue){
-    plotGraphs(output$all.jxns.info, output$sign.jxns.info.list$intersections)
+
+  for (tissue in names(outputs_tissue)){
+    outputs_tissue[[tissue]]$sign.jxns.info.list$intersections = 
+      outputs_tissue[[tissue]]$sign.jxns.info.list$intersections[c('sajr',
+                                                                  'dje', 
+                                                                  'diego',
+                                                                  'dje&sajr',
+                                                                  'diego&sajr',
+                                                                  'diego&dje',
+                                                                  'diego&dje&sajr')]
+    plotGraphs(outputs_tissue[[tissue]]$all.jxns.info, 
+               outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, tissue)
   }  
   
   #plotVennDiagram(outputs_tissue)

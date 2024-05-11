@@ -15,4 +15,4 @@ rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 # 
 # saveRDS(outputs_tissue,'tool_outputs_all_tissues.rds')
 
-rse.gene.cytosk = readRDS('tool_outputs_all_tissues.rds', refhook = NULL)
+outputs_tissue = readRDS('tool_outputs_all_tissues.rds', refhook = NULL)
