@@ -12,8 +12,8 @@ getNrowsNcols = function(outputs_tissue){
   list(nrow=nrow, ncol=cols)
 }
 
-setPlotParameters <- function(bottom_page_margin=1.5, left_page_margin=1, top_page_margin=0.5, right_page_margin=0,
-                              bottom_plot_margin=1.5, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
+setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page_margin=1.5, right_page_margin=0,
+                              bottom_plot_margin=2.4, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
                               nrow, ncol) {
@@ -22,21 +22,21 @@ setPlotParameters <- function(bottom_page_margin=1.5, left_page_margin=1, top_pa
       oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
       mgp = c(title_axis_distance, axis_label_distance, axis_line_distance),  # Title, label, and line distances
       xpd=TRUE,
-      pty = "s" # square plots
-      #cex.axis = font_size)
-  )
+      pty = "s", # square plots
+      cex.axis = font_size)
+
   # Create the plot matrix
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
   layout(mat = layout_matrix)
 }
 
-col = c(diego = "#377EB8",
+col = c(sajr = "#984EA3",
         dje = "#A65628",
-        sajr = "#984EA3",
-        'diego&dje' = '#F781BF',
-        'diego&sajr' = '#FFFF33',
+        diego = "#377EB8",
         'dje&sajr' = "#FF7F00",
+        'diego&sajr' = '#FFFF33',
+        'diego&dje' = '#F781BF',
         'diego&dje&sajr' = "#4DAF4A")
 
 
@@ -49,6 +49,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
 
   comb = combn(all.jxns[,tf], 2, simplify = FALSE)
   lapply(comb, function(x) {
+
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
     plot(x,
@@ -64,10 +65,14 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
     if(all(colnames(x) %in% names(ticks_dict))){
       axis(1, at=ticks_dict[[par.1]], labels = FALSE)
       axis(2, at=ticks_dict[[par.2]], labels = TRUE)
+      # Fit linear regression
+      lm_model <- lm(x[, par.2] ~ x[, par.1], data = x[complete.cases(x), ])
+      abline(lm_model, col = "#a72127", lwd = 1, xpd=FALSE)
       if (par("mfg")[1]==grid[[1]]){
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
       }
+      
     } else {
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
@@ -79,6 +84,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
     if (par("mfg")[2]==1) {
       mtext(side=2, text = tissue, line = 3.5, cex= 1)  
     }
+    
     # points
     for (ids in names(intersections)){
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
@@ -102,9 +108,17 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
         }
       }
     }
+    # Calculate Spearman correlation
+    a = x[complete.cases(x),]
+
+    result = cor.test(a[,par.1], a[,par.2], method = "spearman")
+    corr.coef = round(result$estimate, digits=2)
+    mtext(paste0('rho = ', corr.coef), side=3,
+          col = "black", cex=0.5)
+
+
   })
 }
-
 
 plotGraphs = function(all.jxns, intersections, tissue){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
@@ -115,19 +129,25 @@ plotGraphs = function(all.jxns, intersections, tissue){
 
 }
 
-plotEulerDiagram = function(outputs_tissue){
+plotEulerDiagram = function(outputs_tissue, n_jxns){
   p=list()
   for (tissue in names(outputs_tissue)){
+    n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
     data = sapply(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, 
                   function(x) length(x))
+    order = names(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
+    print(col[order])
     fit = euler(data,
                 shape = "circle",   # Force circles
                 control = list(area.prop = TRUE))
-    
     p[[tissue]] = plot(fit,
                        quantities = TRUE,
-                       fills = list(fill = col), newpage = FALSE,
-                       main = tissue) 
+                       fills = list(fill = col[order]), 
+                       newpage = FALSE,
+                       legend = TRUE,       # Remove legend
+                       main = list(label=paste0("#jxns = ",n_jxns),
+                                   fontsize=7)
+                      )
   }
   # rc = ceiling(sqrt(length(outputs_tissue)))
   do.call(grid.arrange, c(p, ncol = 1))  
@@ -146,22 +166,24 @@ plotVennDiagram = function(outputs_tissue){
 plotResultsRepot = function(outputs_tissue){
   grid = getNrowsNcols(outputs_tissue)
   setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
-
   for (tissue in names(outputs_tissue)){
-    outputs_tissue[[tissue]]$sign.jxns.info.list$intersections = 
+    outputs_tissue[[tissue]]$sign.jxns.info.list$intersections =
       outputs_tissue[[tissue]]$sign.jxns.info.list$intersections[c('sajr',
-                                                                  'dje', 
+                                                                  'dje',
                                                                   'diego',
                                                                   'dje&sajr',
                                                                   'diego&sajr',
                                                                   'diego&dje',
                                                                   'diego&dje&sajr')]
-    plotGraphs(outputs_tissue[[tissue]]$all.jxns.info, 
+    plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
                outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, tissue)
-  }  
+  }
+  mtext(side=1, 
+        text = c('Filtration thresholds. logFC>=2, dPSI >= 0.2, abundance change >= 1, FDR >= 0.05'), 
+        outer=TRUE, cex= 0.7, line=1)  
   
-  #plotVennDiagram(outputs_tissue)
-  #plotEulerDiagram(outputs_tissue)
+  plotVennDiagram(outputs_tissue)
+  plotEulerDiagram(outputs_tissue)
 }
 
 

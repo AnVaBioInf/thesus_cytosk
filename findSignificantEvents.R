@@ -141,7 +141,6 @@ runDJExpress = function(rse, tissue, reference_condition, FDR_threshold, logFC_t
   filtered_rse = filterRse(rse, tissue)
   prep_out = makePrepOutObj(filtered_rse, tissue, reference_condition)
   reference_sample_ids = findConditionIds(filtered_rse, reference_condition)
-  
   anlz_out <- DJEanalyze(prepare.out = prep_out,
                          Group1 = reference_sample_ids,
                          FDR = FDR_threshold,
@@ -273,9 +272,9 @@ makeSAJR = function(rse.filtered){
   sajr
 }
 
-calculateMetrics = function(sajr, fetus.samples.ids){
-  fetus.indices = match(fetus.samples.ids, colnames(sajr$ir))
-  dPSI = apply(sajr$ir, 1, function(x) mean(x[-fetus.indices],na.rm=T)-mean(x[fetus.indices],na.rm=T))
+calculateMetrics = function(sajr, reference.sample.ids){
+  reference.indices = match(reference.sample.ids, colnames(sajr$ir))
+  dPSI = apply(sajr$ir, 1, function(x) mean(x[-reference.indices],na.rm=T)-mean(x[reference.indices],na.rm=T))
   #logFC = apply(sajr$ir, 1, function(x) log2(mean(x[adult.samples.ids],na.rm=T)/mean(x[fetus.samples.ids],na.rm=T)))
   dPSI #, logFC=logFC)
 }
@@ -285,10 +284,10 @@ runSAJR = function(rse, tissue, reference_condition){
   sajr.tissue = makeSAJR(rse.filtered)
   mod = rse.filtered@colData$age_group
   mod = list(age_group=factor(mod)) # ~ model data
-  fetus.sample.ids = findConditionIds(rse.filtered, reference_condition)
+  reference.sample.ids = findConditionIds(rse.filtered, reference_condition)
   
   alt.glm = as.data.frame( fitSAGLM(sajr.tissue, terms(x ~ age_group, keep.order=T),mod,return.pv=T) )
-  alt.glm$dPSI = calculateMetrics(sajr.tissue, fetus.sample.ids)
+  alt.glm$dPSI = calculateMetrics(sajr.tissue, reference.sample.ids)
   alt.glm$FDR.sajr = p.adjust(alt.glm$age_group,m='BH')
   names(alt.glm)[names(alt.glm) == "age_group"] = "p.value.sajr"
   
@@ -412,7 +411,7 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
 
 
 getJxnSignInfo = function(rse, tissue, 
-                          logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.1, abund_change_threshold=0.1){
+                          logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.2, abund_change_threshold=1){
   tools.outputs.list = runTools(rse, tissue)
   all.jxns.info.df = mergeOutputs(tools.outputs.list)
   sign.jxns.info.list = findSignificantJxnsIds(all.jxns.info.df, logfc_threshold, 
