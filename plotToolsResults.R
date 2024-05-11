@@ -40,18 +40,19 @@ col = c(sajr = "#984EA3",
         'diego&dje&sajr' = "#4DAF4A")
 
 
-makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
+makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid){
   x_lim_dict = list('dPSI_sajr' = c(-1,1), 
                     'logFC_dje' = c(-4,4), 
                     'abund_change_diego' = c(-3,3))
   ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 'logFC_dje'=seq(-4,4,by=2), 'abund_change_diego' = seq(-3,3,by=1.5))
-  grid = getNrowsNcols(outputs_tissue)
+
 
   comb = combn(all.jxns[,tf], 2, simplify = FALSE)
   lapply(comb, function(x) {
 
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
+    
     plot(x,
          xaxt = "n", yaxt='n',    # Suppress x-axis ticks and labels
          xlab = '', 
@@ -60,7 +61,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
          type = 'p', col = 'lightgrey',
          pch = 16 , cex = 0.7, lwd = 1,
          bty = "L")
-    
+
     # tick axis + titles
     if(all(colnames(x) %in% names(ticks_dict))){
       axis(1, at=ticks_dict[[par.1]], labels = FALSE)
@@ -68,28 +69,31 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
       # Fit linear regression
       lm_model <- lm(x[, par.2] ~ x[, par.1], data = x[complete.cases(x), ])
       abline(lm_model, col = "#a72127", lwd = 1, xpd=FALSE)
+      
       if (par("mfg")[1]==grid[[1]]){
+        print(par("mfg"))
+        print(grid[[1]])
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
       }
-      
+
     } else {
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
     }
 
     if (par("mfg")[1]==grid[[1]]) {
-      mtext(side=1, text = par.1, line = 2, cex= 0.7)  
+      mtext(side=1, text = par.1, line = 2, cex= 0.7)
     }
     if (par("mfg")[2]==1) {
-      mtext(side=2, text = tissue, line = 3.5, cex= 1)  
+      mtext(side=2, text = tissue, line = 3.5, cex= 1)
     }
-    
+
     # points
     for (ids in names(intersections)){
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
       points(x[i,], col=col[ids], pch = 16)
-      
+
       # gene labeles
       if (ids=='diego&dje&sajr'){
         jxns = x[i,]
@@ -97,12 +101,12 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
 
         # Add text labels to the points
         n_labels = min(5, length(labels))
-        
+
         if (n_labels > 0) {
           # Calculate label positions based on modulo 3
           label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
           label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
-          
+
           text(jxns[1:n_labels, par.1], jxns[1:n_labels, par.2],
                labels = labels[1:n_labels], pos = label_positions, cex = 0.8)
         }
@@ -120,12 +124,12 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = ''){
   })
 }
 
-plotGraphs = function(all.jxns, intersections, tissue){
+plotGraphs = function(all.jxns, intersections, tissue, grid){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
   col.metrics.if = !grepl("FDR|gene|id", colnames(all.jxns))
   
-  makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue)
-  makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy')
+  makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue, grid=grid)
+  makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy', grid=grid)
 
 }
 
@@ -176,7 +180,7 @@ plotResultsRepot = function(outputs_tissue){
                                                                   'diego&dje',
                                                                   'diego&dje&sajr')]
     plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
-               outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, tissue)
+               outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, tissue, grid)
   }
   mtext(side=1, 
         text = c('Filtration thresholds. logFC>=2, dPSI >= 0.2, abundance change >= 1, FDR >= 0.05'), 
