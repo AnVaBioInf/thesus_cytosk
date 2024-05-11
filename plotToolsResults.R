@@ -153,15 +153,15 @@ plotEulerDiagram = function(outputs_tissue, n_jxns){
   do.call(grid.arrange, c(p, ncol = 1))  
 }
 
-plotVennDiagram = function(outputs_tissue){
-  p=list()
-  for (tissue in names(outputs_tissue)){
-    p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
-      labs(title = tissue) # Add title labels to each plot
-  }
-  rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = rc))  
-}
+# plotVennDiagram = function(outputs_tissue){
+#   p=list()
+#   for (tissue in names(outputs_tissue)){
+#     p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
+#       labs(title = tissue) # Add title labels to each plot
+#   }
+#   rc = ceiling(sqrt(length(outputs_tissue)))
+#   do.call(grid.arrange, c(p, ncol = rc))  
+# }
 
 plotResultsRepot = function(outputs_tissue){
   grid = getNrowsNcols(outputs_tissue)
@@ -185,7 +185,4 @@ plotResultsRepot = function(outputs_tissue){
   plotVennDiagram(outputs_tissue)
   plotEulerDiagram(outputs_tissue)
 }
-
-
-plotResultsRepot(outputs_tissue)
 

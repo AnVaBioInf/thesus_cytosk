@@ -341,7 +341,7 @@ mergeOutputs = function(output.list){
 #=================================================================================
 #=================================================================================
 #=================================================================================
-compareOutputs = function(jxn.sign.df, jxn.ids.list) {
+compareOutputs = function(jxn.ids.list) {
   jxn.ids.list = lapply(jxn.ids.list, function(x) x[!is.na(x)])
   # 1. Find elements present in all vectors
   all.tools = Reduce(intersect, jxn.ids.list)
@@ -381,12 +381,12 @@ compareOutputs = function(jxn.sign.df, jxn.ids.list) {
   
   # jxn.ids.list = lapply(jxn.ids.list, ids2df)
 
-  return(list(
-    all.single.tool = jxn.ids.list,
-    intersections = Reduce(append, sign.jxns.info))
+  return(list(intersections = Reduce(append, sign.jxns.info))
   )
 }
 
+# сделать ее универсальной и все сохранить в список
+# то есть на вход один параметр за раз
 findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_threshold, dpsi_threshold, abund_change_threshold){
   # 1. Define filtering conditions for each tool
   diego.sign.tf = abs(jxns.significance.df$abund_change_diego) >= abund_change_threshold & jxns.significance.df$FDR_diego <= fdr_threshold
@@ -402,7 +402,7 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
                                     dje = all.sign.jxns.dje, 
                                     sajr = all.sign.jxns.sajr)
   
-  sign.jxns.info = compareOutputs(jxns.significance.df, all.sign.jxn.ids.tool.list)
+  sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
   sign.jxns.info
 }
 
@@ -410,10 +410,8 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
 #findSignifDF = ?
 
 
-getJxnSignInfo = function(rse, tissue, 
+getJxnSignInfo = function(all.jxns.info.df, 
                           logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.2, abund_change_threshold=1){
-  tools.outputs.list = runTools(rse, tissue)
-  all.jxns.info.df = mergeOutputs(tools.outputs.list)
   sign.jxns.info.list = findSignificantJxnsIds(all.jxns.info.df, logfc_threshold, 
                                                fdr_threshold, dpsi_threshold, abund_change_threshold)
   list(all.jxns.info = all.jxns.info.df, sign.jxns.info.list = sign.jxns.info.list)
