@@ -77,15 +77,27 @@ for (tissue in unique.tissues){
   fisher_results_tissues_list[[tissue]]$dev = getFisher(outputs_dev_sign_info[[tissue]],
                                                         one_to_all=FALSE, 
                                                         ref_col='')
+  
   fisher_results_tissues_list[[tissue]]$gtex2tum = getFisher(outputs_gtex2tum[[tissue]],
                                                       one_to_all=TRUE, 
                                                       ref_col='sajr.norm.tumor')
+  names(fisher_results_tissues_list[[tissue]]$gtex2tum) = gsub("sajr.norm.tumor", 
+                                                               "sajr.gtex2tum", 
+                                                               names(fisher_results_tissues_list[[tissue]]$gtex2tum))
+  
   fisher_results_tissues_list[[tissue]]$norm2tum = getFisher(outputs_norm2tum[[tissue]],
                                                              one_to_all=TRUE, 
                                                              ref_col='sajr.norm.tumor')
+  names(fisher_results_tissues_list[[tissue]]$norm2tum) = gsub("sajr.norm.tumor", 
+                                                               "sajr.norm2tum", 
+                                                               names(fisher_results_tissues_list[[tissue]]$norm2tum))
+  
+  fisher_results_tissues_list[[tissue]] = 
+    Reduce(append, fisher_results_tissues_list[[tissue]])
+  
 }
 
-#plotFisherResults(fisher_results_tissues_list)
+plotFisherResults(fisher_results_tissues_list)
 
 # p.adjust(p_values, method = "bonferroni")
 

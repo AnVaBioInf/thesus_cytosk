@@ -240,12 +240,12 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
 
 plotFisherResults = function(fisher_results_tissues_list){
   # Create the plot matrix
-  nrow = length(fisher_results_tissues_list)
-  ncol = 1
+  
+  nrow = ceiling(sqrt(length(fisher_results_tissues_list)))-1
+  ncol = ceiling(sqrt(length(fisher_results_tissues_list)))
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
-  setPlotParameters(layout_matrix=layout_matrix,
-                    axis_label_distance = 1)
+  setPlotParameters(layout_matrix=layout_matrix)
 
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
