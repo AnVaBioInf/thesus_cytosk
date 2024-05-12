@@ -199,58 +199,69 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
 
 
 
-plotFisher = function(outputs_tissue){
-  all.single.tool = lapply(outputs_tissue$sign.jxns.info.list$all.single.tool, function(x) length(x))
-  pairs = lapply(outputs_tissue$sign.jxns.info.list$intersections$only.pair.tools, function(x) length(x))
-  
-  
-  
-  data = matrix(c(all.single.tool$diego-pairs$'diego&dje', 
-                  pairs$'diego&dje', 
-                  all.single.tool$dje-pairs$'diego&dje',
-                  pairs$'diego&dje'), nrow = 2, ncol=2, byrow = TRUE)
-  
-  print(data)
-  
-  # Perform Fisher's exact test
-  result <- fisher.test(data)
-
-  # Print the results
-  print(result)
-  
-}
-
 
 plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
   grid = getNrowsNcols(outputs_tissue,tumor)
   setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
   for (tissue in names(outputs_tissue)){
-    intersect = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
-    intersect = intersect[c('sajr',
-                            'dje',
-                            'diego',
-                            'dje&sajr',
-                            'diego&sajr',
-                            'diego&dje',
-                            'diego&dje&sajr')]
-    plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
-               intersect, tissue, grid, tumor)
+    # intersect = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
+    # intersect = intersect[c('sajr',
+    #                         'dje',
+    #                         'diego',
+    #                         'dje&sajr',
+    #                         'diego&sajr',
+    #                         'diego&dje',
+    #                         'diego&dje&sajr')]
+    # plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
+    #            intersect, tissue, grid, tumor)
+    
   }
-  thresholds_text = paste0('Filtration thresholds. logFC >= ', thresholds$logfc_threshold,
-                           'dPSI >= ', thresholds$dpsi_threshold,
-                           'abundance change >= ', abund_change_threshold, 
-                           'FDR >= ', fdr_threshold)
-  if (tumor==TRUE){  
-    title=paste0(file, " and development. Tool comparison")
-    mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)}
-  else{  
-    title = "Development. Tool comparison"
-    mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
-  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)  
+  # thresholds_text = paste0('Filtration thresholds. logFC >= ', thresholds$logfc_threshold,
+  #                          'dPSI >= ', thresholds$dpsi_threshold,
+  #                          'abundance change >= ', abund_change_threshold, 
+  #                          'FDR >= ', fdr_threshold)
+  # if (tumor==TRUE){  
+  #   title=paste0(file, " and development. Tool comparison")
+  #   mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)}
+  # else{  
+  #   title = "Development. Tool comparison"
+  #   mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
+  # mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)  
+  # 
+  # plotVennDiagram(outputs_tissue, title, thresholds_text)
+  # if (tumor==FALSE){
+  #   plotEulerDiagram(outputs_tissue, title = title, thresholds_text = thresholds_text)
+  # }
+}
+
+
+
+plotFisherResults = function(fisher_results_tissues_list){
+  # Create the plot matrix
+  nrow = length(fisher_results_tissues_list)
+  ncol = 1
   
-  plotVennDiagram(outputs_tissue, title, thresholds_text)
-  if (tumor==FALSE){
-    plotEulerDiagram(outputs_tissue, title = title, thresholds_text = thresholds_text)
-  }
-  plotFisher(outputs_tissue[[tissue]])
+  total_numb_of_plots = nrow*ncol
+  layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
+  layout(mat = layout_matrix)
+  
+  lapply(fisher_results_tissues_list, function(fisher_results_tissue) {
+    odds_ratio = sapply(fisher_results_tissue, function(x) x$odds_ratio)
+    p_val = sapply(fisher_results_tissue, function(x) x$p_val)
+    names = names(fisher_results_tissue)
+    
+    # Adjust ylim for stars
+    max_odds_ratio <- max(odds_ratio)
+    ylim_max <- max_odds_ratio + 0.1 * max_odds_ratio  # Add 10% buffer for stars
+    
+    barplot(odds_ratio, 
+            names.arg = names)
+    
+    # Add stars based on significance
+    for (i in 1:length(p_val)) {
+      if (p_val[i] <= 0.05) {
+        text(i, odds_ratio[i] + (0.05 * ylim_max), "*", cex = 1.5) # Add star
+      }
+    }
+  })
 }

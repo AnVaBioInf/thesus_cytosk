@@ -460,3 +460,28 @@ getJxnSignInfo = function(tools.outputs.list,
 # outputs_tissue = runTools(rse.jxn.cytosk, 'Brain')
 # getJxnSignInfo(outputs_tissue)
 
+getFisher = function(outputs_tissue, tissue=''){
+  all.sign.jxns.tool = outputs_tissue$sign.jxns.info.list$all.single.tool
+  all.jxns = outputs_tissue$all.jxns.info
+  all.tool.pairs.comb = combn(names(all.sign.jxns.tool), 2, simplify = FALSE)
+  fisher=lapply(all.tool.pairs.comb, function(tool.pair){
+    all.sign.jxns.tool.pair.ids = all.sign.jxns.tool[tool.pair]
+    sign.jxns.intersect.ids = compareOutputs(all.sign.jxns.tool.pair.ids)
+
+    sign.both.tools = length(sign.jxns.intersect.ids$intersections$all.tools[[1]])
+    sign.tool.1 = length(sign.jxns.intersect.ids$intersections$unique.to.tool[[tool.pair[1]]])
+    sign.tool.2 = length(sign.jxns.intersect.ids$intersections$unique.to.tool[[tool.pair[2]]])
+    not.sign = nrow(all.jxns)-sign.both.tools-sign.tool.1-sign.tool.2
+    
+    contingency.table = matrix(c(sign.both.tools, sign.tool.1, sign.tool.2, not.sign), ncol = 2, byrow = TRUE)
+    rownames(contingency.table) <- c(paste0(tool.pair[1]," Significant"), paste0(tool.pair[1]," Not Significant"))
+    colnames(contingency.table) <- c(paste0(tool.pair[2]," Significant"), paste0(tool.pair[2]," Not Significant"))
+    result = fisher.test(contingency.table)
+    list(contingency.table=contingency.table, p_val = result$p.value, odds_ratio = result$estimate)
+  })
+  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = " & "))
+  fisher
+}
+
+getFisher(outputs_dev_sign_info[['Brain']])
+

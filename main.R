@@ -37,13 +37,15 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 #                                                    add_external_data=FALSE, file='')
 # }
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
-# outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-# plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold, 
-#                                                            dpsi_threshold=dpsi_threshold, 
-#                                                            abund_change_threshold=abund_change_threshold, 
-#                                                            fdr_threshold=fdr_threshold))
+outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
+plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold,
+                                                           dpsi_threshold=dpsi_threshold,
+                                                           abund_change_threshold=abund_change_threshold,
+                                                           fdr_threshold=fdr_threshold))
 
-
+for (tissue in unique.tissues){
+  fisher_results_tissues_list = getFisher
+}
 # #================================= tumor
 # # -- reading files
 # outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
@@ -67,20 +69,20 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
 # saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
 # 
-outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
-outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
-
-plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum',                  
-                 thresholds = list(logfc_threshold=logfc_threshold, 
-                                   dpsi_threshold=dpsi_threshold,
-                                   abund_change_threshold=abund_change_threshold,
-                                   fdr_threshold=fdr_threshold))  
-
-plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', 
-                 thresholds = list(logfc_threshold=logfc_threshold, 
-                                   dpsi_threshold=dpsi_threshold,
-                                   abund_change_threshold=abund_change_threshold,
-                                   fdr_threshold=fdr_threshold))
+# outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
+# outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
+# 
+# plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum',                  
+#                  thresholds = list(logfc_threshold=logfc_threshold, 
+#                                    dpsi_threshold=dpsi_threshold,
+#                                    abund_change_threshold=abund_change_threshold,
+#                                    fdr_threshold=fdr_threshold))  
+# 
+# plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', 
+#                  thresholds = list(logfc_threshold=logfc_threshold, 
+#                                    dpsi_threshold=dpsi_threshold,
+#                                    abund_change_threshold=abund_change_threshold,
+#                                    fdr_threshold=fdr_threshold))
 
 
 
