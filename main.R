@@ -38,14 +38,20 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # }
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold,
-                                                           dpsi_threshold=dpsi_threshold,
-                                                           abund_change_threshold=abund_change_threshold,
-                                                           fdr_threshold=fdr_threshold))
+# plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold,
+#                                                            dpsi_threshold=dpsi_threshold,
+#                                                            abund_change_threshold=abund_change_threshold,
+#                                                            fdr_threshold=fdr_threshold))
 
+fisher_results_tissues_list = list()
 for (tissue in unique.tissues){
-  fisher_results_tissues_list = getFisher
+  fisher_results_tissues_list[[tissue]] = getFisher(outputs_dev_sign_info[[tissue]])
+  
 }
+
+plotFisherResults(fisher_results_tissues_list)
+
+
 # #================================= tumor
 # # -- reading files
 # outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)

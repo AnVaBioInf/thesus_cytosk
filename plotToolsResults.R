@@ -12,14 +12,20 @@ getNrowsNcols = function(outputs_tissue, tumor){
   if(tumor){
     cols=cols-2
   }
-  list(nrow=nrow, ncol=cols)
+  
+  # Create the plot matrix
+  total_numb_of_plots = nrow*ncol
+  layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
+  list(nrow=nrow, ncol=cols, layout_matrix)
 }
+
+
 
 setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page_margin=2, right_page_margin=0,
                               bottom_plot_margin=2.4, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
-                              nrow, ncol) {
+                              layout_matrix) {
   par(tcl=tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
       mar = (c(bottom_plot_margin, left_plot_margin, top_plot_margin, right_plot_margin) + 0.1),  # mar = c(bottom, left, top, right)
       oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
@@ -27,10 +33,6 @@ setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page
       xpd=TRUE,
       pty = "s", # square plots
       cex.axis = font_size)
-
-  # Create the plot matrix
-  total_numb_of_plots = nrow*ncol
-  layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
   layout(mat = layout_matrix)
 }
 
@@ -240,12 +242,12 @@ plotFisherResults = function(fisher_results_tissues_list){
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 1
-  
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
-  layout(mat = layout_matrix)
-  
-  lapply(fisher_results_tissues_list, function(fisher_results_tissue) {
+  setPlotParameters(layout_matrix=layout_matrix)
+
+  lapply(names(fisher_results_tissues_list), function(tissue) {
+    fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = sapply(fisher_results_tissue, function(x) x$odds_ratio)
     p_val = sapply(fisher_results_tissue, function(x) x$p_val)
     names = names(fisher_results_tissue)
@@ -255,7 +257,11 @@ plotFisherResults = function(fisher_results_tissues_list){
     ylim_max <- max_odds_ratio + 0.1 * max_odds_ratio  # Add 10% buffer for stars
     
     barplot(odds_ratio, 
-            names.arg = names)
+            names.arg = names,
+            ylim=c(0,150),
+            ylab = 'odds ratio')
+    
+    mtext(side=2, text = tissue, cex= 0.7, line=3.5)
     
     # Add stars based on significance
     for (i in 1:length(p_val)) {
