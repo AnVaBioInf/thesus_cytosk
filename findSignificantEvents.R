@@ -322,6 +322,7 @@ downloadExternalOutputs = function(path = './',
   names(tum) = c('junction_id_sajr', 
                       paste0('dPSI_', file.name), 
                       paste0('FDR_', file.name))
+  print('Finished downloading external data')
   tum
 }
 
@@ -353,6 +354,7 @@ mergeOutputs = function(output.list, add_external_data, file){
     tum = downloadExternalOutputs(file.name=file)
     output.merged.df = merge(output.merged.df, tum, by = "junction_id_sajr", all = TRUE)
   }
+  print('Finished merging outputs')
   return(output.merged.df) 
 }
 
@@ -401,7 +403,7 @@ compareOutputs = function(jxn.ids.list) {
 
   return(list(
     all.single.tool =  jxn.ids.list,
-    intersections = Reduce(append, sign.jxns.info)) )
+    intersections = sign.jxns.info ))
 }
 
 # сделать ее универсальной и все сохранить в список
@@ -434,6 +436,7 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
     sign.jxns.info$intersections = sign.jxns.info.d
     sign.jxns.info$all.single.tool[['sajr.norm.tumor']] = all.sign.jxns.tum
   } 
+  print('Finished intersecting junction ids between tools')
   return(sign.jxns.info)
   
 }
@@ -442,16 +445,17 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
 #findSignifDF = ?
 
 
-getJxnSignInfo = function(rse.jxn.cytosk, tissue, 
-                          logfc_threshold=2, fdr_threshold=0.05, dpsi_threshold=0.2, abund_change_threshold=1,
+getJxnSignInfo = function(tools.outputs.list, 
+                          logfc_threshold=1.5, dpsi_threshold=0.1, abund_change_threshold=0.5, fdr_threshold=0.1,
                           add_external_data=FALSE, file=''){
-  tools.outputs.list = runTools(rse.jxn.cytosk, tissue)
   all.jxns.info.df = mergeOutputs(tools.outputs.list, add_external_data, file)
   sign.jxns.info.list = findSignificantJxnsIds(all.jxns.info.df, logfc_threshold, 
                                                fdr_threshold, dpsi_threshold, abund_change_threshold, 
                                                add_external_data, file)
+  print('Finished running')
   list(all.jxns.info = all.jxns.info.df, sign.jxns.info.list = sign.jxns.info.list)
 }
 
-# getJxnSignInfo(rse.jxn.cytosk, 'Brain')
+# outputs_tissue = runTools(rse.jxn.cytosk, 'Brain')
+# getJxnSignInfo(outputs_tissue)
 

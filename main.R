@@ -1,51 +1,71 @@
 source("downloadRseData.R")
 source("findSignificantEvents.R")
 source('plotToolsResults.R')
-# download and filter rse
+
+logfc_threshold=1.5
+dpsi_threshold=0.1
+abund_change_threshold=0.5
+fdr_threshold=0.1
+
+#==================== download and filter rse
 #prepareRse()
 
-# # -- reading files
+
+# #=======================running tools
+# # # -- reading files
 # rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 # rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
-# 
 # unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 # outputs_tissue = list()
 # for (tissue in unique.tissues){
-#   outputs_tissue[[tissue]] = getJxnSignInfo(rse.jxn.cytosk, tissue)
+#   outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
 # }
-# 
-# saveRDS(outputs_tissue,'tool_outputs_all_tissues.rds')
-# tool_outputs_all_tissues = readRDS('tool_outputs_all_tissues.rds', refhook = NULL)
-# 
-# plotResultsRepot(tool_outputs_all_tissues)
+# saveRDS(outputs_tissue,'outputs_tissue.rds')
+outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 
-# 
-# # tumor
-# # # -- reading files
+
+#=================================dev
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+# outputs_dev_sign_info = list()
+# for (tissue in unique.tissues){
+#   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
+#                                                    logfc_threshold=logfc_threshold,
+#                                                    dpsi_threshold=dpsi_threshold,
+#                                                    abund_change_threshold=abund_change_threshold,
+#                                                    fdr_threshold=fdr_threshold,
+#                                                    add_external_data=FALSE, file='')
+# }
+# saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
+outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
+plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold, 
+                                                           dpsi_threshold=dpsi_threshold, 
+                                                           abund_change_threshold=abund_change_threshold, 
+                                                           fdr_threshold=fdr_threshold))
+
+
+#================================= tumor
+# -- reading files
 rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
-
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)[1]
-
+outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 outputs_gtex2tum = list()
 outputs_norm2tum = list()
 for (tissue in unique.tissues){
-  outputs_gtex2tum[[tissue]] = getJxnSignInfo(rse.jxn.cytosk, tissue, add_external_data=TRUE)
-  # outputs_norm2tum[[tissue]] = getJxnSignInfo(rse.jxn.cytosk, tissue, add_external_data=TRUE, file='norm2tum')
+  outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
+                                              add_external_data=TRUE, file='gtex2tum')
+  outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
+                                              add_external_data=TRUE, file='norm2tum')
 }
-
-# outputs_gtex2tum
+saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
+saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
 # 
-# #
-# 
-# saveRDS(outputs_tissue,'tool_outputs_all_tissues_dev_tumor.rds')
-# tool_outputs_all_tissues_dev_tumor = readRDS('tool_outputs_all_tissues_dev_tumor.rds', refhook = NULL)
-# outputs.dev.cans = tool_outputs_all_tissues_dev_tumor
+outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
+outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
 
-
-
-#plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='norm2tum')
-
+plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum')
+plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum')
 
 
 

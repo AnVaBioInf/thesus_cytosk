@@ -15,7 +15,7 @@ getNrowsNcols = function(outputs_tissue, tumor){
   list(nrow=nrow, ncol=cols)
 }
 
-setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page_margin=1.5, right_page_margin=0,
+setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page_margin=2, right_page_margin=0,
                               bottom_plot_margin=2.4, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
@@ -71,7 +71,6 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
   }
   
   lapply(comb, function(x) {
-
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
     
@@ -93,8 +92,6 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
       abline(lm_model, col = "#a72127", lwd = 1, xpd=FALSE)
       
       if (par("mfg")[1]==grid[[1]]){
-        print(par("mfg"))
-        print(grid[[1]])
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
       }
@@ -149,26 +146,32 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
 plotGraphs = function(all.jxns, intersections, tissue, grid, tumor){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
   col.metrics.if = !grepl("FDR|gene|id", colnames(all.jxns))  
-  
   makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue, grid=grid, tumor=tumor)
   makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy', grid=grid,tumor=tumor)
 
 }
 
-plotEulerDiagram = function(outputs_tissue, n_jxns){
+plotEulerDiagram = function(outputs_tissue, title, thresholds_text){
   p=list()
   for (tissue in names(outputs_tissue)){
+    intersections = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
+    intersections = intersections[c('sajr',
+                            'dje',
+                            'diego',
+                            'dje&sajr',
+                            'diego&sajr',
+                            'diego&dje',
+                            'diego&dje&sajr')]
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
-    data = sapply(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, 
+    data = sapply(intersections, 
                   function(x) length(x))
-    order = names(outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
-    print(col[order])
+    order = names(intersections)
     fit = euler(data,
                 shape = "circle",   # Force circles
                 control = list(area.prop = TRUE))
     p[[tissue]] = plot(fit,
                        quantities = TRUE,
-                       fills = list(fill = col[order]), 
+                       fills = list(fill = col), 
                        newpage = FALSE,
                        legend = TRUE,       # Remove legend
                        main = list(label=paste0("#jxns = ",n_jxns),
@@ -176,41 +179,72 @@ plotEulerDiagram = function(outputs_tissue, n_jxns){
                       )
   }
   # rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = 1))  
+  do.call(grid.arrange, c(p, ncol = 1, top = title, bottom = thresholds_text))  
 }
 
-plotVennDiagram = function(outputs_tissue){
+plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   p=list()
   for (tissue in names(outputs_tissue)){
+    n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
     p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
-      labs(title = tissue) # Add title labels to each plot
+      labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) # Add title labels to each plot
   }
   rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = rc))
+  do.call(grid.arrange, c(p, ncol = rc, top = title, bottom = thresholds_text))
 }
 
-plotResultsRepot = function(outputs_tissue, tumor=TRUE){
+
+
+plotFisher = function(outputs_tissue){
+  all.single.tool = lapply(outputs_tissue$sign.jxns.info.list$all.single.tool, function(x) length(x))
+  pairs = lapply(outputs_tissue$sign.jxns.info.list$intersections$only.pair.tools, function(x) length(x))
+  
+  data = matrix(c(all.single.tool$diego-pairs$'diego&dje', 
+                  pairs$'diego&dje', 
+                  all.single.tool$dje-pairs$'diego&dje',
+                  pairs$'diego&dje'), nrow = 2, ncol=2, byrow = TRUE)
+  
+  print(data)
+  
+  # Perform Fisher's exact test
+  result <- fisher.test(data)
+
+  # Print the results
+  print(result)
+  
+}
+
+
+plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
   grid = getNrowsNcols(outputs_tissue,tumor)
-  print(grid)
   setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
   for (tissue in names(outputs_tissue)){
-    outputs_tissue[[tissue]]$sign.jxns.info.list$intersections =
-      outputs_tissue[[tissue]]$sign.jxns.info.list$intersections[c('sajr',
-                                                                  'dje',
-                                                                  'diego',
-                                                                  'dje&sajr',
-                                                                  'diego&sajr',
-                                                                  'diego&dje',
-                                                                  'diego&dje&sajr')]
+    intersect = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
+    intersect = intersect[c('sajr',
+                            'dje',
+                            'diego',
+                            'dje&sajr',
+                            'diego&sajr',
+                            'diego&dje',
+                            'diego&dje&sajr')]
     plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
-               outputs_tissue[[tissue]]$sign.jxns.info.list$intersections, tissue, grid, tumor)
+               intersect, tissue, grid, tumor)
   }
-  mtext(side=1, 
-        text = c('Filtration thresholds. logFC>=2, dPSI >= 0.2, abundance change >= 1, FDR >= 0.05'), 
-        outer=TRUE, cex= 0.7, line=1)  
-  plotVennDiagram(outputs_tissue)
-  if (tumor==TRUE){
-    plotEulerDiagram(outputs_tissue)
+  thresholds_text = paste0('Filtration thresholds. logFC >= ', thresholds$logfc_threshold,
+                           'dPSI >= ', thresholds$dpsi_threshold,
+                           'abundance change >= ', abund_change_threshold, 
+                           'FDR >= ', fdr_threshold)
+  if (tumor==TRUE){  
+    title=paste0(file, " and development. Tool comparison")
+    mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)}
+  else{  
+    title = "Development. Tool comparison"
+    mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)  
+  
+  plotVennDiagram(outputs_tissue, title, thresholds_text)
+  if (tumor==FALSE){
+    plotEulerDiagram(outputs_tissue, title = title, thresholds_text = thresholds_text)
   }
+  plotFisher(outputs_tissue[[tissue]])
 }
-
