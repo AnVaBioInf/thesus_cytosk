@@ -37,35 +37,50 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 #                                                    add_external_data=FALSE, file='')
 # }
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
-outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold, 
-                                                           dpsi_threshold=dpsi_threshold, 
-                                                           abund_change_threshold=abund_change_threshold, 
-                                                           fdr_threshold=fdr_threshold))
+# outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
+# plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold, 
+#                                                            dpsi_threshold=dpsi_threshold, 
+#                                                            abund_change_threshold=abund_change_threshold, 
+#                                                            fdr_threshold=fdr_threshold))
 
 
-#================================= tumor
-# -- reading files
-rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
-rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-outputs_gtex2tum = list()
-outputs_norm2tum = list()
-for (tissue in unique.tissues){
-  outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
-                                              add_external_data=TRUE, file='gtex2tum')
-  outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
-                                              add_external_data=TRUE, file='norm2tum')
-}
-saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
-saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
+# #================================= tumor
+# # -- reading files
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+# outputs_gtex2tum = list()
+# outputs_norm2tum = list()
+# for (tissue in unique.tissues){
+#   outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
+#                                               logfc_threshold=logfc_threshold, 
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='gtex2tum')
+#   outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]], 
+#                                               logfc_threshold=logfc_threshold, 
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='norm2tum')
+# }
+# saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
+# saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
 # 
 outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
 outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
 
-plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum')
-plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum')
+plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum',                  
+                 thresholds = list(logfc_threshold=logfc_threshold, 
+                                   dpsi_threshold=dpsi_threshold,
+                                   abund_change_threshold=abund_change_threshold,
+                                   fdr_threshold=fdr_threshold))  
+
+plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', 
+                 thresholds = list(logfc_threshold=logfc_threshold, 
+                                   dpsi_threshold=dpsi_threshold,
+                                   abund_change_threshold=abund_change_threshold,
+                                   fdr_threshold=fdr_threshold))
 
 
 

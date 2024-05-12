@@ -432,7 +432,8 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
     tum.sign.tf = abs(jxns.significance.df[, dpsi_file]) >= dpsi_threshold & jxns.significance.df[, fdr_file] <= fdr_threshold  
     all.sign.jxns.tum = jxns.significance.df[tum.sign.tf, 'junction_id_sajr']
     all.sign.jxns.tum = all.sign.jxns.tum[!is.na(all.sign.jxns.tum)]
-    sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(x) intersect(x, all.sign.jxns.tum))
+    sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(sub) 
+      lapply(sub, function(x) intersect(x, all.sign.jxns.tum)))
     sign.jxns.info$intersections = sign.jxns.info.d
     sign.jxns.info$all.single.tool[['sajr.norm.tumor']] = all.sign.jxns.tum
   } 
@@ -446,7 +447,7 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
 
 
 getJxnSignInfo = function(tools.outputs.list, 
-                          logfc_threshold=1.5, dpsi_threshold=0.1, abund_change_threshold=0.5, fdr_threshold=0.1,
+                          logfc_threshold, dpsi_threshold, abund_change_threshold, fdr_threshold,
                           add_external_data=FALSE, file=''){
   all.jxns.info.df = mergeOutputs(tools.outputs.list, add_external_data, file)
   sign.jxns.info.list = findSignificantJxnsIds(all.jxns.info.df, logfc_threshold, 

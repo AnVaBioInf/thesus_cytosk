@@ -203,6 +203,8 @@ plotFisher = function(outputs_tissue){
   all.single.tool = lapply(outputs_tissue$sign.jxns.info.list$all.single.tool, function(x) length(x))
   pairs = lapply(outputs_tissue$sign.jxns.info.list$intersections$only.pair.tools, function(x) length(x))
   
+  
+  
   data = matrix(c(all.single.tool$diego-pairs$'diego&dje', 
                   pairs$'diego&dje', 
                   all.single.tool$dje-pairs$'diego&dje',
