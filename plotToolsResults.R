@@ -244,7 +244,8 @@ plotFisherResults = function(fisher_results_tissues_list){
   ncol = 1
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
-  setPlotParameters(layout_matrix=layout_matrix)
+  setPlotParameters(layout_matrix=layout_matrix,
+                    axis_label_distance = 1)
 
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
@@ -254,19 +255,21 @@ plotFisherResults = function(fisher_results_tissues_list){
     
     # Adjust ylim for stars
     max_odds_ratio <- max(odds_ratio)
-    ylim_max <- max_odds_ratio + 0.1 * max_odds_ratio  # Add 10% buffer for stars
+    ylim_max <- max_odds_ratio +1.2 * max_odds_ratio  # Add 10% buffer for stars
     
     barplot(odds_ratio, 
             names.arg = names,
-            ylim=c(0,150),
-            ylab = 'odds ratio')
+            ylim=c(-3,150),
+            ylab = 'odds ratio',
+            cex.lab = 0.7,
+            las=2)
     
     mtext(side=2, text = tissue, cex= 0.7, line=3.5)
     
     # Add stars based on significance
     for (i in 1:length(p_val)) {
       if (p_val[i] <= 0.05) {
-        text(i, odds_ratio[i] + (0.05 * ylim_max), "*", cex = 1.5) # Add star
+        text(i, odds_ratio[i] + (0.05 * ylim_max), "*", cex = 1.5) 
       }
     }
   })

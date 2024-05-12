@@ -460,10 +460,25 @@ getJxnSignInfo = function(tools.outputs.list,
 # outputs_tissue = runTools(rse.jxn.cytosk, 'Brain')
 # getJxnSignInfo(outputs_tissue)
 
-getFisher = function(outputs_tissue, tissue=''){
+makePairs = function(names, ref_col='', one_to_all){
+  if (one_to_all){
+    # ref.col.name <- grep(ref_col, colnames(df), value = TRUE)
+    # Get the names of all other columns
+    other.cols <- setdiff(names, ref_col)
+    # Create a list of combinations
+    all.pairs.comb = lapply(other.cols, function(col_name) c(ref_col, col_name))
+  } else{
+    all.pairs.comb = combn(names, 2, simplify = FALSE)
+  }
+  all.pairs.comb
+}
+
+getFisher = function(outputs_tissue, one_to_all=FALSE, ref_col=''){
   all.sign.jxns.tool = outputs_tissue$sign.jxns.info.list$all.single.tool
   all.jxns = outputs_tissue$all.jxns.info
-  all.tool.pairs.comb = combn(names(all.sign.jxns.tool), 2, simplify = FALSE)
+  all.tool.pairs.comb = makePairs(names(all.sign.jxns.tool),
+                                  one_to_all=one_to_all, 
+                                  ref_col=ref_col)
   fisher=lapply(all.tool.pairs.comb, function(tool.pair){
     tool1.name = tool.pair[1]
     tool2.name = tool.pair[2]
@@ -484,9 +499,9 @@ getFisher = function(outputs_tissue, tissue=''){
     result = fisher.test(contingency.table)
     list(contingency.table=contingency.table, p_val = result$p.value, odds_ratio = result$estimate)
   })
-  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = " & "))
+  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = "&"))
   fisher
 }
 
-getFisher(outputs_dev_sign_info[['Brain']])
+#getFisher(outputs_dev_sign_info[['Brain']])
 
