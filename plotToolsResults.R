@@ -83,12 +83,15 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
          pch = 16 , cex = 0.7, lwd = 1,
          bty = "L")
 
+    
     # tick axis + titles
     if(all(colnames(x) %in% names(ticks_dict))){
       axis(1, at=ticks_dict[[par.1]], labels = FALSE)
       axis(2, at=ticks_dict[[par.2]], labels = TRUE)
+      
       # Fit linear regression
-      lm_model <- lm(x[, par.2] ~ x[, par.1], data = x[complete.cases(x), ])
+      a = x[complete.cases(x),]
+      lm_model = lm(a[, par.2] ~ a[, par.1])
       abline(lm_model, col = "#a72127", lwd = 1, xpd=FALSE)
       
       if (par("mfg")[1]==grid[[1]]){
@@ -187,7 +190,8 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   for (tissue in names(outputs_tissue)){
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
     p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
-      labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) # Add title labels to each plot
+      labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) +
+      theme(legend.position = "none") 
   }
   rc = ceiling(sqrt(length(outputs_tissue)))
   do.call(grid.arrange, c(p, ncol = rc, top = title, bottom = thresholds_text))
