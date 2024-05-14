@@ -9,16 +9,17 @@ library(RColorBrewer)
 
 getNrowsNcols = function(outputs_tissue, tumor){
   nrow = length(outputs_tissue)
-  cols = colnames(outputs_tissue[[1]]$all.jxns.info)
-  cols = length(cols)-4  # Remove first two columns
+  ncol = colnames(outputs_tissue[[1]]$all.jxns.info)
+  ncol = length(ncol)-4  # Remove first two columns
   if(tumor){
-    cols=cols-2
+    ncol=ncol-2
   }
-  
   # Create the plot matrix
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
-  list(nrow=nrow, ncol=cols, layout_matrix)
+  layout_matrix = cbind(layout_matrix, rep(total_numb_of_plots+1, nrow))
+  print(layout_matrix)
+  layout_matrix
 }
 
 
@@ -28,6 +29,7 @@ setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
                               layout_matrix, pty="s") {
+  plot.new()
   par(tcl=tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
       mar = (c(bottom_plot_margin, left_plot_margin, top_plot_margin, right_plot_margin) + 0.1),  # mar = c(bottom, left, top, right)
       oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
@@ -39,15 +41,24 @@ setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page
 }
 
 col = c(sajr = "#984EA3",
-        dje = "#A65628",
-        diego = "#377EB8",
-        'dje&sajr' = "#FF7F00",
-        'diego&sajr' = '#FFFF33',
+        dje = "orange3",
+        diego = "#5DADE2",
+        'dje&sajr' = "#FF9900",
+        'diego&sajr' = '#E8FF00',
         'diego&dje' = '#F781BF',
         'diego&dje&sajr' = "#4DAF4A")
 
 
-makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tumor){
+col_tum = c('sajr.norm.tumor' = '#979A9A',
+            sajr = "#8F00FF",
+            dje = "darkorange4",
+            diego = "deepskyblue",
+            'dje&sajr' = "#FF5733",
+            'diego&sajr' = '#FFFF00',
+            'diego&dje' = '#FF00FF',
+            'diego&dje&sajr' = "#7FFF00")
+
+makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', tumor){
   x_lim_dict = list('dPSI_sajr' = c(-1,1), 
                     'dPSI_gtex2tum' = c(-1,1),
                     'dPSI_norm2tum' = c(-1,1),
@@ -59,7 +70,6 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
                     'dPSI_norm2tum' = seq(-1,1,by=0.5), 
                     'logFC_dje'=seq(-4,4,by=2), 
                     'abund_change_diego' = seq(-3,3,by=1.5))
-  
   if (tumor){
     col1_name <- grep("tum", colnames(all.jxns[,tf]), value = TRUE)
     # Get the names of all other columns
@@ -98,7 +108,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
       lm_model = lm(a[, par.2] ~ a[, par.1])
       abline(lm_model, col = "#a72127", lwd = 1, xpd=FALSE)
       
-      if (par("mfg")[1]==grid[[1]]){
+      if (par("mfg")[1]==par("mfg")[3]){
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
       }
@@ -108,26 +118,23 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
       axis(2, labels = TRUE)
     }
 
-    if (par("mfg")[1]==grid[[1]]) {
+    if (par("mfg")[1]==par("mfg")[3]) {
       mtext(side=1, text = par.1, line = 2, cex= 0.7)
     }
     if (par("mfg")[2]==1) {
       mtext(side=2, text = tissue, line = 3.5, cex= 1)
     }
-
     # points
-    for (ids in names(intersections)){
+    if (tumor) col=col_tum
+    for (ids in names(col)){
       i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
-      points(x[i,], col=col[ids], pch = 16)
-
+      points(x[i,], col=col[ids], pch = 16, cex=1.1)
       # gene labeles
       if (ids=='diego&dje&sajr'){
         jxns = x[i,]
         labels = all.jxns[i,'gene_name']
-
         # Add text labels to the points
         n_labels = min(5, length(labels))
-
         if (n_labels > 0) {
           # Calculate label positions based on modulo 3
           label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
@@ -145,16 +152,14 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, log = '', grid, tum
     corr.coef = round(result$estimate, digits=2)
     mtext(paste0('rho = ', corr.coef), side=3,
           col = "black", cex=0.5)
-
-
   })
 }
 
-plotGraphs = function(all.jxns, intersections, tissue, grid, tumor){
+plotGraphs = function(all.jxns, intersections, tissue, tumor){
   col.fdr.if = grepl("FDR", colnames(all.jxns))
   col.metrics.if = !grepl("FDR|gene|id", colnames(all.jxns))  
-  makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue, grid=grid, tumor=tumor)
-  makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy', grid=grid,tumor=tumor)
+  makeDotplots(col.metrics.if, all.jxns, intersections, tissue=tissue, tumor=tumor)
+  makeDotplots(col.fdr.if, all.jxns, intersections, tissue=tissue, log='xy',tumor=tumor)
 
 }
 
@@ -193,55 +198,61 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   p=list()
   for (tissue in names(outputs_tissue)){
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
-    p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool) +
+    p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool, 
+                                label_alpha = 0, 
+                                label_col = "white") +
       labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) +
-      theme(legend.position = "none") 
+      theme(legend.position = "none")
   }
   rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = rc, top = title, bottom = thresholds_text))
+  do.call(grid.arrange, c(p, ncol = 2, top = title, bottom = thresholds_text))
 }
 
 setTitles = function(thresholds){
   thresholds_text = paste0('Output filtration thresholds. logFC >= ', thresholds$logfc_threshold,
                            ', dPSI >= ', thresholds$dpsi_threshold,
                            ', abundance change >= ', abund_change_threshold,
-                           ', FDR >= ', fdr_threshold)
-  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
+                           ', FDR <= ', fdr_threshold)
+  thresholds_text
 }
 
+addLegend = function(labels, pch, col, pt.cex=1){
+  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+  legend('center', inset = c(0, 0),  # Adjust inset as needed
+         bty='n', xpd=TRUE,
+         legend = labels,
+         col = col, pch = pch, # Use filled circle and star 
+         pt.cex=pt.cex, cex=1,
+         horiz = FALSE, ncol=1)
+}
 
 plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
-  grid = getNrowsNcols(outputs_tissue,tumor)
-  setPlotParameters(nrow = grid[[1]], ncol = grid[[2]])
+  layout_matrix = getNrowsNcols(outputs_tissue,tumor)
+  setPlotParameters(layout_matrix = layout_matrix)
   for (tissue in names(outputs_tissue)){
-    # intersect = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
-    # intersect = intersect[c('sajr',
-    #                         'dje',
-    #                         'diego',
-    #                         'dje&sajr',
-    #                         'diego&sajr',
-    #                         'diego&dje',
-    #                         'diego&dje&sajr')]
-    # plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,
-    #            intersect, tissue, grid, tumor)
-    
+    intersect = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
+    plotGraphs(outputs_tissue[[tissue]]$all.jxns.info,intersect, tissue, tumor)
   }
-
-  # if (tumor==TRUE){  
-  #   title=paste0(file, " and development. Tool comparison")
-  #   mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)}
-  # else{  
-  #   title = "Development. Tool comparison"
-  #   mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
+  if (tumor==TRUE){
+    tool_names = names(col_tum)[grep("tum", names(col_tum), invert = TRUE)]
+    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"), 
+              col=c(col_tum, 'lightgrey'), pch=16, pt.cex=2)
+    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
+    mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)
+    }
+  else{
+    addLegend(labels=c(names(col), "not significant"), 
+              col=c(col, 'lightgrey'), pch=16, pt.cex=2)
+    title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
+    mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
+  thresholds_text = setTitles(thresholds)
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
   
-  setTitles(thresholds)
-  # 
-  # plotVennDiagram(outputs_tissue, title, thresholds_text)
-  # if (tumor==FALSE){
-  #   plotEulerDiagram(outputs_tissue, title = title, thresholds_text = thresholds_text)
-  # }
+  plotVennDiagram(outputs_tissue, title, thresholds_text)
+  if (tumor==FALSE){
+    plotEulerDiagram(outputs_tissue, title = title, thresholds_text = thresholds_text)
+  }
 }
-
 
 
 plotFisherResults = function(fisher_results_tissues_list, col='', thresholds){
@@ -258,7 +269,6 @@ plotFisherResults = function(fisher_results_tissues_list, col='', thresholds){
   nbars = length(names)
   col=RColorBrewer::brewer.pal(nbars, "Pastel1")
   
-
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = fisher_results_tissue$odds_ratio
@@ -286,14 +296,12 @@ plotFisherResults = function(fisher_results_tissues_list, col='', thresholds){
     mtext(side=2, text = tissue, cex= 0.7, line=2.7)
   })
   
-  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend('center', inset = c(0, 0),  # Adjust inset as needed
-         bty='n', xpd=TRUE,
-         legend = c(names, 'q-value <=0.05'),
-         col = c(col, 'black'), pch = c(rep(15, length(names)), 8), # Use filled circle and star 
-         pt.cex=3, cex=1,
-         horiz = FALSE, ncol=1)
-  setTitles(thresholds)
+  addLegend(labels=c(names, 'q-value <=0.05'),
+            pch = c(rep(15, length(names)), 8),
+            col=c(col, 'black'), pt.cex=1)
+  
+  thresholds_text = setTitles(thresholds)
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
   mtext(side=3, text = 'Fisher Exact Test Results for each pair of methods & condition comaparisons', outer=TRUE, cex= 0.7)
   
   

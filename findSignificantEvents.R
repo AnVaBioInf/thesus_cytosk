@@ -394,10 +394,10 @@ compareOutputs = function(jxn.ids.list) {
   #        only.pair.tools = only.pair.tools,
   #        unique.to.tool = unique.to.tool)
   
-  sign.jxns.info =
-    list(all.tools = all.tools,
+  sign.jxns.info =list(
+        unique.to.tool = unique.to.tool,
         only.pair.tools = only.pair.tools,
-        unique.to.tool = unique.to.tool)
+        all.tools = all.tools)
   
   # jxn.ids.list = lapply(jxn.ids.list, ids2df)
 
@@ -435,6 +435,9 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
     sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(sub) 
       lapply(sub, function(x) intersect(x, all.sign.jxns.tum)))
     sign.jxns.info$intersections = sign.jxns.info.d
+    sign.jxns.info$intersections$unique.to.tool$sajr.norm.tumor = 
+      setdiff(all.sign.jxns.tum, unname(unlist(sign.jxns.info.d)))
+    
     sign.jxns.info$all.single.tool[['sajr.norm.tumor']] = all.sign.jxns.tum
   } 
   print('Finished intersecting junction ids between tools')
