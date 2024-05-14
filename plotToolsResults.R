@@ -255,19 +255,29 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
 }
 
 
-plotFisherResults = function(fisher_results_tissues_list, col='', thresholds){
+plotFisherResults = function(fisher_results_tissues_list, thresholds){
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 2
   plots = c(seq(1:nrow), rep(nrow+1,nrow))
   layout_matrix = matrix(plots, nrow = nrow, ncol = ncol, byrow = FALSE)
+  print(layout_matrix)
   setPlotParameters(layout_matrix=layout_matrix,
                     pty = "m", left_page_margin=20, bottom_page_margin = 4,
                     right_page_margin = 15, bottom_plot_margin = 2)
   
   names = fisher_results_tissues_list[[1]]$tool_pair
   nbars = length(names)
-  col=RColorBrewer::brewer.pal(nbars, "Pastel1")
+  col=c(sajr = "#984EA3",
+        dje = "orange3",
+        diego = "#5DADE2",
+        sajr = "#8F00FF",
+        dje = "darkorange4",
+        diego = "deepskyblue",
+        sajr = "#8F00FF",
+        dje = "darkorange4",
+        diego = "deepskyblue")
+  print(col)
   
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
