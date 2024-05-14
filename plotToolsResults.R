@@ -201,7 +201,7 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   do.call(grid.arrange, c(p, ncol = rc, top = title, bottom = thresholds_text))
 }
 
-
+setTitles = function()
 
 
 plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
@@ -242,16 +242,14 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
 
 plotFisherResults = function(fisher_results_tissues_list, col=''){
   # Create the plot matrix
-  
   nrow = length(fisher_results_tissues_list)
   ncol = 2
   plots = c(seq(1:nrow), rep(nrow+1,nrow))
-  #total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(plots, nrow = nrow, ncol = ncol, byrow = FALSE)
   setPlotParameters(layout_matrix=layout_matrix,
                     pty = "m", left_page_margin=20, bottom_page_margin = 4,
                     right_page_margin = 15, bottom_plot_margin = 2)
-  print(layout_matrix)
+  
   names = names(fisher_results_tissues_list[[1]])
   nbars = length(names)
   col=RColorBrewer::brewer.pal(nbars, "Pastel1")
@@ -262,45 +260,33 @@ plotFisherResults = function(fisher_results_tissues_list, col=''){
     odds_ratio = sapply(fisher_results_tissue, function(x) x$odds_ratio)
     p_val = sapply(fisher_results_tissue, function(x) x$p_val)
     
-    print(names)
-    print(col)
-    bp = barplot(odds_ratio, 
-            names.arg = names,
-            ylim=c(-3,150),
-            ylab = 'odds ratio',
-            cex.lab = 0.7,
-            las=2, 
-            xaxt = "n", 
-            col= col)
-    tick_positions <- seq(1.5, nbars * 2 - 0.5, by = 3)
-    
-    axis(1, at=bp, labels = FALSE)
-      
-    mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) # Add y-axis label
-    mtext(side=2, text = tissue, cex= 0.7, line=2.7)
-    if (par("mfg")[1]==length(fisher_results_tissues_list)){
-      text(bp, par("usr")[3] - 5, labels = names, srt = 15, 
-           adj = c(1,1), xpd = TRUE, cex = 0.7, xpd=TRUE)
-    }
-    
+    bp = barplot(odds_ratio,
+                 col= col,
+                 ylim=c(-3,150),
+                 ylab = 'odds ratio',
+                 xaxt = "n",
+                 cex.lab = 0.7,
+                 las=2)
     # Add stars based on significance
     for (i in 1:length(p_val)) {
       if (p_val[i] <= 0.05) {
         text(bp[i], odds_ratio[i] + 15, "*", cex = 1.5) 
       }
     }
+    axis(1, at=bp, labels = FALSE)
+    if (par("mfg")[1]==nrow){
+      text(bp, par("usr")[3] - 5, labels = names, srt = 15, 
+           adj = c(1,1), xpd = TRUE, cex = 0.7)
+    }
+    mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) 
+    mtext(side=2, text = tissue, cex= 0.7, line=2.7)
   })
+  
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
   legend('center', inset = c(0, 0),  # Adjust inset as needed
-         legend = names,
-         xpd=TRUE,
-         col = col,
-         pch=20,
-         bty='n',
-         horiz = FALSE,
-         ncol=1,
-         pt.cex=3,
-         cex=1)
+         bty='n', xpd=TRUE,
+         legend = c(names, 'p-value <=0.05'),
+         col = c(col, 'black'), pch = c(rep(15, length(names)), 8), # Use filled circle and star 
+         pt.cex=3, cex=1,
+         horiz = FALSE, ncol=1)
 }
-
-?mtext
