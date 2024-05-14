@@ -7,6 +7,11 @@ dpsi_threshold=0.1
 abund_change_threshold=0.5
 fdr_threshold=0.1
 
+thresholds = list(logfc_threshold=logfc_threshold,
+                   dpsi_threshold=dpsi_threshold,
+                   abund_change_threshold=abund_change_threshold,
+                   fdr_threshold=fdr_threshold)
+
 #==================== download and filter rse
 #prepareRse()
 
@@ -38,16 +43,13 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # }
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-# plotResultsRepot(outputs_dev_sign_info, thresholds = list(logfc_threshold=logfc_threshold,
-#                                                            dpsi_threshold=dpsi_threshold,
-#                                                            abund_change_threshold=abund_change_threshold,
-#                                                            fdr_threshold=fdr_threshold))
+# plotResultsRepot(outputs_dev_sign_info, thresholds = )
 
 
 
 #================================= tumor
 # -- reading files
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 # outputs_gtex2tum = list()
 # outputs_norm2tum = list()
@@ -74,30 +76,18 @@ outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
 
 fisher_results_tissues_list = list()
 for (tissue in unique.tissues){
-  fisher_results_tissues_list[[tissue]]$dev = getFisher(outputs_dev_sign_info[[tissue]],
-                                                        one_to_all=FALSE, 
-                                                        ref_col='')
-  
-  fisher_results_tissues_list[[tissue]]$gtex2tum = getFisher(outputs_gtex2tum[[tissue]],
-                                                      one_to_all=TRUE, 
-                                                      ref_col='sajr.norm.tumor')
-  names(fisher_results_tissues_list[[tissue]]$gtex2tum) = gsub("sajr.norm.tumor", 
-                                                               "sajr.gtex2tum", 
-                                                               names(fisher_results_tissues_list[[tissue]]$gtex2tum))
-  
-  fisher_results_tissues_list[[tissue]]$norm2tum = getFisher(outputs_norm2tum[[tissue]],
-                                                             one_to_all=TRUE, 
-                                                             ref_col='sajr.norm.tumor')
-  names(fisher_results_tissues_list[[tissue]]$norm2tum) = gsub("sajr.norm.tumor", 
-                                                               "sajr.norm2tum", 
-                                                               names(fisher_results_tissues_list[[tissue]]$norm2tum))
-  
-  fisher_results_tissues_list[[tissue]] = 
-    Reduce(append, fisher_results_tissues_list[[tissue]])
-  
+  fisher.df = data.frame(tool_pair=character(), odds_ratio = numeric(), p_val = numeric())
+  fisher.df = getFisher(fisher.df, outputs_dev_sign_info[[tissue]], one_to_all=FALSE,  ref_col='')
+  fisher.df = getFisher(fisher.df, outputs_gtex2tum[[tissue]], one_to_all=TRUE, ref_col='sajr.norm.tumor')
+  fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.gtex2tum",  fisher.df$tool_pair)
+  fisher.df = getFisher(fisher.df, outputs_norm2tum[[tissue]], one_to_all=TRUE, ref_col='sajr.norm.tumor')
+  fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.norm2tum",  fisher.df$tool_pair)
+  fisher.df$q_val = p.adjust(fisher.df$p_val, method = "BH") 
+  fisher_results_tissues_list[[tissue]] = fisher.df
 }
+fisher_results_tissues_list
 
-plotFisherResults(fisher_results_tissues_list)
+plotFisherResults(fisher_results_tissues_list, thresholds= thresholds)
 
 # p.adjust(p_values, method = "bonferroni")
 

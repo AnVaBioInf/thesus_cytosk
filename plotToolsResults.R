@@ -201,7 +201,13 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   do.call(grid.arrange, c(p, ncol = rc, top = title, bottom = thresholds_text))
 }
 
-setTitles = function()
+setTitles = function(thresholds){
+  thresholds_text = paste0('Output filtration thresholds. logFC >= ', thresholds$logfc_threshold,
+                           ', dPSI >= ', thresholds$dpsi_threshold,
+                           ', abundance change >= ', abund_change_threshold,
+                           ', FDR >= ', fdr_threshold)
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
+}
 
 
 plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
@@ -220,17 +226,15 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
     #            intersect, tissue, grid, tumor)
     
   }
-  # thresholds_text = paste0('Filtration thresholds. logFC >= ', thresholds$logfc_threshold,
-  #                          'dPSI >= ', thresholds$dpsi_threshold,
-  #                          'abundance change >= ', abund_change_threshold, 
-  #                          'FDR >= ', fdr_threshold)
+
   # if (tumor==TRUE){  
   #   title=paste0(file, " and development. Tool comparison")
   #   mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)}
   # else{  
   #   title = "Development. Tool comparison"
   #   mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
-  # mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)  
+  
+  setTitles(thresholds)
   # 
   # plotVennDiagram(outputs_tissue, title, thresholds_text)
   # if (tumor==FALSE){
@@ -240,7 +244,7 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
 
 
 
-plotFisherResults = function(fisher_results_tissues_list, col=''){
+plotFisherResults = function(fisher_results_tissues_list, col='', thresholds){
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 2
@@ -250,15 +254,15 @@ plotFisherResults = function(fisher_results_tissues_list, col=''){
                     pty = "m", left_page_margin=20, bottom_page_margin = 4,
                     right_page_margin = 15, bottom_plot_margin = 2)
   
-  names = names(fisher_results_tissues_list[[1]])
+  names = fisher_results_tissues_list[[1]]$tool_pair
   nbars = length(names)
   col=RColorBrewer::brewer.pal(nbars, "Pastel1")
   
 
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
-    odds_ratio = sapply(fisher_results_tissue, function(x) x$odds_ratio)
-    p_val = sapply(fisher_results_tissue, function(x) x$p_val)
+    odds_ratio = fisher_results_tissue$odds_ratio
+    q_val = fisher_results_tissue$q_val
     
     bp = barplot(odds_ratio,
                  col= col,
@@ -268,8 +272,8 @@ plotFisherResults = function(fisher_results_tissues_list, col=''){
                  cex.lab = 0.7,
                  las=2)
     # Add stars based on significance
-    for (i in 1:length(p_val)) {
-      if (p_val[i] <= 0.05) {
+    for (i in 1:length(q_val)) {
+      if (q_val[i] <= 0.05) {
         text(bp[i], odds_ratio[i] + 15, "*", cex = 1.5) 
       }
     }
@@ -285,8 +289,12 @@ plotFisherResults = function(fisher_results_tissues_list, col=''){
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
   legend('center', inset = c(0, 0),  # Adjust inset as needed
          bty='n', xpd=TRUE,
-         legend = c(names, 'p-value <=0.05'),
+         legend = c(names, 'q-value <=0.05'),
          col = c(col, 'black'), pch = c(rep(15, length(names)), 8), # Use filled circle and star 
          pt.cex=3, cex=1,
          horiz = FALSE, ncol=1)
+  setTitles(thresholds)
+  mtext(side=3, text = 'Fisher Exact Test Results for each pair of methods & condition comaparisons', outer=TRUE, cex= 0.7)
+  
+  
 }

@@ -473,17 +473,20 @@ makePairs = function(names, ref_col='', one_to_all){
   all.pairs.comb
 }
 
-getFisher = function(outputs_tissue, one_to_all=FALSE, ref_col=''){
+getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
   all.sign.jxns.tool = outputs_tissue$sign.jxns.info.list$all.single.tool
   all.jxns = outputs_tissue$all.jxns.info
+  print(names(all.sign.jxns.tool))
   all.tool.pairs.comb = makePairs(names(all.sign.jxns.tool),
                                   one_to_all=one_to_all, 
                                   ref_col=ref_col)
-  fisher=lapply(all.tool.pairs.comb, function(tool.pair){
+
+  for (tool.pair in all.tool.pairs.comb){
     tool1.name = tool.pair[1]
     tool2.name = tool.pair[2]
     all.sign.jxns.tool.pair.ids = all.sign.jxns.tool[tool.pair]
     sign.jxns.intersect.ids = compareOutputs(all.sign.jxns.tool.pair.ids)
+    
 
     sign.both.tools = length(sign.jxns.intersect.ids$intersections$all.tools[[1]])
     sign.tool.1 = length(sign.jxns.intersect.ids$intersections$unique.to.tool[[tool1.name]])
@@ -497,11 +500,16 @@ getFisher = function(outputs_tissue, one_to_all=FALSE, ref_col=''){
                                      paste0(toupper(tool2.name)," Not Significant"))
     
     result = fisher.test(contingency.table)
-    list(contingency.table=contingency.table, p_val = result$p.value, odds_ratio = result$estimate)
-  })
-  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = " & "))
-  fisher
+    new_row = data.frame(tool_pair = paste(tool.pair, collapse = " & "), 
+                         odds_ratio = result$estimate, 
+                         p_val = result$p.value)
+    fisher.df = rbind(fisher.df, new_row)
+  }
+  rownames(fisher.df) = c(1:nrow(fisher.df))
+  fisher.df
 }
+
+
 
 #getFisher(outputs_dev_sign_info[['Brain']])
 
