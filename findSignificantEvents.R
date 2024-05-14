@@ -499,7 +499,7 @@ getFisher = function(outputs_tissue, one_to_all=FALSE, ref_col=''){
     result = fisher.test(contingency.table)
     list(contingency.table=contingency.table, p_val = result$p.value, odds_ratio = result$estimate)
   })
-  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = "&"))
+  names(fisher) = sapply(all.tool.pairs.comb, function(x) paste(x, collapse = " & "))
   fisher
 }
 

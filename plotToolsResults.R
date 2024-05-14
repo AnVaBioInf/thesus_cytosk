@@ -4,6 +4,8 @@ library(ggVennDiagram)
 library(grid)
 library(gridExtra)
 library(eulerr)
+library(RColorBrewer)
+
 
 getNrowsNcols = function(outputs_tissue, tumor){
   nrow = length(outputs_tissue)
@@ -25,13 +27,13 @@ setPlotParameters <- function(bottom_page_margin=2, left_page_margin=1, top_page
                               bottom_plot_margin=2.4, left_plot_margin=0, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.7, tick_length=-0.4,
-                              layout_matrix) {
+                              layout_matrix, pty="s") {
   par(tcl=tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
       mar = (c(bottom_plot_margin, left_plot_margin, top_plot_margin, right_plot_margin) + 0.1),  # mar = c(bottom, left, top, right)
       oma = (c(bottom_page_margin, left_page_margin, top_page_margin, right_page_margin) + 0.1),  # Bottom, left, top, right
       mgp = c(title_axis_distance, axis_label_distance, axis_line_distance),  # Title, label, and line distances
       xpd=TRUE,
-      pty = "s", # square plots
+      pty = pty, # square plots
       cex.axis = font_size)
   layout(mat = layout_matrix)
 }
@@ -238,39 +240,67 @@ plotResultsRepot = function(outputs_tissue, tumor=FALSE, file='', thresholds){
 
 
 
-plotFisherResults = function(fisher_results_tissues_list){
+plotFisherResults = function(fisher_results_tissues_list, col=''){
   # Create the plot matrix
   
-  nrow = ceiling(sqrt(length(fisher_results_tissues_list)))-1
-  ncol = ceiling(sqrt(length(fisher_results_tissues_list)))
-  total_numb_of_plots = nrow*ncol
-  layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
-  setPlotParameters(layout_matrix=layout_matrix)
+  nrow = length(fisher_results_tissues_list)
+  ncol = 2
+  plots = c(seq(1:nrow), rep(nrow+1,nrow))
+  #total_numb_of_plots = nrow*ncol
+  layout_matrix = matrix(plots, nrow = nrow, ncol = ncol, byrow = FALSE)
+  setPlotParameters(layout_matrix=layout_matrix,
+                    pty = "m", left_page_margin=20, bottom_page_margin = 4,
+                    right_page_margin = 15, bottom_plot_margin = 2)
+  print(layout_matrix)
+  names = names(fisher_results_tissues_list[[1]])
+  nbars = length(names)
+  col=RColorBrewer::brewer.pal(nbars, "Pastel1")
+  
 
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = sapply(fisher_results_tissue, function(x) x$odds_ratio)
     p_val = sapply(fisher_results_tissue, function(x) x$p_val)
-    names = names(fisher_results_tissue)
     
-    # Adjust ylim for stars
-    max_odds_ratio <- max(odds_ratio)
-    ylim_max <- max_odds_ratio +1.2 * max_odds_ratio  # Add 10% buffer for stars
-    
-    barplot(odds_ratio, 
+    print(names)
+    print(col)
+    bp = barplot(odds_ratio, 
             names.arg = names,
             ylim=c(-3,150),
             ylab = 'odds ratio',
             cex.lab = 0.7,
-            las=2)
+            las=2, 
+            xaxt = "n", 
+            col= col)
+    tick_positions <- seq(1.5, nbars * 2 - 0.5, by = 3)
     
-    mtext(side=2, text = tissue, cex= 0.7, line=3.5)
+    axis(1, at=bp, labels = FALSE)
+      
+    mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) # Add y-axis label
+    mtext(side=2, text = tissue, cex= 0.7, line=2.7)
+    if (par("mfg")[1]==length(fisher_results_tissues_list)){
+      text(bp, par("usr")[3] - 5, labels = names, srt = 15, 
+           adj = c(1,1), xpd = TRUE, cex = 0.7, xpd=TRUE)
+    }
     
     # Add stars based on significance
     for (i in 1:length(p_val)) {
       if (p_val[i] <= 0.05) {
-        text(i, odds_ratio[i] + (0.05 * ylim_max), "*", cex = 1.5) 
+        text(bp[i], odds_ratio[i] + 15, "*", cex = 1.5) 
       }
     }
   })
+  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+  legend('center', inset = c(0, 0),  # Adjust inset as needed
+         legend = names,
+         xpd=TRUE,
+         col = col,
+         pch=20,
+         bty='n',
+         horiz = FALSE,
+         ncol=1,
+         pt.cex=3,
+         cex=1)
 }
+
+?mtext
