@@ -4,8 +4,13 @@ library(rtracklayer)
 bigWig2Cov = function(bw){
   bw = as.data.frame(bw) # columns: seqnames, start, end, width, strand, score
   bw = bw[order(bw$start),] # ordering bw df my start coordinate column
+  print('bw')
+  print(bw)
   start = bw$start[1] # starting coordinate of the gene
   stop = bw$end[nrow(bw)] # end coordinate of the gene
+  
+  print(start)
+  print(stop)
   cov = rep(0,stop-start+1) # vector with 0s of length the gene
 
   for(i in 1:nrow(bw)){ # for every record in bw
@@ -19,6 +24,9 @@ bigWig2Cov = function(bw){
 # jxn - rse object
 # gene.grange - granges of genes of interest
 import = function(sample.id, gene.grange){
+  print('here')
+  print(sample.id)
+  print(gene.grange)
   folder.path = '/home/an/Manananggal/Input/bigWig/'
   sample.path = paste0(folder.path, sample.id, '.bw')
   # download and subset bw file
@@ -153,4 +161,91 @@ plotArc = function(from,to,top,n=100,y.base=0,...){
   y = x*4*top/len - x^2*(4*top/len^2) 
   # This equation represents a downward-facing parabola that starts at 0, reaches its peak at top, and ends at 0 again.
   lines(x+from,y+y.base,...)
+}
+
+
+get.gene.region = function(gene){
+  # selecting significant junctions for the GENE in both, development and cancer
+  sign.gene.jxns.df = sign.jxns.info.dev.and.cancer[sign.jxns.info.dev.and.cancer$GeneID==gene,]
+  
+  # region of gene where significant junctions of gene are located
+  sign.gene.jxns.coords = strsplit(sign.gene.jxns.df$junctionID,'[:-]')
+  gene.region.coords = c(min(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[2]))),
+                         max(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[3]))))
+  gene.region.coords = as.integer(gene.region.coords)
+  gene.region.coords
+}
+
+
+get.sample.ids = function(rse,tissue){
+  # sample ids
+  # gene annotation for a tissue
+  ann.tissue = rse@colData[rse@colData$tissue==tissue,]
+  # tissue samples ids
+  all.samples.ids.tissue = rownames(ann.tissue)
+  # adult and fetus sample ids
+  adult.samples.ids = rownames(ann.tissue[ann.tissue$age_group=='adult',])
+  list(adult.samples.ids=adult.samples.ids, all.samples.ids.tissue=all.samples.ids.tissue)
+}
+
+
+get.covs = function(gene, rse.jxn.cytosk){
+  # gene.grange is needed by rtracklayer to filter bw files
+  gene.grange = rse.jxn.cytosk@rowRanges[rse.jxn.cytosk@rowRanges$gene_names==gene,]
+  rse.gene = rse.jxn.cytosk[rse.jxn.cytosk@rowRanges$gene_names==gene,]
+  
+  sample.ids = get.sample.ids(rse.gene,tissue)
+  all.samples.ids = sample.ids[['all.samples.ids.tissue']]
+  adult.samples.ids = sample.ids[['adult.samples.ids']]
+  
+  # -- coverages
+  # covearge for each sample, output is a list of lists with read coverages, start:end positions, juncs df
+  # gene.cov.all.samples.list - named list for each tissue sample
+  gene.cov.all.samples.list = 
+    lapply(all.samples.ids, function(samples.id){getRecountCov(samples.id, rse.gene, gene.grange)}) 
+  # assigning elements of the list sample ids names
+  names(gene.cov.all.samples.list) = all.samples.ids
+  
+  # --- merging
+  # sum coverage in each condition
+  fetus.covs.summed.gene = 
+    sumCovs(gene.cov.all.samples.list[!(names(gene.cov.all.samples.list) %in% adult.samples.ids)])
+  
+  adult.covs.summed.gene =
+    sumCovs(gene.cov.all.samples.list[adult.samples.ids])
+  
+  list(fetus.covs.summed.gene=fetus.covs.summed.gene, adult.covs.summed.gene=adult.covs.summed.gene)
+} 
+
+# --
+assign.colors = function(sign.jxns.info.dev.and.cancer){
+  sign.colors = c("#E41A1C", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+  not.sign.colors = "#377EB8"
+  
+  # creating a vector of colors assigned to significant junctions
+  # unique junction = unique color
+  all.sign.jxns = unique(sign.jxns.info.dev.and.cancer$unifiedJxnID)
+  # Generate unique colors for each junction
+  
+  jxn.colors = sign.colors[1:length(all.sign.jxns)]
+  names(jxn.colors) = all.sign.jxns
+  jxn.colors
+}
+
+set.colors = function(sign.jxns.info.dev.and.cancer, jxn, covs){
+  # to set color to sign jxn in the tissue
+  jxn.colors = assign.colors(sign.jxns.info.dev.and.cancer)
+  
+  sign.gene.jxns.tissue.df = 
+    sign.jxns.info.dev.and.cancer[sign.jxns.info.dev.and.cancer$tissue==tissue &
+                                    sign.jxns.info.dev.and.cancer$unifiedJxnID==jxn , , drop=F]
+  # colors
+  sign.jxn.col = jxn.colors[jxn]
+  print(sign.gene.jxns.tissue.df)
+  
+  cols = sign.jxn.col[sub(':.$', '', rownames(covs$juncs))]
+  cols = ifelse(is.na(cols),"#377EB8", cols)
+  covs$juncs$cols = cols
+  print(table(unname(cols)))
+  covs
 }

@@ -4,6 +4,8 @@
 library(reticulate)
 library(SAJR)
 library(DJExpress)
+library(recount3)
+library(rtracklayer)
 
 rse2countDf = function(rse){
   counts = as.matrix(assay(rse, "counts"))
@@ -512,7 +514,155 @@ getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
   fisher.df
 }
 
-
+findCommonJxns = function(outputs_tum){
+  unique.tissue = names(outputs_tum)
+  common_sign_jxns_outputs_tum = list()
+  for (tissue in unique.tissue){
+    intersections = outputs_tum[[tissue]]$sign.jxns.info.list$intersections
+    intersections = Reduce(append, intersections)
+    intersections = intersections[names(intersections) != 'sajr.norm.tumor']
+    all.jxns.info = outputs_tum[[tissue]]$all.jxns.info
+    intersections = lapply(intersections, function(tool) 
+      all.jxns.info[all.jxns.info$junction_id_sajr %in% tool,])
+    intersections = do.call(rbind, intersections)
+    intersections = intersections[order(abs(intersections$dPSI_sajr), decreasing = TRUE), ]
+    intersections = intersections[!duplicated(intersections$junction_id), ]
+    if (nrow(intersections) > 0) {
+      intersections$tissue = tissue
+    }
+    common_sign_jxns_outputs_tum[[tissue]]=intersections
+  }
+  common_sign_jxns_outputs_tum = do.call(rbind, common_sign_jxns_outputs_tum)
+  common_sign_jxns_outputs_tum
+}
 
 #getFisher(outputs_dev_sign_info[['Brain']])
+
+
+
+
+#=================================
+#######################-----coverage
+#=================================
+
+bigWig2Cov = function(bw){
+  bw = as.data.frame(bw) # columns: seqnames, start, end, width, strand, score
+  bw = bw[order(bw$start),] # ordering bw df my start coordinate column
+  start = bw$start[1] # starting coordinate of the gene
+  stop = bw$end[nrow(bw)] # end coordinate of the gene
+
+  cov = rep(0,stop-start+1) # vector with 0s of length the gene
+  
+  for(i in 1:nrow(bw)){ # for every record in bw
+    cov[(bw$start[i]:bw$end[i])-start+1] = bw$score[i] # assigning score to every position of gene
+    # every position of a range is asigned with the same score
+  }
+  list(cov=cov,x=start:stop) # coverage, start and end gene coordinates on a chromosome
+}
+
+# sid - sample id
+# jxn - rse object
+# gene.grange - granges of genes of interest
+import = function(sample.id, gene.grange){
+  folder.path = '/home/an/Manananggal/Input/bigWig/'
+  sample.path = paste0(folder.path, sample.id, '.bw')
+  # download and subset bw file
+  bw = rtracklayer::import.bw(sample.path, which=gene.grange) 
+  bw
+}
+
+get.counts = function(sample.id, rse.gene.tissue){
+  # rse for one sample
+  rse.tissue.samples = rse.gene.tissue[, sample.id]
+  all.genejxn.info = cbind(as.data.frame(rse.gene.tissue@rowRanges)[,c('start','end','strand')],
+                           counts = rse.gene.tissue@assays@data$counts[,sample.id]) # ?? зачем еще раз выбирать sample.id?
+  all.genejxn.info
+}
+
+getRecountCov = function(sample.id, rse.gene.tissue, gene.grange){
+  bw = import(sample.id, gene.grange)
+  # coverage on a gene, start:stop 
+  cov.list.sample = bigWig2Cov(bw) 
+  cov.list.sample$juncs =  get.counts(sample.id, rse.gene.tissue)
+  # coverages and counts for the entire gene (all jxns)
+  cov.list.sample
+}
+
+sumCovs = function(gene.cov.samples.list){
+  # launched for each of the conditions (2ce)
+  # launched for every tissue where significant junction was found
+  # creating a template of merged object
+  cov.merged = gene.cov.samples.list[[1]] # read coverages for the first sample
+  
+  # Extract "val" elements from each sublist
+  cov.list <- lapply(gene.cov.samples.list, `[[`, "cov")
+  # Sum corresponding elements using Reduce
+  cov.merged$cov <- Reduce("+", cov.list)
+  
+  juncs.list <- lapply(gene.cov.samples.list, `[[`, "juncs")
+  counts.list <- lapply(juncs.list, `[[`, "counts")
+  cov.merged$juncs$counts <- Reduce("+", counts.list)
+  cov.merged
+}
+
+
+filter.data = function(condition.cov.list, xlim, min.junc.cov,plot.junc.only.within, min.junc.cov.f){
+  #print(condition.cov.list)
+  # choosing only x inside the range of interest
+  x.in.range.tf = condition.cov.list$x >= xlim[1]-500 &
+    condition.cov.list$x <= xlim[2]+500
+  #??? x is from 1 to what?
+  
+  condition.cov.list$x = condition.cov.list$x[x.in.range.tf]
+  condition.cov.list$cov = condition.cov.list$cov[x.in.range.tf]
+  
+  condition.cov.list$juncs =
+    condition.cov.list$juncs[(condition.cov.list$juncs$start == xlim[1] |
+                                condition.cov.list$juncs$end == xlim[2]) &
+                               condition.cov.list$juncs$counts > min.junc.cov.f,]
+  
+  condition.cov.list$cov[c(1,length(condition.cov.list$cov))] = 0 # assigning cov 0 to first and last elements of cov
+  condition.cov.list
+}
+
+prepareCovs = function(gene, rse.gene.cytosk, tissue){
+  # gene.grange is needed by rtracklayer to filter bw files
+  gene.grange = rse.gene.cytosk@rowRanges[rse.gene.cytosk@rowRanges$gene_name==gene,]
+  rse.gene = rse.gene.cytosk[rse.gene.cytosk@rowRanges$gene_name==gene,]
+  rse.gene = rse.gene[,rse.gene@colData$tissue==tissue]
+  
+  rse.gene = rse.gene[,rse.gene@colData$age_group %in% c('fetus','adult')]
+  adult.samples.ids = rownames(rse.gene@colData[rse.gene@colData$age_group == 'adult',])
+  fetus.samples.ids = rownames(rse.gene@colData[rse.gene@colData$age_group == 'fetus',])
+  
+  all.samples.ids = c(adult.samples.ids, fetus.samples.ids)
+  # -- coverages
+  # covearge for each sample, output is a list of lists with read coverages, start:end positions, juncs df
+  # gene.cov.all.samples.list - named list for each tissue sample
+  gene.cov.all.samples.list = 
+    lapply(all.samples.ids, function(samples.id){getRecountCov(samples.id, rse.gene, gene.grange)}) 
+  # assigning elements of the list sample ids names
+  names(gene.cov.all.samples.list) = all.samples.ids
+  
+  # --- merging
+  # sum coverage in each condition
+  fetus.covs.summed.gene = sumCovs(gene.cov.all.samples.list[fetus.samples.ids])
+  adult.covs.summed.gene = sumCovs(gene.cov.all.samples.list[adult.samples.ids])
+  
+  list(fetus.covs.summed.gene=fetus.covs.summed.gene, adult.covs.summed.gene=adult.covs.summed.gene)
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -277,8 +277,7 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
         sajr = "#8F00FF",
         dje = "darkorange4",
         diego = "deepskyblue")
-  print(col)
-  
+
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = fisher_results_tissue$odds_ratio
@@ -291,6 +290,7 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
                  xaxt = "n",
                  cex.lab = 0.7,
                  las=2)
+    
     # Add stars based on significance
     for (i in 1:length(q_val)) {
       if (q_val[i] <= 0.05) {
@@ -316,3 +316,88 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
   
   
 }
+
+
+
+
+#============================================
+#=================covs
+#====================================
+
+set.colors = function(jxn, covs){
+  # colors
+  cols = ifelse(sub(':.$', '', rownames(covs$juncs)) %in% jxn,
+                'orange', 'skyblue')
+  covs$juncs$cols = cols
+  covs
+}
+
+
+#' Plots read coverage
+#'
+#' @param r read coverage; output of \code{\link{getReadCoverage}}
+#' @param min.junc.cov numeric, plots only junctions (introns) with coverage not less than \code{min.junc.cov}
+#' @param min.junc.cov.f numeric, plots only junctions (introns) with coverage not less than \code{min.junc.cov.f} of maximal coverage in the region
+#' @param plot.junc.only.within logical, plot only juction with both ends within the region, FALSE plots all junctions with at least one end within region. NA plot all junctions overlapping the region.
+#' @param reverse reverse x coordinates
+#' @param junc.col colour for junction line. Individual color could be specified for each junction
+#' @param junc.lwd line width for jucntion line
+#' @param ... other parameters for plot function
+#'
+#' @export
+
+plotReadCov = function(condition.cov.list,
+                       min.junc.cov=0,
+                       min.junc.cov.f=0,
+                       plot.junc.only.within=FALSE,
+                       xlim,
+                       reverse=FALSE,
+                       #    junc.col='blue',
+                       junc.lwd=3,
+                       bottom.mar=0,...){
+  
+  condition.cov.list = filter.data(condition.cov.list, xlim, min.junc.cov,plot.junc.only.within, min.junc.cov.f)
+  
+  # create a graph
+  plot(condition.cov.list$x,
+       condition.cov.list$cov,
+       t='n',
+       xlab = 'Chromosome coordinate',
+       ylab = 'Coverage',
+       cex.axis = 0.7,
+       cex.lab = 0.9,
+       xlim=c(xlim[1]-500, xlim[2]+500),
+       ...)
+  
+  # plot verticale lines
+  polygon(condition.cov.list$x,
+          condition.cov.list$cov,
+          col = 'gray',
+          border=NA)
+  
+  if(nrow(condition.cov.list$juncs)>0) {
+    for(i in 1:nrow(condition.cov.list$juncs)){
+      plotArc(condition.cov.list$juncs$start[i],
+              condition.cov.list$juncs$end[i],
+              condition.cov.list$juncs$counts[i],
+              col=condition.cov.list$juncs$cols[i],
+              lwd=junc.lwd)
+    }
+  }
+}
+
+#' Plots parabolic arc
+#'
+#' @param from,to x coordinates of arc
+#' @param top highest point of arc
+#' @param n number of points
+#' @param y.base bottom coordinate of arc
+#' @param ... other parameters of lines functoin
+plotArc = function(from,to,top,n=100,y.base=0,...){
+  len = to - from
+  x = seq(from=0,to=len,length.out = n)
+  y = x*4*top/len - x^2*(4*top/len^2) 
+  # This equation represents a downward-facing parabola that starts at 0, reaches its peak at top, and ends at 0 again.
+  lines(x+from,y+y.base,...)
+}
+
