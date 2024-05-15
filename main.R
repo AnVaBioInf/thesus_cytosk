@@ -123,25 +123,84 @@ common_sign_jxns =
 # write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv", 
 #             sep = ",",  row.names = TRUE, col.names = TRUE)
 
+runJunxtionPlot(common_sign_jxns)
+
+#=========================significant only in one tool
+all.jxns.info = outputs_dev_sign_info[['Testis']]$all.jxns.info
+unique.to.tool.ids = outputs_dev_sign_info[['Testis']]$sign.jxns.info.list$intersections$unique.to.tool
+
+all.jxns.df = lapply(unique.to.tool.ids, function(tool) 
+  all.jxns.info[all.jxns.info$junction_id_sajr %in% tool,])
+
+
+all.jxns.df = lapply(all.jxns.df, function(x) {
+  # Sort by absolute value of dPSI_sajr (descending)
+  x <- x[order(abs(x$dPSI_sajr), decreasing = TRUE), ] 
+  # Remove duplicates based on junction_id
+  x <- x[!duplicated(x$junction_id), ] 
+  return(x) # Return the modified data frame
+})
+
+all.jxns.df$dje = all.jxns.df$dje[abs(all.jxns.df$dje$logFC_dje)>=2,]
+all.jxns.df$sajr = all.jxns.df$sajr[abs(all.jxns.df$sajr$dPSI_sajr)>=0.2,]
+
+# for every gene
+tissue = 'Testis'
+par(mfrow = c(4,2), bty='n')
+for (tool in all.jxns.df){
+  for (jxn in unique(tool$junction_id)){
+    print('gere')
+    # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
+    # selecting significant junctions for the GENE in both, development and cancer
+    sign.jxn.df = tool[tool$junction_id==jxn,]
+    gene = unique(sign.jxn.df$gene_name)
+    # for every tissue where any of selected junctions are significant
+    covs.summed.gene = prepareCovs(gene,rse.jxn.cytosk,tissue)
+    
+    fetus.covs.summed.gene =  covs.summed.gene[['fetus.covs.summed.gene']]
+    adult.covs.summed.gene = covs.summed.gene[['adult.covs.summed.gene']]
+    
+    gene.region.coords = strsplit(jxn,'[:-]')
+    gene.region.coords = as.integer(c(gene.region.coords[[1]][2], gene.region.coords[[1]][3]))
+    gene.region.coords = c(gene.region.coords[1], gene.region.coords[2])
+    
+    fetus.covs.summed.gene = set.colors(jxn, fetus.covs.summed.gene)
+    adult.covs.summed.gene = set.colors(jxn, adult.covs.summed.gene)
+    
+    sign.jxn.tissue = sign.jxn.df[sign.jxn.df$tissue==tissue,]
+    
+    text = paste(paste(tissue,gene, jxn), " \n(",
+                 'dPSI.sajr=',round(sign.jxn.df$dPSI_sajr, digits=2), 
+                 ', FDR.sajr=', round(sign.jxn.df$FDR_sajr, digits=2),
+                 ', logFC.dje=', round(sign.jxn.df$logFC_dje, digits=2),
+                 ', FDR.dje=', round(sign.jxn.df$FDR_dje, digits=2),
+                 ', sign.diego=', round(sign.jxn.df$abund_change_diego, digits=2),
+                 ', FDR.diego=', round(sign.jxn.df$FDR_diego, digits=2), ")")
+    
+    plotReadCov(fetus.covs.summed.gene,
+                junc.col = fetus.covs.summed.gene$cols,
+                xlim=gene.region.coords,
+                plot.junc.only.within = F,
+                min.junc.cov.f = 0.05,
+                sub='Before birth'
+    )
+    mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
+    
+    plotReadCov(adult.covs.summed.gene,
+                junc.col = fetus.covs.summed.gene$cols,
+                xlim=gene.region.coords,
+                plot.junc.only.within = F,
+                min.junc.cov.f = 0.05,
+                sub='After birth')
+  }
+}
 
 
 
 
-dev.off()
-common_sign_jxns_outputs_gtex2tum = findCommonJxns(outputs_gtex2tum)
-common_sign_jxns_outputs_norm2tum = findCommonJxns(outputs_norm2tum)
 
-common_sign_jxns = merge(common_sign_jxns_outputs_gtex2tum,common_sign_jxns_outputs_norm2tum,
-                         by = c('junction_id_sajr', 'tissue', 'junction_id', 'gene_name', 'gene_id',
-                                'dPSI_sajr', 'FDR_sajr', 'logFC_dje', 'FDR_dje',
-                                'abund_change_diego', 'FDR_diego'), all=TRUE)
-common_sign_jxns = 
-  common_sign_jxns[order(common_sign_jxns$gene_name, 
-                         common_sign_jxns$junction_id,
-                         common_sign_jxns$tissue), ]
 
-# write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv", 
-#             sep = ",",  row.names = TRUE, col.names = TRUE)
+
 
 
 
