@@ -18,6 +18,10 @@ yo_56_65 = c("58ypb")
 toddler.to.adult = c(toddler, school, teen, yo_25_35, yo_36_45, yo_46_55, yo_56_65)
 adult = c(yo_25_35, yo_36_45, yo_46_55, yo_56_65)
 
+cytoskeleton.genes = rbind(data.frame(gene_name=c('CYFIP1','CYFIP2','NCKAP1','NCKAP1L','ABI1','ABI2','ABI3','WASF1','WASF2','WASF3','BRK1'),group='WAVE'),
+                           data.frame(gene_name=c('NHS','NHSL1','NHSL2','KIAA1522'),group='NHS'),
+                           data.frame(gene_name=c('ARPC1A','ARPC1B','ARPC2','ARPC3','ARPC4','ARPC5','ACTR2','ACTR3','ACTR3B'),group='Arp2/3'))
+
 downloadRse = function(project.id, type){
   human_projects = recount3::available_projects()
   proj_info = subset(human_projects,
@@ -26,18 +30,18 @@ downloadRse = function(project.id, type){
   rse
 }
 
-filterRseGenes = function(gene_names_df, rse.gene){
+filterRseGenes = function(gene_names_df=cytoskeleton.genes, rse.gene){
   # -- gene rse only with cytoskeleton genes --
   rse.gene = rse.gene[rse.gene@rowRanges$gene_name %in% gene_names_df$gene_name,]
   # adding group names
   rse.gene@rowRanges$group = gene_names_df$group[
     match(rse.gene@rowRanges$gene_name,gene_names_df$gene_name)]
   # leaving only genes on main chr
-  rse.gene@rowRanges =
-    rse.gene@rowRanges[startsWith(as.character(rse.gene@rowRanges@seqnames),'chr'),]
+  rse.gene =
+    rse.gene[startsWith(as.character(rse.gene@rowRanges@seqnames),'chr'),]
   # sorting
-  rse.gene@rowRanges =
-    rse.gene@rowRanges[order(rse.gene@rowRanges@seqnames, rse.gene@rowRanges@ranges), ]
+  rse.gene =
+    rse.gene[order(rse.gene@rowRanges@seqnames, rse.gene@rowRanges@ranges), ]
   
   # subsetting seqinfo
   new_seqinfo = Seqinfo(seqnames = as.character(unique(rse.gene@rowRanges@seqnames)),

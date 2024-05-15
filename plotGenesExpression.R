@@ -165,7 +165,7 @@ plotBarplotExpression = function(gene.rse, tissue.col...){
             xlab = "Tissue", ylab = "CPM",
             ylim = findYlim(rse.gene.cytosk),
             xaxt = "n", yaxt = "n", 
-            col=tissue.col)
+            col=tissue.col[tissues])
     setAxis(tissues, gene.name, gene.rse)
   }
 }

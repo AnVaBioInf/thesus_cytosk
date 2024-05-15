@@ -120,10 +120,10 @@ common_sign_jxns =
                          common_sign_jxns$junction_id,
                          common_sign_jxns$tissue), ]
 
-# write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv", 
-#             sep = ",",  row.names = TRUE, col.names = TRUE)
+write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv",
+            sep = ",",  row.names = TRUE, col.names = TRUE)
 
-runJunxtionPlot(common_sign_jxns)
+# runJunxtionPlot(common_sign_jxns)
 
 #=========================significant only in one tool
 all.jxns.info = outputs_dev_sign_info[['Testis']]$all.jxns.info
@@ -195,12 +195,37 @@ for (tool in all.jxns.df){
   }
 }
 
+########################### cancer gene expression
+# tcga.brca = downloadRse('BRCA', 'gene')
+# tcga.brca = filterRseGenes(rse.gene=tcga.brca)
+# tcga.brca = normaliseCoutsCPM(tcga.brca)
+# saveRDS(tcga.brca,'tcga.brca.rds')
+tcga.brca = readRDS('tcga.brca.rds')
+
+tcga.brca@colData$tissue = tcga.brca@colData$study
+plotBarplotExpression(tcga.brca)
 
 
+# boxplots
+plotBarplotExpression = function(gene.rse){
+  # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. 
+  # The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
+  # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
+  # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
+  
+  cpm = as.data.frame(gene.rse@assays@data$cpm)
+  cpm=t(cpm)
+  colnames(cpm) = gene.rse@rowRanges$gene_name
 
+  
+  # Create boxplot
+  boxplot(cpm, data = cpm,
+          xlab = "Tissue", ylab = "CPM",
+          xaxt = "n", yaxt = "n")
+  # Assuming setAxis is a function you've defined elsewhere to set the axes
+  #setAxis(colnames(cpm)[sapply(cpm, is.numeric)], levels(cpm$gene), gene.rse) 
+}
 
-
-
-
-
-
+# Assuming tcga.brca is your gene expression data
+plotBarplotExpression(tcga.brca) 
+?boxplot
