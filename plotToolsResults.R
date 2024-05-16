@@ -22,24 +22,6 @@ tissue.col=c('Brain'="#3399CC",
              'BRCA' = 'darkgrey',
              'Breast normal'='white')
 
-col = c(sajr = "#984EA3",
-        dje = "orange3",
-        diego = "#5DADE2",
-        'dje&sajr' = "#FF9900",
-        'diego&sajr' = '#E8FF00',
-        'diego&dje' = '#F781BF',
-        'diego&dje&sajr' = "#4DAF4A")
-
-
-col_tum = c('sajr.norm.tumor' = '#979A9A',
-            sajr = "#8F00FF",
-            dje = "darkorange4",
-            diego = "deepskyblue",
-            'dje&sajr' = "#FF5733",
-            'diego&sajr' = '#FFFF00',
-            'diego&dje' = '#FF00FF',
-            'diego&dje&sajr' = "#7FFF00")
-
 
 # ----------------------------------------------------------------------------------
 # ------------------------ gene expression vs time graphs -------------------------
@@ -192,6 +174,42 @@ plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
 #==================================================================================
 #=============================== results comparison================================
 #==================================================================================
+x_lim_dict = list('dPSI_sajr' = c(-1,1), 
+                  'dPSI_gtex2tum' = c(-1,1),
+                  'dPSI_norm2tum' = c(-1,1),
+                  'logFC_dje' = c(-4,4), 
+                  'abund_change_diego' = c(3,-3))
+
+ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 
+                  'dPSI_gtex2tum' = seq(-1,1,by=0.5), 
+                  'dPSI_norm2tum' = seq(-1,1,by=0.5), 
+                  'logFC_dje'=seq(-4,4,by=2), 
+                  'abund_change_diego' = seq(-3,3,by=1.5))
+
+axis_names_dict = c('dPSI_sajr' = 'dPSI sajr', 
+                    'dPSI_gtex2tum' = 'dPSI gtex2tum',
+                    'dPSI_norm2tum' = 'dPSI norm2tum',
+                    'logFC_dje' = 'logFC dje', 
+                    'abund_change_diego' = 'AC diego')
+
+col = c(sajr = "#984EA3",
+        dje = "orange3",
+        diego = "#5DADE2",
+        'dje&sajr' = "#FF9900",
+        'diego&sajr' = '#E8FF00',
+        'diego&dje' = '#F781BF',
+        'diego&dje&sajr' = "#4DAF4A")
+
+col_tum = c('sajr.norm.tumor' = '#979A9A',
+            sajr = "#8F00FF",
+            dje = "darkorange4",
+            diego = "deepskyblue",
+            'dje&sajr' = "#FF5733",
+            'diego&sajr' = '#FFFF00',
+            'diego&dje' = '#FF00FF',
+            'diego&dje&sajr' = "#7FFF00")
+
+
 getNrowsNcols = function(ncol,nrow){
   # Create the plot matrix
   total_numb_of_plots = nrow*ncol
@@ -200,46 +218,6 @@ getNrowsNcols = function(ncol,nrow){
   print(layout_matrix)
   layout_matrix
 }
-
-plotLine = function(x,y=NULL,cor.method='pearson',line.col='red',leg.pos='topright',line.lwd=1,plot.ci=FALSE,ci.transparency=0.3,line.on.top=TRUE,new=TRUE,...){
-  if(is.null(y)){
-    y = x[,2]
-    x = x[,1]
-  }
-  if(new)
-    plot(x,y,t='n',...)
-  if(line.on.top)
-    points(x,y,...)
-  f = !is.na(x) & !is.na(y) & !is.infinite(x) &  !is.infinite(y)
-  x = x[f]
-  y = y[f]
-  o = order(x)
-  y = y[o]
-  x = x[o]
-  x = as.numeric(x)
-  y = as.numeric(y)
-  m = lm(y~x)
-  ci=predict.lm(m,interval='confidence')
-  if(plot.ci){
-    c=col2rgb(line.col)
-    polygon(c(x,rev(x)),c(ci[,2],rev(ci[,3])),border=NA,col=rgb(c[1],c[2],c[3],ci.transparency*255,maxColorValue = 255))
-  }
-  lines(x,ci[,1],col=line.col,lwd=line.lwd)
-  if(!line.on.top)
-    points(x,y,...)
-  if(tolower(cor.method)==substr('spearman',1,nchar(cor.method))){
-    x = rank(x)
-    y = rank(y)
-    cor.method = 'pearson'
-  }
-  c = cor.test(x,y,m=cor.method)
-  ci = round(c$conf.int,2)
-  leg=paste(toupper(substr(cor.method,1,1)),'CC=',round(c$estimate,2),' [',ci[1],',',ci[2],']\npv=',format(c$p.value,digits=2,scientific=TRUE),'\nN=',length(x),sep='')
-  text(grconvertX(0.01,'npc','user'),grconvertY(0.99,'npc','user'),leg,col=line.col,adj=c(0,1),font=2)
-}
-
-# plotLine(mtcars$disp,mtcars$wt,plot.ci=T)
-
 
 setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page_margin=2, right_page_margin=3,
                               bottom_plot_margin=1.5, left_plot_margin=4, top_plot_margin=0, right_plot_margin=0,
@@ -257,43 +235,46 @@ setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page
   layout(mat = layout_matrix)
 }
 
+addSpearmanCorr = function(x,y){
+  result = cor.test(x, y, method = "spearman")
+  corr.coef = round(result$estimate, digits=2)
+  p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
+  mtext(paste0('rho = ', corr.coef,  ', p.val ', p.value), side=3,
+        col = "black", cex=0.5)
+}
 
-makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
-  x_lim_dict = list('dPSI_sajr' = c(-1,1), 
-                    'dPSI_gtex2tum' = c(-1,1),
-                    'dPSI_norm2tum' = c(-1,1),
-                    'logFC_dje' = c(-4,4), 
-                    'abund_change_diego' = c(3,-3))
-  
-  ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 
-                    'dPSI_gtex2tum' = seq(-1,1,by=0.5), 
-                    'dPSI_norm2tum' = seq(-1,1,by=0.5), 
-                    'logFC_dje'=seq(-4,4,by=2), 
-                    'abund_change_diego' = seq(-3,3,by=1.5))
-  
-  axis_names_dict = c('dPSI_sajr' = 'dPSI sajr', 
-                       'dPSI_gtex2tum' = 'dPSI gtex2tum',
-                       'dPSI_norm2tum' = 'dPSI norm2tum',
-                       'logFC_dje' = 'logFC dje', 
-                       'abund_change_diego' = 'AC diego')
-  
+addRegressionCurve = function(x,y){
+  lm_model = lm(y ~ x)
+  ci=predict.lm(lm_model,interval='confidence')
+  c=col2rgb("red")
+  polygon(c(x,rev(x)),
+          c(ci[,2],rev(ci[,3])),
+          border=NA,
+          col=rgb(c[1],c[2],c[3],0.2*255,maxColorValue = 255))
+  lines(x, ci[,1], col = "red", lwd = 1)
+}
+
+getColumnCombinations = function(df, tumor){
   if (tumor){
-    col1_name <- grep("tum", colnames(all.jxns[,tf]), value = TRUE)
+    col1_name = grep("tum", colnames(df), value = TRUE)
     # Get the names of all other columns
-    other_cols <- setdiff(colnames(all.jxns[,tf]), col1_name)
+    other_cols = setdiff(colnames(df), col1_name)
     # Create a list of combinations
-    comb <- lapply(other_cols, function(col_name) {
-      all.jxns[, c(col1_name, col_name)]
+    comb = lapply(other_cols, function(col_name) {
+      df[, c(col1_name, col_name)]
     })
   }
   else{
-    comb = combn(all.jxns[,tf], 2, simplify = FALSE)
+    comb = combn(df, 2, simplify = FALSE)
   }
-  
+  comb
+}
+
+makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
+  comb = getColumnCombinations(all.jxns[,tf], tumor)
   lapply(comb, function(x) {
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
-    
     plot(x,
          xaxt = "n", yaxt='n',    # Suppress x-axis ticks and labels
          xlab = '', ylab = axis_names_dict[par.2],
@@ -302,7 +283,24 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
          type = 'p', col = 'lightgrey',
          pch = 16 , cex = 0.7, lwd = 1,
          bty = "L")
-
+    # points
+    if (tumor) col=col_tum
+    for (tool in names(col)){
+      sign.jxns.tool = which(all.jxns$junction_id_sajr %in% intersections[[tool]])
+      points(x[sign.jxns.tool,], col=col[tool], pch = 16, cex=1.1)
+      # gene labeles
+      if (tool=='diego&dje&sajr'){
+        jxns = x[sign.jxns.tool,]
+        if (nrow(jxns)==0) next
+        print(jxns)
+        labels = all.jxns[sign.jxns.tool,'gene_name']
+        # Add text labels to the points
+        text(jxns[, par.1], jxns[, par.2],
+             labels = labels, pos = c(2,4), cex = 0.7, font = 2,
+             xpd=TRUE)
+        }
+    }
+    
     # tick axis + titles
     if(all(colnames(x) %in% names(ticks_dict))){
       axis(1, at=ticks_dict[[par.1]], labels = FALSE)
@@ -315,57 +313,18 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
     }
+    # adding x axis names (tool metrix)
     if (par("mfg")[1]==par("mfg")[3]) {
       mtext(side=1, text = axis_names_dict[par.1], line = 2, cex= 0.7)
     }
+    # adding tissue names to rows
     if (par("mfg")[2]==1) {
       mtext(side=2, text = tissue, line = 3, cex= 1)
     }
-    # points
-    if (tumor) col=col_tum
-    for (ids in names(col)){
-      i = which(all.jxns$junction_id_sajr %in% intersections[[ids]])
-      points(x[i,], col=col[ids], pch = 16, cex=1.1)
-      # gene labeles
-      if (ids=='diego&dje&sajr'){
-        jxns = x[i,]
-        labels = all.jxns[i,'gene_name']
-        # Add text labels to the points
-        n_labels = min(5, length(labels))
-        if (n_labels > 0) {
-          # Calculate label positions based on modulo 3
-          label_positions <- (seq_len(n_labels) - 1) %% 3 + 1
-          label_positions <- c(4, 3, 1)[label_positions]  # Map 1 to right, 2 to below, 3 to above
-
-          text(jxns[1:n_labels, par.1], jxns[1:n_labels, par.2],
-               labels = labels[1:n_labels], pos = label_positions, cex = 1, font = 2,
-               xpd=TRUE)
-        }
-        
-      }
-    }
-    # Calculate Spearman correlation
-    # # Fit linear regression
-    a = x[complete.cases(x),]
-    a = a[order(a[,par.1]),]
-    
-    xx = a[, par.1]
-    yy = a[, par.2]
-    lm_model = lm(yy ~ xx)
-    ci=predict.lm(lm_model,interval='confidence')
-    c=col2rgb("black")
-    polygon(c(xx,rev(xx)),
-            c(ci[,2],rev(ci[,3])),
-            border=NA,
-            col=rgb(c[1],c[2],c[3],0.9*255,maxColorValue = 255))
-    lines(xx, ci[,1], col = "black", lwd = 1)
-    
-    result = cor.test(a[,par.1], a[,par.2], method = "spearman")
-    corr.coef = round(result$estimate, digits=2)
-    p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
-    
-    mtext(paste0('rho = ', corr.coef,  ', p.val ', p.value), side=3,
-          col = "black", cex=0.5)
+    df = x[complete.cases(x),]
+    df = df[order(df[,1]),]
+    addSpearmanCorr(df[,1],df[,2])
+    addRegressionCurve(df[,1],df[,2])
   })
 }
 
@@ -395,7 +354,6 @@ plotGraphs = function(outputs.prepr.list, tumor, cols, log=''){
     mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
   thresholds_text = setTitles(thresholds)
   mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=2)
-  
 }
 
 
@@ -404,11 +362,11 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   
-  png("metrics_plot.png", width = 20, height = 20, units = "cm", res = 500)
+  png("metrics_plot.png", width = 30, height = 30, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list, tumor, col.fdr.if)
   dev.off()
   
-  png("fdr_plot.png", width = 20, height = 20, units = "cm", res = 500)
+  png("fdr_plot.png", width = 30, height = 30, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list, tumor, col.metrics.if, log='')
   dev.off()
   
