@@ -1,6 +1,8 @@
 source("downloadRseData.R")
 source("findSignificantEvents.R")
 source('plotToolsResults.R')
+library(SummarizedExperiment)
+
 
 logfc_threshold=1.5
 dpsi_threshold=0.1
@@ -13,13 +15,37 @@ thresholds = list(logfc_threshold=logfc_threshold,
                    fdr_threshold=fdr_threshold)
 
 # #==================== download and filter rse
-# #prepareRse()
-# 
-# 
-# # #=======================running tools
-# # # # -- reading files
+# prepareRse()
 rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
+
+# # ==================== gene expression
+# --------------------
+
+# #--------------------barplots
+# gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
+# gtex.breast$tissue = 'Breast gtex'
+# saveRDS(gtex.breast,'gtex.breast.rds')
+gtex.breast = readRDS('gtex.breast.rds')
+
+# tcga.brca = prepareGeneRseAssay('BRCA', 'gene')
+# # Define the values to be replaced
+# old_values = c( "Solid Tissue Normal" = "Breast normal",
+#                 "Primary Tumor" = "BRCA",
+#                 "Primary solid Tumor" = "BRCA",
+#                 "Metastatic" = "Metastatic BRCA")
+# tcga.brca.cpm@colData$tissue =
+#   unname(old_values[tcga.brca.cpm@colData$tcga.gdc_cases.samples.sample_type])
+saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
+tcga.brca = readRDS('tcga.brca.cpm.rds')
+
+# Extract assay data
+merged_rse = mergeRse(list(rse.gene.cytosk, gtex.breast, tcga.brca))
+setParams(merged_rse)
+plotBoxplotExpression(merged_rse)
+
+# #=======================running tools
+# # # -- reading files
 unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 outputs_tissue = list()
 for (tissue in unique.tissues){
@@ -195,37 +221,3 @@ for (tool in all.jxns.df){
   }
 }
 
-########################### cancer gene expression
-# tcga.brca = downloadRse('BRCA', 'gene')
-# tcga.brca = filterRseGenes(rse.gene=tcga.brca)
-# tcga.brca = normaliseCoutsCPM(tcga.brca)
-# saveRDS(tcga.brca,'tcga.brca.rds')
-tcga.brca = readRDS('tcga.brca.rds')
-
-tcga.brca@colData$tissue = tcga.brca@colData$study
-plotBarplotExpression(tcga.brca)
-
-
-# boxplots
-plotBarplotExpression = function(gene.rse){
-  # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. 
-  # The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
-  # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
-  # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
-  
-  cpm = as.data.frame(gene.rse@assays@data$cpm)
-  cpm=t(cpm)
-  colnames(cpm) = gene.rse@rowRanges$gene_name
-
-  
-  # Create boxplot
-  boxplot(cpm, data = cpm,
-          xlab = "Tissue", ylab = "CPM",
-          xaxt = "n", yaxt = "n")
-  # Assuming setAxis is a function you've defined elsewhere to set the axes
-  #setAxis(colnames(cpm)[sapply(cpm, is.numeric)], levels(cpm$gene), gene.rse) 
-}
-
-# Assuming tcga.brca is your gene expression data
-plotBarplotExpression(tcga.brca) 
-?boxplot

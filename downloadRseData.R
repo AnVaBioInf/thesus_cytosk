@@ -197,6 +197,13 @@ save2RDS = function(rse.gene, rse.jxn, path){
   saveRDS(rse.jxn,'rse.jxn.cytosk.rds')
 }
 
+prepareGeneRseAssay = function(project.id, type='gene'){
+  rse.gene = downloadRse(project.id, type='gene')
+  rse.gene = normaliseCoutsCPM(rse.gene)
+  rse.gene = filterRseGenes(cytoskeleton.genes, rse.gene)
+  rse.gene
+}
+
 prepareRse = function(project.id = 'ERP109002', 
                       # 24 cytoskeleton genes
                       cytoskeleton.genes = rbind(data.frame(gene_name=c('CYFIP1','CYFIP2','NCKAP1','NCKAP1L','ABI1','ABI2','ABI3','WASF1','WASF2','WASF3','BRK1'),group='WAVE'),
@@ -207,9 +214,7 @@ prepareRse = function(project.id = 'ERP109002',
                                                           c("KidneyTestis", "Kidney"))
                       ){
   rse.jxn = downloadRse(project.id, type='jxn')
-  rse.gene = downloadRse(project.id, type='gene')
-  rse.gene = normaliseCoutsCPM(rse.gene)
-  rse.gene = filterRseGenes(cytoskeleton.genes, rse.gene)
+  rse.gene = prepareGeneRseAssay(project.id, type='gene')
 
   rse = annotateJxns(rse.gene, rse.jxn)
   rse.jxn = rse$rse.jxn
@@ -220,4 +225,18 @@ prepareRse = function(project.id = 'ERP109002',
   rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list)
   rse.jxn = rse.jxn[,rse.jxn@colData$age_group %in% c('adult', 'fetus')]
   save2RDS(rse.gene, rse.jxn, path='./')
+}
+
+mergeRse = function(gene.rse.list){
+  assay.data.list = lapply(gene.rse.list, function(x) assay(x, 'cpm'))
+  merged.assay.data = do.call(cbind, assay.data.list)
+  col.data.list = lapply(gene.rse.list, function(x) colData(x, 'cpm')[,'tissue',drop=F])
+  merged.col.data = do.call(rbind, col.data.list)
+  # Create the new RangedSummarizedExperiment
+  merged_rse <- SummarizedExperiment(
+    assays = list(cpm = merged.assay.data), 
+    rowRanges = rowRanges(gene.rse.list[[1]]), 
+    colData = merged.col.data
+  )
+  merged_rse
 }
