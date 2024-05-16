@@ -19,56 +19,56 @@ thresholds = list(logfc_threshold=logfc_threshold,
 rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 
-# # ==================== gene expression
-# --------------------gene expression vs age
-plotScatterplotExpression(rse.gene.cytosk)
-
-# #--------------------barplots
-# gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
-# gtex.breast$tissue = 'Breast gtex'
-# saveRDS(gtex.breast,'gtex.breast.rds')
-gtex.breast = readRDS('gtex.breast.rds')
-
-# tcga.brca = prepareGeneRseAssay('BRCA', 'gene')
-# # Define the values to be replaced
-# old_values = c( "Solid Tissue Normal" = "Breast normal",
-#                 "Primary Tumor" = "BRCA",
-#                 "Primary solid Tumor" = "BRCA",
-#                 "Metastatic" = "Metastatic BRCA")
-# tcga.brca.cpm@colData$tissue =
-#   unname(old_values[tcga.brca.cpm@colData$tcga.gdc_cases.samples.sample_type])
-# saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
-tcga.brca = readRDS('tcga.brca.cpm.rds')
-
-# Extract assay data
-merged_rse = mergeRse(list(rse.gene.cytosk, gtex.breast, tcga.brca))
-setParams(merged_rse)
-plotBoxplotExpression(merged_rse)
+# # # ==================== gene expression
+# # --------------------gene expression vs age
+# plotScatterplotExpression(rse.gene.cytosk)
+# 
+# # #--------------------barplots
+# # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
+# # gtex.breast$tissue = 'Breast gtex'
+# # saveRDS(gtex.breast,'gtex.breast.rds')
+# gtex.breast = readRDS('gtex.breast.rds')
+# 
+# # tcga.brca = prepareGeneRseAssay('BRCA', 'gene')
+# # # Define the values to be replaced
+# # old_values = c( "Solid Tissue Normal" = "Breast normal",
+# #                 "Primary Tumor" = "BRCA",
+# #                 "Primary solid Tumor" = "BRCA",
+# #                 "Metastatic" = "Metastatic BRCA")
+# # tcga.brca.cpm@colData$tissue =
+# #   unname(old_values[tcga.brca.cpm@colData$tcga.gdc_cases.samples.sample_type])
+# # saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
+# tcga.brca = readRDS('tcga.brca.cpm.rds')
+# 
+# # Extract assay data
+# merged_rse = mergeRse(list(rse.gene.cytosk, gtex.breast, tcga.brca))
+# setParams(merged_rse)
+# plotBoxplotExpression(merged_rse)
 
 # #=======================running tools
 # # # -- reading files
 unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-outputs_tissue = list()
-for (tissue in unique.tissues){
-  outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
-}
-saveRDS(outputs_tissue,'outputs_tissue.rds')
+# outputs_tissue = list()
+# for (tissue in unique.tissues){
+#   outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
+# }
+# saveRDS(outputs_tissue,'outputs_tissue.rds')
 outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # 
 # 
 # #=================================dev
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-outputs_dev_sign_info = list()
-for (tissue in unique.tissues){
-  outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
-                                                   logfc_threshold=logfc_threshold,
-                                                   dpsi_threshold=dpsi_threshold,
-                                                   abund_change_threshold=abund_change_threshold,
-                                                   fdr_threshold=fdr_threshold,
-                                                   add_external_data=FALSE, file='')
-}
-saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+# outputs_dev_sign_info = list()
+# for (tissue in unique.tissues){
+#   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
+#                                                    logfc_threshold=logfc_threshold,
+#                                                    dpsi_threshold=dpsi_threshold,
+#                                                    abund_change_threshold=abund_change_threshold,
+#                                                    fdr_threshold=fdr_threshold,
+#                                                    add_external_data=FALSE, file='')
+# }
+# saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
 plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
 
