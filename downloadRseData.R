@@ -208,9 +208,9 @@ prepareRse = function(project.id = 'ERP109002',
                       ){
   rse.jxn = downloadRse(project.id, type='jxn')
   rse.gene = downloadRse(project.id, type='gene')
-  rse.gene = filterRseGenes(cytoskeleton.genes, rse.gene)
   rse.gene = normaliseCoutsCPM(rse.gene)
-  
+  rse.gene = filterRseGenes(cytoskeleton.genes, rse.gene)
+
   rse = annotateJxns(rse.gene, rse.jxn)
   rse.jxn = rse$rse.jxn
   rse.gene = rse$rse.gene 

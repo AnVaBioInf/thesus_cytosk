@@ -19,7 +19,9 @@ tissue.col=c('Brain'="#3399CC",
              'Liver'="#339900",
              'Ovary'="#CC3399",
              'Testis'="#FF6600",
-             'BRCA' = 'grey')
+             'BRCA' = 'lightgrey',
+             'Metastatic BRCA' = 'darkgrey',
+             'Breast normal'='white')
 
 col = c(sajr = "#984EA3",
         dje = "orange3",
@@ -545,7 +547,6 @@ createGrid = function(gene.rse){
 
 setParams = function(gene.rse){
   numb = createGrid(gene.rse)
-  print(numb)
   par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
       oma = c(4, 3, 1, 1),  # bottom, left, top, right.
       mar = c(1, 2, 1, 1),  # bottom, left, top, right.
@@ -618,29 +619,40 @@ plotScatterplotExpression = function(gene.rse, tissue.col){
 
 
 # boxplots
-plotBarplotExpression = function(gene.rse, xlab = "Tissue", ...){
+plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
   # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
   # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
   # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
   
   cpm = as.data.frame(t(gene.rse@assays@data$cpm))
-  cpm$tissue = gene.rse@colData$tissue
-  cpm$tissue = factor(cpm$tissue)
-  
-  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
-                                        c('gene_id', 'gene_name')]
-  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
+  cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
   tissues = unique(gene.rse@colData$tissue)
+  exclude_indices <- grepl("brca|tumor|metastatic", tissues, ignore.case = TRUE)
+
+  # Subset the list
+  tissues = c(tissues[!exclude_indices], tissues[exclude_indices])
+  print('here')
   print(tissues)
   
+  
+  cpm$tissue = factor(cpm$tissue, levels = tissues)
   print(cpm$tissue)
+  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
+                                        c('gene_id', 'gene_name')]
+  # make a named list
+  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
+  print(tissues)
   # Create a vector of colors for each box in the plot
   # Create boxplot
   for (gene.name in names(gene.ids.ordered)){
     gene.id = gene.ids.ordered[gene.name]
-    boxplot(cpm[[gene.id]] ~ cpm$tissue, data = cpm,
+    print(head(cpm[[gene.id]]))
+    print(head(cpm[['tissue']]))
+    
+    boxplot(cpm[[gene.id]] ~ cpm[["tissue"]],
             xlab = xlab, ylab = "CPM",
             ylim = findYlim(gene.rse),
+            las=2,
             xaxt = "n", yaxt = "n", 
             col=tissue.col[tissues])
     setAxis(tissues, gene.name, gene.rse)
