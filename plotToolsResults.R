@@ -42,8 +42,143 @@ col_tum = c('sajr.norm.tumor' = '#979A9A',
             'diego&dje&sajr' = "#7FFF00")
 
 
+# ----------------------------------------------------------------------------------
+# ------------------------ gene expression vs time graphs -------------------------
+# ----------------------------------------------------------------------------------
 
+findYlim = function(rse.gene.cytosk){
+  cpm = as.data.frame(t(rse.gene.cytosk@assays@data$cpm))
+  cpm$tissue = rse.gene.cytosk@colData$tissue
+  
+  a = by(cpm[, sapply(cpm, is.numeric)], cpm$tissue, 
+         function(x) as.data.frame(
+           apply(x, 2, quantile, probs = c(0.25, 0.75)), simplify = FALSE))
+  a = do.call(cbind, a)
+  max.up.quantile = max.col(a)[2]
+  cpm.max.quantiles = a[,max.up.quantile]
+  ylim.max = cpm.max.quantiles[2]+1.5*(cpm.max.quantiles[2]-cpm.max.quantiles[1])
+  c(0,ylim.max)
+}
 
+fitCurve = function(gene.id, age.group.specific, gene.tissue.counts, col){
+  # Fit a curve (example using loess)
+  model = loess(gene.tissue.counts[[gene.id]] ~ as.numeric(age.group.specific))
+  # Generate x-values for prediction
+  x_pred = seq(min(age.group.specific), max(age.group.specific), length.out = 100)
+  # Predict y-values using the model
+  y_pred = predict(model, newdata = data.frame(age.group.specific = x_pred))
+  # Add the curve to the plot
+  lines(x_pred, y_pred, col = col, lwd = 2)  # Adjust lwd for line thickness
+}
+
+createGrid = function(gene.rse){
+  numb.graphs = round(sqrt(length(gene.rse@rowRanges)))
+  numb.empty = numb.graphs**2 - length(gene.rse@rowRanges)
+  list(numb.graphs=numb.graphs, numb.empty=numb.empty)
+}
+
+setParams = function(gene.rse){
+  numb = createGrid(gene.rse)
+  par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
+      oma = c(5, 3, 1, 1),  # bottom, left, top, right.
+      mar = c(1, 2, 1, 1),  # bottom, left, top, right.
+      cex.axis = 0.7,  # Adjust the value as needed
+      bty="l")
+}
+
+setAxis = function(x.value, gene.name, gene.rse){
+  numb = createGrid(gene.rse)
+  title(main = gene.name, line = 0.2, cex=0.8)  # Place title 3 lines above the plot
+  axis(1, at = 1:length(x.value), labels = FALSE)  # x-axis ticks
+  axis(2, labels = FALSE)  # y-axis ticks
+  
+  boxplot.coord = par("mfg")
+  # Add y-axis only for rightmost plots
+  if (boxplot.coord[2] == 1) {
+    axis(2, las = 1)  
+    mtext("CPM", side = 2, line = 2.4, las = 0, cex = par("cex.axis"))
+  }
+  # Add x-axis only for bottom plots
+  if ((boxplot.coord[1] == 5) |
+      (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
+    axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
+  }
+  grid(nx = NULL, ny = NULL)
+}
+
+plotScatterplotExpression = function(gene.rse){
+  setParams(gene.rse)
+  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
+                                        c('gene_id', 'gene_name')]
+  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
+  tissues = unique(gene.rse@colData$tissue)
+  
+  for (gene.name in names(gene.ids.ordered)){
+    # Create a new plot for each gene
+    gene.id = gene.ids.ordered[gene.name]
+    plot(
+      0, 0,  # Placeholder values, will be replaced by actual data
+      xlim = c(1, length(order)),  # Set x-axis limits based on number of tissues
+      ylim = findYlim(rse.gene.cytosk),  # Set y-axis limits based on gene expression
+      type = "n",  # Start with an empty plot
+      xaxt = "n",  # Suppress default x-axis
+      yaxt = "n",  # Suppress default x-axis
+      # main = gene.rse@rowRanges[gene.rse@rowRanges$gene_id==gene.id,]$gene_name  # Set title to gene name
+    )
+    setAxis(names(order), gene.name, gene.rse)
+    
+    for (tissue in tissues){
+      samples = rownames(gene.rse@colData[gene.rse@colData$tissue==tissue,])
+      col = tissue.col[tissue]
+      age.group.specific = 
+        gene.rse@colData[gene.rse@colData$tissue==tissue,]$age_group_specific
+      age.group.specific = order[age.group.specific]
+      
+      gene.tissue.counts = as.data.frame(t(gene.rse@assays@data$cpm[gene.id,samples,drop=F]))
+      gene.tissue.counts$age.group.specific = age.group.specific
+      
+      points(age.group.specific, gene.tissue.counts[[gene.id]], col=col)
+      fitCurve(gene.id, age.group.specific, gene.tissue.counts, col=col)
+    }
+  }
+  # Plot the legend in the last cell
+  plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
+  legend('bottom', legend = tissues, col = tissue.col, pch = 16,
+         bty = "n", y.intersp = 0.6, xpd = TRUE,
+         inset = c(0, -0.2))
+}
+
+# boxplots
+plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
+  # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
+  # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
+  # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
+  setParams(gene.rse)
+  cpm = as.data.frame(t(gene.rse@assays@data$cpm))
+  cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
+  tissues = unique(gene.rse@colData$tissue)
+  exclude_indices <- grepl("brca|tumor|metastatic", tissues, ignore.case = TRUE)
+  tissues = c(tissues[!exclude_indices], tissues[exclude_indices])
+  cpm$tissue = factor(cpm$tissue, levels = tissues)
+  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
+                                        c('gene_id', 'gene_name')]
+  # make a named list
+  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
+  # Create a vector of colors for each box in the plot
+  # Create boxplot
+  for (gene.name in names(gene.ids.ordered)){
+    gene.id = gene.ids.ordered[gene.name]
+    boxplot(cpm[[gene.id]] ~ cpm[["tissue"]],
+            xlab = xlab, ylab = "CPM",
+            ylim = findYlim(gene.rse),
+            las=2,
+            xaxt = "n", yaxt = "n", 
+            col=tissue.col[tissues])
+    setAxis(tissues, gene.name, gene.rse)
+  }
+}
+
+#=============================== results comparison
 getNrowsNcols = function(outputs_tissue, tumor){
   nrow = length(outputs_tissue)
   ncol = colnames(outputs_tissue[[1]]$all.jxns.info)
@@ -510,154 +645,6 @@ plotHeatmapSamples = function(){
   axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
 }
 
-# ----------------------------------------------------------------------------------
-# ------------------------ gene expression vs time graphs -------------------------
-# ----------------------------------------------------------------------------------
-
-findYlim = function(rse.gene.cytosk){
-  cpm = as.data.frame(t(rse.gene.cytosk@assays@data$cpm))
-  cpm$tissue = rse.gene.cytosk@colData$tissue
-  
-  a = by(cpm[, sapply(cpm, is.numeric)], cpm$tissue, 
-         function(x) as.data.frame(
-           apply(x, 2, quantile, probs = c(0.25, 0.75)), simplify = FALSE))
-  a = do.call(cbind, a)
-  max.up.quantile = max.col(a)[2]
-  cpm.max.quantiles = a[,max.up.quantile]
-  ylim.max = cpm.max.quantiles[2]+1.5*(cpm.max.quantiles[2]-cpm.max.quantiles[1])
-  c(0,ylim.max)
-}
-
-fitCurve = function(gene.id, age.group.specific, gene.tissue.counts, col){
-  # Fit a curve (example using loess)
-  model = loess(gene.tissue.counts[[gene.id]] ~ as.numeric(age.group.specific))
-  # Generate x-values for prediction
-  x_pred = seq(min(age.group.specific), max(age.group.specific), length.out = 100)
-  # Predict y-values using the model
-  y_pred = predict(model, newdata = data.frame(age.group.specific = x_pred))
-  # Add the curve to the plot
-  lines(x_pred, y_pred, col = col, lwd = 2)  # Adjust lwd for line thickness
-}
-
-createGrid = function(gene.rse){
-  numb.graphs = round(sqrt(length(gene.rse@rowRanges)))
-  numb.empty = numb.graphs**2 - length(gene.rse@rowRanges)
-  list(numb.graphs=numb.graphs, numb.empty=numb.empty)
-}
-
-setParams = function(gene.rse){
-  numb = createGrid(gene.rse)
-  par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
-      oma = c(5, 3, 1, 1),  # bottom, left, top, right.
-      mar = c(1, 2, 1, 1),  # bottom, left, top, right.
-      cex.axis = 0.7,  # Adjust the value as needed
-      bty="l")
-}
-
-setAxis = function(x.value, gene.name, gene.rse){
-  numb = createGrid(gene.rse)
-  print(x.value)
-  title(main = gene.name, line = 0.2, cex=0.8)  # Place title 3 lines above the plot
-  axis(1, at = 1:length(x.value), labels = FALSE)  # x-axis ticks
-  axis(2, labels = FALSE)  # y-axis ticks
-  
-  boxplot.coord = par("mfg")
-  # Add y-axis only for rightmost plots
-  if (boxplot.coord[2] == 1) {
-    axis(2, las = 1)  
-    mtext("CPM", side = 2, line = 2.4, las = 0, cex = par("cex.axis"))
-  }
-  # Add x-axis only for bottom plots
-  if ((boxplot.coord[1] == 5) |
-      (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
-    axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
-  }
-  grid(nx = NULL, ny = NULL)
-}
-
-
-plotScatterplotExpression = function(gene.rse, tissue.col){
-  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
-                                        c('gene_id', 'gene_name')]
-  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
-  tissues = unique(gene.rse@colData$tissue)
-  
-  for (gene.name in names(gene.ids.ordered)){
-    # Create a new plot for each gene
-    gene.id = gene.ids.ordered[gene.name]
-    plot(
-      0, 0,  # Placeholder values, will be replaced by actual data
-      xlim = c(1, length(order)),  # Set x-axis limits based on number of tissues
-      ylim = findYlim(rse.gene.cytosk),  # Set y-axis limits based on gene expression
-      type = "n",  # Start with an empty plot
-      xaxt = "n",  # Suppress default x-axis
-      yaxt = "n",  # Suppress default x-axis
-      # main = gene.rse@rowRanges[gene.rse@rowRanges$gene_id==gene.id,]$gene_name  # Set title to gene name
-    )
-    setAxis(names(order), gene.name, gene.rse)
-    
-    for (tissue in tissues){
-      samples = rownames(gene.rse@colData[gene.rse@colData$tissue==tissue,])
-      col = tissue.col[tissue]
-      age.group.specific = 
-        gene.rse@colData[gene.rse@colData$tissue==tissue,]$age_group_specific
-      age.group.specific = order[age.group.specific]
-      
-      gene.tissue.counts = as.data.frame(t(gene.rse@assays@data$cpm[gene.id,samples,drop=F]))
-      gene.tissue.counts$age.group.specific = age.group.specific
-      
-      points(age.group.specific, gene.tissue.counts[[gene.id]], col=col)
-      fitCurve(gene.id, age.group.specific, gene.tissue.counts, col=col)
-    }
-  }
-  # Plot the legend in the last cell
-  plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend('bottom', legend = tissues, col = tissue.col, pch = 16,
-         bty = "n", y.intersp = 0.6, xpd = TRUE,
-         inset = c(0, -0.2))
-}
-
-
-# boxplots
-plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
-  # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
-  # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
-  # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
-  
-  cpm = as.data.frame(t(gene.rse@assays@data$cpm))
-  cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
-  tissues = unique(gene.rse@colData$tissue)
-  exclude_indices <- grepl("brca|tumor|metastatic", tissues, ignore.case = TRUE)
-
-  # Subset the list
-  tissues = c(tissues[!exclude_indices], tissues[exclude_indices])
-  print('here')
-  print(tissues)
-  
-  
-  cpm$tissue = factor(cpm$tissue, levels = tissues)
-  print(cpm$tissue)
-  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
-                                        c('gene_id', 'gene_name')]
-  # make a named list
-  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
-  print(tissues)
-  # Create a vector of colors for each box in the plot
-  # Create boxplot
-  for (gene.name in names(gene.ids.ordered)){
-    gene.id = gene.ids.ordered[gene.name]
-    print(head(cpm[[gene.id]]))
-    print(head(cpm[['tissue']]))
-    
-    boxplot(cpm[[gene.id]] ~ cpm[["tissue"]],
-            xlab = xlab, ylab = "CPM",
-            ylim = findYlim(gene.rse),
-            las=2,
-            xaxt = "n", yaxt = "n", 
-            col=tissue.col[tissues])
-    setAxis(tissues, gene.name, gene.rse)
-  }
-}
 
 
 # plotHeatmapSamples()

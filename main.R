@@ -20,7 +20,8 @@ rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 
 # # ==================== gene expression
-# --------------------
+# --------------------gene expression vs age
+plotScatterplotExpression(rse.gene.cytosk)
 
 # #--------------------barplots
 # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
@@ -36,7 +37,7 @@ gtex.breast = readRDS('gtex.breast.rds')
 #                 "Metastatic" = "Metastatic BRCA")
 # tcga.brca.cpm@colData$tissue =
 #   unname(old_values[tcga.brca.cpm@colData$tcga.gdc_cases.samples.sample_type])
-saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
+# saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
 tcga.brca = readRDS('tcga.brca.cpm.rds')
 
 # Extract assay data
