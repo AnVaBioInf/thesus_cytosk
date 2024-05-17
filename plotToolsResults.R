@@ -184,15 +184,16 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
                  axis_cex, title_cex, point_label_cex, col=col)
   }
   if (tumor==TRUE){
-    # tool_names = names(col_tum)[grep("tum", names(col_tum), invert = TRUE)]
-    # addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
-    #           col=c(col_tum, 'lightgrey'), pch=16, pt.cex=2)
+    tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
+    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
+              col=c(col, 'lightgrey'), pch=16, pt.cex=2)
     title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)
   }
   else{
-    addLegend(labels=c(names(col), "not significant"),
-              col=c(col, 'lightgrey'), pch=16, pt.cex=2)
+    tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
+    addLegend(labels=c(tool_names, "not significant"),
+              col=c(col[2:length(col)], 'lightgrey'), pch=16, pt.cex=2)
     title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)  }
   thresholds_text = setTitles(thresholds)
