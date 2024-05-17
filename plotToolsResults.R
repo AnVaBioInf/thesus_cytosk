@@ -235,7 +235,11 @@ setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page
   layout(mat = layout_matrix)
 }
 
-addSpearmanCorr = function(x,y){
+addSpearmanCorr = function(df){
+  df = df[complete.cases(df),]
+  df = df[order(df[,1]),]
+  x = df[,1]
+  y = df[,2]
   result = cor.test(x, y, method = "spearman")
   corr.coef = round(result$estimate, digits=2)
   p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
@@ -243,7 +247,11 @@ addSpearmanCorr = function(x,y){
         col = "black", cex=0.7)
 }
 
-addRegressionCurve = function(x,y){
+addRegressionCurve = function(df){
+  df = df[complete.cases(df),]
+  df = df[order(df[,1]),]
+  x = df[,1]
+  y = df[,2]
   lm_model = lm(y ~ x)
   ci=predict.lm(lm_model,interval='confidence')
   c=col2rgb("red")
@@ -310,6 +318,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
     if(all(colnames(x) %in% names(ticks_dict))){
       axis(1, at=ticks_dict[[par.1]], labels = FALSE)
       axis(2, at=ticks_dict[[par.2]], labels = TRUE)
+      addRegressionCurve(x)
       if (par("mfg")[1]==par("mfg")[3]){
         axis(1, at=ticks_dict[[par.1]], labels = TRUE)
         axis(2, at=ticks_dict[[par.2]], labels = TRUE)
@@ -326,10 +335,7 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
     if (par("mfg")[2]==1) {
       mtext(side=2, text = tissue, line = 3, cex= 1)
     }
-    df = x[complete.cases(x),]
-    df = df[order(df[,1]),]
-    addSpearmanCorr(df[,1],df[,2])
-    addRegressionCurve(df[,1],df[,2])
+    addSpearmanCorr(x)
   })
 }
 
@@ -372,7 +378,7 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   dev.off()
   
   png("fdr_plot.png", width = 25, height = 30, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list, tumor, col.fdr.if, log='')
+  plotGraphs(outputs.prepr.list, tumor, col.fdr.if, log='xy')
   dev.off()
   
   
