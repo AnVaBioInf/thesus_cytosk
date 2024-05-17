@@ -155,9 +155,9 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
       }
     }
     # adding x axis names (tool metrix)
-    # if (par("mfg")[1]==par("mfg")[3]) {
-    #   mtext(side=1, text = , line = 2, cex= axis_cex)
-    # }
+    if (par("mfg")[1]==par("mfg")[3]) {
+      mtext(side=1, text = par.1, line = 2, cex= axis_cex)
+    }
     # adding tissue names to rows
     if (par("mfg")[2]==1) mtext(side=2, text = tissue, line = 3, cex= title_cex)  
 
@@ -166,7 +166,7 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
       
   })
 }
-?mtext
+
 plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='', 
                       show_all_xtick_labels = FALSE, 
                       add_regression_curve=TRUE, add_spearman_corr=TRUE,
