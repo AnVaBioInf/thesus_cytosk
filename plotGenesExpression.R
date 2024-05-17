@@ -1,4 +1,19 @@
-source("rseAnnotationPreprocessing.R")
+
+order = c("4wpc", "5wpc", "6wpc", "7wpc", "8wpc", "9wpc",  "10wpc", "11wpc", "12wpc", "13wpc",
+          "14wpc", "16wpc", "18wpc", "19wpc", "20wpc", "newborn", "infant", "toddler", "school", 
+          "teen", "25-35 y.o.", "36-45 y.o.", "46-45 y.o.", "56-55 y.o.") # setting new order
+order = setNames(1:length(order), order)
+
+# --- plotting
+tissue.col=c('Brain'="#3399CC",
+             'Cerebellum'="#33CCFF",
+             'Heart'="#CC0000",
+             'Kidney'="#CC9900",
+             'Liver'="#339900",
+             'Ovary'="#CC3399",
+             'Testis'="#FF6600",
+             'BRCA' = 'darkgrey',
+             'Breast normal'='white')
 
 # -----------------------------------------------------------------------------------
 # ------------------------- samples occurrence heatmap ------------------------------
@@ -33,6 +48,7 @@ plotHeatmapSamples = function(){
   axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
 }
 
+
 # ----------------------------------------------------------------------------------
 # ------------------------ gene expression vs time graphs -------------------------
 # ----------------------------------------------------------------------------------
@@ -42,8 +58,8 @@ findYlim = function(rse.gene.cytosk){
   cpm$tissue = rse.gene.cytosk@colData$tissue
   
   a = by(cpm[, sapply(cpm, is.numeric)], cpm$tissue, 
-        function(x) as.data.frame(
-          apply(x, 2, quantile, probs = c(0.25, 0.75)), simplify = FALSE))
+         function(x) as.data.frame(
+           apply(x, 2, quantile, probs = c(0.25, 0.75)), simplify = FALSE))
   a = do.call(cbind, a)
   max.up.quantile = max.col(a)[2]
   cpm.max.quantiles = a[,max.up.quantile]
@@ -71,7 +87,7 @@ createGrid = function(gene.rse){
 setParams = function(gene.rse){
   numb = createGrid(gene.rse)
   par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
-      oma = c(4, 3, 1, 1),  # bottom, left, top, right.
+      oma = c(5, 3, 1, 1),  # bottom, left, top, right.
       mar = c(1, 2, 1, 1),  # bottom, left, top, right.
       cex.axis = 0.7,  # Adjust the value as needed
       bty="l")
@@ -79,7 +95,6 @@ setParams = function(gene.rse){
 
 setAxis = function(x.value, gene.name, gene.rse){
   numb = createGrid(gene.rse)
-  
   title(main = gene.name, line = 0.2, cex=0.8)  # Place title 3 lines above the plot
   axis(1, at = 1:length(x.value), labels = FALSE)  # x-axis ticks
   axis(2, labels = FALSE)  # y-axis ticks
@@ -88,7 +103,7 @@ setAxis = function(x.value, gene.name, gene.rse){
   # Add y-axis only for rightmost plots
   if (boxplot.coord[2] == 1) {
     axis(2, las = 1)  
-    mtext("CPM", side = 2, line = 2.2, las = 0, cex = par("cex.axis"))
+    mtext("CPM", side = 2, line = 2.4, las = 0, cex = par("cex.axis"))
   }
   # Add x-axis only for bottom plots
   if ((boxplot.coord[1] == 5) |
@@ -98,10 +113,8 @@ setAxis = function(x.value, gene.name, gene.rse){
   grid(nx = NULL, ny = NULL)
 }
 
-
-plotScatterplotExpression = function(gene.rse, tissue.col){
+plotScatterplotExpression = function(gene.rse){
   setParams(gene.rse)
-  
   gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
                                         c('gene_id', 'gene_name')]
   gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
@@ -142,52 +155,40 @@ plotScatterplotExpression = function(gene.rse, tissue.col){
          inset = c(0, -0.2))
 }
 
-
 # boxplots
-plotBarplotExpression = function(gene.rse, tissue.col...){
+plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
   # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
   # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
   # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
-  
+  setParams(gene.rse)
   cpm = as.data.frame(t(gene.rse@assays@data$cpm))
-  cpm$tissue = gene.rse@colData$tissue
-  cpm$tissue = factor(cpm$tissue)
-  
+  cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
+  tissues = unique(gene.rse@colData$tissue)
+  exclude_indices <- grepl("brca|tumor|metastatic", tissues, ignore.case = TRUE)
+  tissues = c(tissues[!exclude_indices], tissues[exclude_indices])
+  cpm$tissue = factor(cpm$tissue, levels = tissues)
   gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
                                         c('gene_id', 'gene_name')]
+  # make a named list
   gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
-  tissues = unique(gene.rse@colData$tissue)
-  
+  # Create a vector of colors for each box in the plot
   # Create boxplot
   for (gene.name in names(gene.ids.ordered)){
     gene.id = gene.ids.ordered[gene.name]
-    boxplot(cpm[[gene.id]] ~ tissue, data = cpm,
-            xlab = "Tissue", ylab = "CPM",
-            ylim = findYlim(rse.gene.cytosk),
+    boxplot(cpm[[gene.id]] ~ cpm[["tissue"]],
+            xlab = xlab, ylab = "CPM",
+            ylim = findYlim(gene.rse),
+            las=2,
             xaxt = "n", yaxt = "n", 
             col=tissue.col[tissues])
     setAxis(tissues, gene.name, gene.rse)
   }
 }
 
-
-order = c("4wpc", "5wpc", "6wpc", "7wpc", "8wpc", "9wpc",  "10wpc", "11wpc", "12wpc", "13wpc",
-          "14wpc", "16wpc", "18wpc", "19wpc", "20wpc", "newborn", "infant", "toddler", "school", 
-          "teen", "25-35 y.o.", "36-45 y.o.", "46-45 y.o.", "56-55 y.o.") # setting new order
-order = setNames(1:length(order), order)
-
-# --- plotting
-tissue.col=c(Brain="#3399CC",
-             Cerebellum="#33CCFF",
-             Heart="#CC0000",
-             Kidney="#CC9900",
-             Liver="#339900",
-             Ovary="#CC3399",
-             Testis="#FF6600")
-
-plotHeatmapSamples()
-plotScatterplotExpression(rse.gene.cytosk, tissue.col)
-plotBarplotExpression(rse.gene.cytosk, tissue.col)
+# plotHeatmapSamples()
+# 
+# plotScatterplotExpression(rse.gene.cytosk, tissue.col)
+# plotBarplotExpression(rse.gene.cytosk, tissue.col)
 
 # gene.ids.ordered = gene.info[order(gene.info$gene_name),]$gene_id
 # tissues = unique(gene.rse@colData$tissue)
@@ -196,4 +197,8 @@ plotBarplotExpression(rse.gene.cytosk, tissue.col)
 # cpm = as.data.frame(t(gene.rse@assays@data$cpm))
 # cpm$tissue = gene.rse@colData$tissue
 # cpm$tissue = factor(cpm$tissue)
+
+
+
+
 

@@ -6,210 +6,10 @@ library(gridExtra)
 library(eulerr)
 library(RColorBrewer)
 
-order = c("4wpc", "5wpc", "6wpc", "7wpc", "8wpc", "9wpc",  "10wpc", "11wpc", "12wpc", "13wpc",
-          "14wpc", "16wpc", "18wpc", "19wpc", "20wpc", "newborn", "infant", "toddler", "school", 
-          "teen", "25-35 y.o.", "36-45 y.o.", "46-45 y.o.", "56-55 y.o.") # setting new order
-order = setNames(1:length(order), order)
-
-# --- plotting
-tissue.col=c('Brain'="#3399CC",
-             'Cerebellum'="#33CCFF",
-             'Heart'="#CC0000",
-             'Kidney'="#CC9900",
-             'Liver'="#339900",
-             'Ovary'="#CC3399",
-             'Testis'="#FF6600",
-             'BRCA' = 'darkgrey',
-             'Breast normal'='white')
-
-
-# ----------------------------------------------------------------------------------
-# ------------------------ gene expression vs time graphs -------------------------
-# ----------------------------------------------------------------------------------
-
-findYlim = function(rse.gene.cytosk){
-  cpm = as.data.frame(t(rse.gene.cytosk@assays@data$cpm))
-  cpm$tissue = rse.gene.cytosk@colData$tissue
-  
-  a = by(cpm[, sapply(cpm, is.numeric)], cpm$tissue, 
-         function(x) as.data.frame(
-           apply(x, 2, quantile, probs = c(0.25, 0.75)), simplify = FALSE))
-  a = do.call(cbind, a)
-  max.up.quantile = max.col(a)[2]
-  cpm.max.quantiles = a[,max.up.quantile]
-  ylim.max = cpm.max.quantiles[2]+1.5*(cpm.max.quantiles[2]-cpm.max.quantiles[1])
-  c(0,ylim.max)
-}
-
-fitCurve = function(gene.id, age.group.specific, gene.tissue.counts, col){
-  # Fit a curve (example using loess)
-  model = loess(gene.tissue.counts[[gene.id]] ~ as.numeric(age.group.specific))
-  # Generate x-values for prediction
-  x_pred = seq(min(age.group.specific), max(age.group.specific), length.out = 100)
-  # Predict y-values using the model
-  y_pred = predict(model, newdata = data.frame(age.group.specific = x_pred))
-  # Add the curve to the plot
-  lines(x_pred, y_pred, col = col, lwd = 2)  # Adjust lwd for line thickness
-}
-
-createGrid = function(gene.rse){
-  numb.graphs = round(sqrt(length(gene.rse@rowRanges)))
-  numb.empty = numb.graphs**2 - length(gene.rse@rowRanges)
-  list(numb.graphs=numb.graphs, numb.empty=numb.empty)
-}
-
-setParams = function(gene.rse){
-  numb = createGrid(gene.rse)
-  par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
-      oma = c(5, 3, 1, 1),  # bottom, left, top, right.
-      mar = c(1, 2, 1, 1),  # bottom, left, top, right.
-      cex.axis = 0.7,  # Adjust the value as needed
-      bty="l")
-}
-
-setAxis = function(x.value, gene.name, gene.rse){
-  numb = createGrid(gene.rse)
-  title(main = gene.name, line = 0.2, cex=0.8)  # Place title 3 lines above the plot
-  axis(1, at = 1:length(x.value), labels = FALSE)  # x-axis ticks
-  axis(2, labels = FALSE)  # y-axis ticks
-  
-  boxplot.coord = par("mfg")
-  # Add y-axis only for rightmost plots
-  if (boxplot.coord[2] == 1) {
-    axis(2, las = 1)  
-    mtext("CPM", side = 2, line = 2.4, las = 0, cex = par("cex.axis"))
-  }
-  # Add x-axis only for bottom plots
-  if ((boxplot.coord[1] == 5) |
-      (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
-    axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
-  }
-  grid(nx = NULL, ny = NULL)
-}
-
-plotScatterplotExpression = function(gene.rse){
-  setParams(gene.rse)
-  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
-                                        c('gene_id', 'gene_name')]
-  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
-  tissues = unique(gene.rse@colData$tissue)
-  
-  for (gene.name in names(gene.ids.ordered)){
-    # Create a new plot for each gene
-    gene.id = gene.ids.ordered[gene.name]
-    plot(
-      0, 0,  # Placeholder values, will be replaced by actual data
-      xlim = c(1, length(order)),  # Set x-axis limits based on number of tissues
-      ylim = findYlim(rse.gene.cytosk),  # Set y-axis limits based on gene expression
-      type = "n",  # Start with an empty plot
-      xaxt = "n",  # Suppress default x-axis
-      yaxt = "n",  # Suppress default x-axis
-      # main = gene.rse@rowRanges[gene.rse@rowRanges$gene_id==gene.id,]$gene_name  # Set title to gene name
-    )
-    setAxis(names(order), gene.name, gene.rse)
-    
-    for (tissue in tissues){
-      samples = rownames(gene.rse@colData[gene.rse@colData$tissue==tissue,])
-      col = tissue.col[tissue]
-      age.group.specific = 
-        gene.rse@colData[gene.rse@colData$tissue==tissue,]$age_group_specific
-      age.group.specific = order[age.group.specific]
-      
-      gene.tissue.counts = as.data.frame(t(gene.rse@assays@data$cpm[gene.id,samples,drop=F]))
-      gene.tissue.counts$age.group.specific = age.group.specific
-      
-      points(age.group.specific, gene.tissue.counts[[gene.id]], col=col)
-      fitCurve(gene.id, age.group.specific, gene.tissue.counts, col=col)
-    }
-  }
-  # Plot the legend in the last cell
-  plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend('bottom', legend = tissues, col = tissue.col, pch = 16,
-         bty = "n", y.intersp = 0.6, xpd = TRUE,
-         inset = c(0, -0.2))
-}
-
-# boxplots
-plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
-  # Box: The box represents the interquartile range (IQR), which contains the middle 50% of the data. The bottom and top edges of the box correspond to the first quartile (Q1) and third quartile (Q3), respectively.
-  # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
-  # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
-  setParams(gene.rse)
-  cpm = as.data.frame(t(gene.rse@assays@data$cpm))
-  cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
-  tissues = unique(gene.rse@colData$tissue)
-  exclude_indices <- grepl("brca|tumor|metastatic", tissues, ignore.case = TRUE)
-  tissues = c(tissues[!exclude_indices], tissues[exclude_indices])
-  cpm$tissue = factor(cpm$tissue, levels = tissues)
-  gene.ids.ordered = gene.rse@rowRanges[order(gene.rse@rowRanges$gene_name),
-                                        c('gene_id', 'gene_name')]
-  # make a named list
-  gene.ids.ordered = setNames(gene.ids.ordered$gene_id, gene.ids.ordered$gene_name)
-  # Create a vector of colors for each box in the plot
-  # Create boxplot
-  for (gene.name in names(gene.ids.ordered)){
-    gene.id = gene.ids.ordered[gene.name]
-    boxplot(cpm[[gene.id]] ~ cpm[["tissue"]],
-            xlab = xlab, ylab = "CPM",
-            ylim = findYlim(gene.rse),
-            las=2,
-            xaxt = "n", yaxt = "n", 
-            col=tissue.col[tissues])
-    setAxis(tissues, gene.name, gene.rse)
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
 
 #==================================================================================
 #=============================== results comparison================================
 #==================================================================================
-x_lim_dict = list('dPSI_sajr' = c(-1,1), 
-                  'dPSI_gtex2tum' = c(-1,1),
-                  'dPSI_norm2tum' = c(-1,1),
-                  'logFC_dje' = c(-4,4), 
-                  'abund_change_diego' = c(3,-3))
-
-ticks_dict = list('dPSI_sajr' = seq(-1,1,by=0.5), 
-                  'dPSI_gtex2tum' = seq(-1,1,by=0.5), 
-                  'dPSI_norm2tum' = seq(-1,1,by=0.5), 
-                  'logFC_dje'=seq(-4,4,by=2), 
-                  'abund_change_diego' = seq(-3,3,by=1.5))
-
-axis_names_dict = c('dPSI_sajr' = 'dPSI sajr', 
-                    'dPSI_gtex2tum' = 'dPSI gtex2tum',
-                    'dPSI_norm2tum' = 'dPSI norm2tum',
-                    'logFC_dje' = 'logFC dje', 
-                    'abund_change_diego' = 'AC diego')
-
-col = c(sajr = "#984EA3",
-        dje = "orange3",
-        diego = "#5DADE2",
-        'dje&sajr' = "#FF9900",
-        'diego&sajr' = '#E8FF00',
-        'diego&dje' = '#F781BF',
-        'diego&dje&sajr' = "#4DAF4A")
-
-col_tum = c('sajr.norm.tumor' = '#979A9A',
-            sajr = "#8F00FF",
-            dje = "darkorange4",
-            diego = "deepskyblue",
-            'dje&sajr' = "#FF5733",
-            'diego&sajr' = '#FFFF00',
-            'diego&dje' = '#FF00FF',
-            'diego&dje&sajr' = "#7FFF00")
-
-
 getNrowsNcols = function(ncol,nrow){
   # Create the plot matrix
   total_numb_of_plots = nrow*ncol
@@ -235,6 +35,24 @@ setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page
   layout(mat = layout_matrix)
 }
 
+setTitles = function(thresholds){
+  thresholds_text = paste0('Output filtration thresholds. logFC >= ', thresholds$logfc_threshold,
+                           ', dPSI >= ', thresholds$dpsi_threshold,
+                           ', abundance change >= ', abund_change_threshold,
+                           ', FDR <= ', fdr_threshold)
+  thresholds_text
+}
+
+addLegend = function(labels, pch, col, pt.cex=1){
+  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+  legend('center',  # Adjust inset as needed
+         bty='n', xpd=TRUE,
+         legend = labels,
+         col = col, pch = pch, # Use filled circle and star 
+         pt.cex=pt.cex, cex=1,
+         horiz = FALSE, ncol=1)
+}
+
 addSpearmanCorr = function(df){
   df = df[complete.cases(df),]
   df = df[order(df[,1]),]
@@ -254,12 +72,12 @@ addRegressionCurve = function(df){
   y = df[,2]
   lm_model = lm(y ~ x)
   ci=predict.lm(lm_model,interval='confidence')
-  c=col2rgb("red")
+  c=col2rgb("#8b0000") 
   polygon(c(x,rev(x)),
           c(ci[,2],rev(ci[,3])),
           border=NA,
           col=rgb(c[1],c[2],c[3],0.2*255,maxColorValue = 255))
-  lines(x, ci[,1], col = "red", lwd = 2)
+  lines(x, ci[,1], col = '#8b0000', lwd = 2)
 }
 
 getColumnCombinations = function(df, tumor){
@@ -278,107 +96,133 @@ getColumnCombinations = function(df, tumor){
   comb
 }
 
-makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
-  comb = getColumnCombinations(all.jxns[,tf], tumor)
+# calculate corr only between significant values
+makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log, 
+                        show_all_xtick_labels, 
+                        add_regression_curve, add_spearman_corr,
+                        axis_cex, title_cex, point_label_cex, col){
+  
+  lim_dict = list('dPSI' = list(lim = c(-1,1), ticks =  seq(-1,1,by=0.5)),
+                  'logFC' = list(lim=c(-4,4), ticks = seq(-4,4,by=2)),
+                  'abund_change' = list(lim=c(2,-2), ticks = seq(-2,2,by=1)),
+                  'FDR'=list(lim=NULL))
+  
+  if (show_all_xtick_labels) par(mar = (c(4, 4, 0, 0) + 0.1))
+  comb = getColumnCombinations(all.jxns[,cols.tf], tumor)
   lapply(comb, function(x) {
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
+    xlims = lim_dict[sapply(names(lim_dict), function(tool) grepl(tool, par.1))][[1]]
+    ylims = lim_dict[sapply(names(lim_dict), function(tool) grepl(tool, par.2))][[1]]
+    
     plot(x,
          xaxt = "n", yaxt='n',    # Suppress x-axis ticks and labels
-         xlab = '', ylab = axis_names_dict[par.2],
+         xlab = '', ylab = gsub("_", " ", par.2),
          log=log,
-         xlim=x_lim_dict[[par.1]], ylim=x_lim_dict[[par.2]],
+         xlim=xlims$lim, ylim=ylims$lim,
          type = 'p', col = 'lightgrey',
-         pch = 16 , cex = 0.7, lwd = 1,
+         pch = 16 , cex = axis_cex, lwd = 1,
          bty = "L")
     # points
-    if (tumor) col=col_tum
-    for (tool in names(col)){
+    for (tool in names(intersections)){
       sign.jxns.tool = which(all.jxns$junction_id_sajr %in% intersections[[tool]])
       points(x[sign.jxns.tool,], col=col[tool], pch = 16, cex=1.1)
-      
       # gene labeles
       if (tool=='diego&dje&sajr'){
+        # removing junctions with l/r end
         all = all.jxns[sign.jxns.tool,]
         all = all[order(all$dPSI_sajr),]
         all = all[!duplicated(all$junction_id), ]
-
-        jxns = x[rownames(all),]
-
-        if (nrow(jxns)==0) next
+        sign.jxns = x[rownames(all),]
+        
+        if (nrow(sign.jxns)==0) next
         labels = all$gene_name
         # Add text labels to the points
-        text(jxns[, par.1], jxns[, par.2],
-             labels = labels, pos = c(2,4), cex = 0.8, font = 2,
+        text(sign.jxns[, par.1], sign.jxns[, par.2],
+             labels = labels, pos = c(2,4), cex = point_label_cex, font = 2,
              xpd=TRUE)
         }
     }
-    
-    # tick axis + titles
-    if(all(colnames(x) %in% names(ticks_dict))){
-      axis(1, at=ticks_dict[[par.1]], labels = FALSE)
-      axis(2, at=ticks_dict[[par.2]], labels = TRUE)
-      addRegressionCurve(x)
-      if (par("mfg")[1]==par("mfg")[3]){
-        axis(1, at=ticks_dict[[par.1]], labels = TRUE)
-        axis(2, at=ticks_dict[[par.2]], labels = TRUE)
-      }
-    } else {
+    if (show_all_xtick_labels){
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
+    } else {
+      axis(1, at=xlims$ticks, labels = FALSE)
+      axis(2, at=ylims$ticks, labels = TRUE)
+      if (par("mfg")[1]==par("mfg")[3]){
+        axis(1, at=xlims$ticks, labels = TRUE)
+        axis(2, at=ylims$ticks, labels = TRUE)
+      }
     }
     # adding x axis names (tool metrix)
     if (par("mfg")[1]==par("mfg")[3]) {
-      mtext(side=1, text = axis_names_dict[par.1], line = 2, cex= 0.7)
+      mtext(side=1, text = axis_names_dict[par.1], line = 2, cex= axis_cex)
     }
     # adding tissue names to rows
-    if (par("mfg")[2]==1) {
-      mtext(side=2, text = tissue, line = 3, cex= 1)
-    }
-    addSpearmanCorr(x)
+    if (par("mfg")[2]==1) mtext(side=2, text = tissue, line = 3, cex= title_cex)  
+
+    if (add_regression_curve) addRegressionCurve(x)
+    if (add_spearman_corr) addSpearmanCorr(x)
+      
   })
 }
 
-plotGraphs = function(outputs.prepr.list, tumor, cols, log=''){
+plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='', 
+                      show_all_xtick_labels = FALSE, 
+                      add_regression_curve=TRUE, add_spearman_corr=TRUE,
+                      axis_cex = 0.7, title_cex=1, point_label_cex=0.7, thresholds=''){
   nrow = length(outputs.prepr.list)
-  ncol = sum(cols)
-  
+  ncol = ifelse(tumor, sum(cols.tf)-1, sum(cols.tf))
   layout_matrix = getNrowsNcols(ncol,nrow)
   setPlotParameters(layout_matrix = layout_matrix)
   
   for (tissue in names(outputs.prepr.list)){
-    intersect = Reduce(append, outputs.prepr.list[[tissue]]$sign.jxns.info.list$intersections)
-    makeDotplots(cols, outputs.prepr.list[[tissue]]$all.jxns.info, 
-                 intersect, tissue=tissue, tumor=tumor, log)
+    intersections = Reduce(append, outputs.prepr.list[[tissue]]$sign.jxns.info.list$intersections)
+    makeDotplots(outputs.prepr.list[[tissue]]$all.jxns.info, 
+                 intersections, cols.tf, tissue, tumor, log, show_all_xtick_labels, 
+                 add_regression_curve, add_spearman_corr,
+                 axis_cex, title_cex, point_label_cex, col=col)
   }
   if (tumor==TRUE){
     tool_names = names(col_tum)[grep("tum", names(col_tum), invert = TRUE)]
-    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"), 
+    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
               col=c(col_tum, 'lightgrey'), pch=16, pt.cex=2)
     title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
-    mtext(side=3, text = title, outer=TRUE, cex= 0.7, line=1)
+    mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)
   }
   else{
-    addLegend(labels=c(names(col), "not significant"), 
+    addLegend(labels=c(names(col), "not significant"),
               col=c(col, 'lightgrey'), pch=16, pt.cex=2)
     title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
-    mtext(side=3, text = title, outer=TRUE, cex= 0.9, line=1)  }
+    mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)  }
   thresholds_text = setTitles(thresholds)
-  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=2)
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= title_cex, line=2)
 }
 
 
-plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds){
+plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds,
+                            metrics_png='metrics_plot.png', fdr_png='fdr_plot.png'){
+  col = c('sajr.norm.tumor' = '#979A9A',
+          sajr = "#984EA3",
+          dje = "orange3",
+          diego = "#5DADE2",
+          'dje&sajr' = "#FF9900",
+          'diego&sajr' = '#E8FF00',
+          'diego&dje' = '#F781BF',
+          'diego&dje&sajr' = "#4DAF4A")
   
-  col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
+  col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   
-  png("metrics_plot.png", width = 25, height = 30, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list, tumor, col.metrics.if)
+  png(metrics_png, width = 25, height = 30, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list=outputs.prepr.list, 
+             cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
   dev.off()
   
-  png("fdr_plot.png", width = 25, height = 30, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list, tumor, col.fdr.if, log='xy')
+  png(fdr_png, width = 25, height = 30, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list=outputs.prepr.list, 
+             cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
+             add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
   dev.off()
   
   
@@ -387,29 +231,6 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   #   plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text)
   # }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 plotEulerDiagram = function(outputs_tissue, title, thresholds_text){
@@ -456,59 +277,6 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
   rc = ceiling(sqrt(length(outputs_tissue)))
   do.call(grid.arrange, c(p, ncol = 2, top = title, bottom = thresholds_text))
 }
-
-setTitles = function(thresholds){
-  thresholds_text = paste0('Output filtration thresholds. logFC >= ', thresholds$logfc_threshold,
-                           ', dPSI >= ', thresholds$dpsi_threshold,
-                           ', abundance change >= ', abund_change_threshold,
-                           ', FDR <= ', fdr_threshold)
-  thresholds_text
-}
-
-addLegend = function(labels, pch, col, pt.cex=1){
-  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend('center',  # Adjust inset as needed
-         bty='n', xpd=TRUE,
-         legend = labels,
-         col = col, pch = pch, # Use filled circle and star 
-         pt.cex=pt.cex, cex=1,
-         horiz = FALSE, ncol=1)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #===========fisher
@@ -575,192 +343,4 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
   
 }
 
-
-
-
-#============================================
-#=================covs
-#====================================
-
-set.colors = function(jxn, covs){
-  # colors
-  cols = ifelse(sub(':.$', '', rownames(covs$juncs)) %in% jxn,
-                'orange2', '#377EB8')
-  covs$juncs$cols = cols
-  covs
-}
-
-
-#' Plots read coverage
-#'
-#' @param r read coverage; output of \code{\link{getReadCoverage}}
-#' @param min.junc.cov numeric, plots only junctions (introns) with coverage not less than \code{min.junc.cov}
-#' @param min.junc.cov.f numeric, plots only junctions (introns) with coverage not less than \code{min.junc.cov.f} of maximal coverage in the region
-#' @param plot.junc.only.within logical, plot only juction with both ends within the region, FALSE plots all junctions with at least one end within region. NA plot all junctions overlapping the region.
-#' @param reverse reverse x coordinates
-#' @param junc.col colour for junction line. Individual color could be specified for each junction
-#' @param junc.lwd line width for jucntion line
-#' @param ... other parameters for plot function
-#'
-#' @export
-
-plotReadCov = function(condition.cov.list,
-                       min.junc.cov=0,
-                       min.junc.cov.f=0,
-                       plot.junc.only.within=FALSE,
-                       xlim,
-                       reverse=FALSE,
-                       #    junc.col='blue',
-                       junc.lwd=3,
-                       bottom.mar=0,...){
-  
-  condition.cov.list = filter.data(condition.cov.list, xlim, min.junc.cov,plot.junc.only.within, min.junc.cov.f)
-  
-  # create a graph
-  plot(condition.cov.list$x,
-       condition.cov.list$cov,
-       t='n',
-       xlab = 'Chromosome coordinate',
-       ylab = 'Coverage',
-       cex.axis = 0.7,
-       cex.lab = 0.9,
-       xlim=c(xlim[1]-500, xlim[2]+500),
-       ...)
-  
-  # plot verticale lines
-  polygon(condition.cov.list$x,
-          condition.cov.list$cov,
-          col = 'gray',
-          border=NA)
-  
-  if(nrow(condition.cov.list$juncs)>0) {
-    for(i in 1:nrow(condition.cov.list$juncs)){
-      plotArc(condition.cov.list$juncs$start[i],
-              condition.cov.list$juncs$end[i],
-              condition.cov.list$juncs$counts[i],
-              col=condition.cov.list$juncs$cols[i],
-              lwd=junc.lwd)
-    }
-  }
-}
-
-#' Plots parabolic arc
-#'
-#' @param from,to x coordinates of arc
-#' @param top highest point of arc
-#' @param n number of points
-#' @param y.base bottom coordinate of arc
-#' @param ... other parameters of lines functoin
-plotArc = function(from,to,top,n=100,y.base=0,...){
-  len = to - from
-  x = seq(from=0,to=len,length.out = n)
-  y = x*4*top/len - x^2*(4*top/len^2) 
-  # This equation represents a downward-facing parabola that starts at 0, reaches its peak at top, and ends at 0 again.
-  lines(x+from,y+y.base,...)
-}
-
-# for every gene
-runJunxtionPlot = function(common_sign_jxns){
-  for (jxn in unique(common_sign_jxns$junction_id)){
-  # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
-  # selecting significant junctions for the GENE in both, development and cancer
-  sign.jxn.df = common_sign_jxns[common_sign_jxns$junction_id==jxn,]
-  gene = unique(sign.jxn.df$gene_name)
-  par(mfrow = c(min(length(unique(sign.jxn.df$tissue)),4),2), bty='n')
-  # for every tissue where any of selected junctions are significant
-  for (tissue in (unique(sign.jxn.df$tissue))){ 
-    covs.summed.gene = prepareCovs(gene,rse.jxn.cytosk,tissue)
-    
-    fetus.covs.summed.gene =  covs.summed.gene[['fetus.covs.summed.gene']]
-    adult.covs.summed.gene = covs.summed.gene[['adult.covs.summed.gene']]
-    
-    gene.region.coords = strsplit(jxn,'[:-]')
-    gene.region.coords = as.integer(c(gene.region.coords[[1]][2], gene.region.coords[[1]][3]))
-    gene.region.coords = c(gene.region.coords[1], gene.region.coords[2])
-    
-    fetus.covs.summed.gene = set.colors(jxn, fetus.covs.summed.gene)
-    adult.covs.summed.gene = set.colors(jxn, adult.covs.summed.gene)
-    
-    sign.jxn.tissue = sign.jxn.df[sign.jxn.df$tissue==tissue,]
-    
-    text = paste(paste(tissue,gene, jxn), " \n(",
-                 'dPSI.sajr=',round(sign.jxn.tissue$dPSI_sajr, digits=2), 
-                 ', FDR.sajr=', round(sign.jxn.tissue$FDR_sajr, digits=2),
-                 ', logFC.dje=', round(sign.jxn.tissue$logFC_dje, digits=2),
-                 ', FDR.dje=', round(sign.jxn.tissue$FDR_dje, digits=2),
-                 ', sign.diego=', round(sign.jxn.tissue$abund_change_diego, digits=2),
-                 ', FDR.diego=', round(sign.jxn.tissue$FDR_diego, digits=2), "\n",
-                 ' dPSI_gtex2tum =',round(sign.jxn.tissue$dPSI_gtex2tum, digits=2),
-                 ', FDR_gtex2tum =',round(sign.jxn.tissue$FDR_gtex2tum, digits=2),
-                 ', dPSI_norm2tum =',round(sign.jxn.tissue$dPSI_norm2tum, digits=2),
-                 ', FDR_norm2tum =',round(sign.jxn.tissue$FDR_norm2tum, digits=2), ")")
-    
-    plotReadCov(fetus.covs.summed.gene,
-                junc.col = fetus.covs.summed.gene$cols,
-                xlim=gene.region.coords,
-                plot.junc.only.within = F,
-                min.junc.cov.f = 0.05,
-                sub='Before birth'
-    )
-    mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
-    
-    plotReadCov(adult.covs.summed.gene,
-                junc.col = fetus.covs.summed.gene$cols,
-                xlim=gene.region.coords,
-                plot.junc.only.within = F,
-                min.junc.cov.f = 0.05,
-                sub='After birth')
-    }
-  }
-}
-
-
-##################### gene expression
-# -----------------------------------------------------------------------------------
-# ------------------------- samples occurrence heatmap ------------------------------
-# -----------------------------------------------------------------------------------
-plotHeatmapSamples = function(){
-  par(oma = c(2, 2, 0, 0))  # bottom, left, top, right.
-  # occurrence of samples
-  sample_occurance = as.data.frame.matrix(
-    table(rse.gene.cytosk@colData$tissue, rse.gene.cytosk@colData$age_group_specific) )
-  # The table() function takes these two vectors as input and creates a contingency table. This table shows the frequency distribution of cells across different combinations of tissue types and age groups.
-  sample_occurance = sample_occurance[,names(order)]
-  sample_occurance = t(sample_occurance)
-  # # making a column for tissues
-  # sample_occurance$tissue = rownames(sample_occurance)
-  # sample_occurance
-  
-  # Set color palette (e.g., blue to red)
-  colors <- colorRampPalette(c("white", "red"))(256)
-  
-  # Create the heatmap
-  image(1:ncol(sample_occurance), 1:nrow(sample_occurance), 
-        t(sample_occurance), col = colors, axes = FALSE, xlab = "", ylab = "")
-  
-  # Add text labels with data values
-  text(x = col(sample_occurance), 
-       y = row(sample_occurance), 
-       labels = sample_occurance, 
-       col = "black")
-  
-  # Add axes and labels
-  axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
-  axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
-}
-
-
-
-# plotHeatmapSamples()
-# 
-# plotScatterplotExpression(rse.gene.cytosk, tissue.col)
-# plotBarplotExpression(rse.gene.cytosk, tissue.col)
-
-# gene.ids.ordered = gene.info[order(gene.info$gene_name),]$gene_id
-# tissues = unique(gene.rse@colData$tissue)
-# ylim=findYlim(rse.gene.cytosk)
-# 
-# cpm = as.data.frame(t(gene.rse@assays@data$cpm))
-# cpm$tissue = gene.rse@colData$tissue
-# cpm$tissue = factor(cpm$tissue)
 

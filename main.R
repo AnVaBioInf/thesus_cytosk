@@ -1,6 +1,7 @@
 source("downloadRseData.R")
 source("findSignificantEvents.R")
 source('plotToolsResults.R')
+source('plotGenesExpression.R')
 library(SummarizedExperiment)
 
 
@@ -72,7 +73,8 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # }
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
+plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds,
+                 metrics_png='metrics_plot_dev.png', fdr_png='fdr_plot_dev.png')
 
 
 #================================= tumor
@@ -101,18 +103,10 @@ saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
 outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
 outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
 
-
-plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum',
-                 thresholds = list(logfc_threshold=logfc_threshold,
-                                   dpsi_threshold=dpsi_threshold,
-                                   abund_change_threshold=abund_change_threshold,
-                                   fdr_threshold=fdr_threshold))
-
-plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum',
-                 thresholds = list(logfc_threshold=logfc_threshold,
-                                   dpsi_threshold=dpsi_threshold,
-                                   abund_change_threshold=abund_change_threshold,
-                                   fdr_threshold=fdr_threshold))
+plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum', thresholds = thresholds,
+                 metrics_png='metrics_plot_gtex2tum.png', fdr_png='fdr_plot_gtex2tum.png')
+plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', thresholds = thresholds,
+                 metrics_png='metrics_plot_norm2tum.png', fdr_png='fdr_plot_norm2tum.png')
 
 
 

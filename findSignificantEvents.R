@@ -356,6 +356,7 @@ mergeOutputs = function(output.list, add_external_data, file){
     tum = downloadExternalOutputs(file.name=file)
     output.merged.df = merge(output.merged.df, tum, by = "junction_id_sajr", all = TRUE)
   }
+  
   print('Finished merging outputs')
   return(output.merged.df) 
 }
