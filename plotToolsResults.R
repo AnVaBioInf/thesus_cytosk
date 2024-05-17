@@ -222,7 +222,7 @@ getNrowsNcols = function(ncol,nrow){
 setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page_margin=2, right_page_margin=3,
                               bottom_plot_margin=1.5, left_plot_margin=4, top_plot_margin=0, right_plot_margin=0,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
-                              font_size = 0.7, tick_length=-0.4,
+                              font_size = 0.9, tick_length=-0.4,
                               layout_matrix, pty="s") {
   plot.new()
   par(tcl=tick_length, # -0.2 specifies the length of the ticks as a fraction of the height of a line of text. A negative value means the ticks will point inwards towards the plot, while a positive value would make them point outwards.
