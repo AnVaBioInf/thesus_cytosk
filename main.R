@@ -9,6 +9,8 @@ dpsi_threshold=0.1
 abund_change_threshold=1
 fdr_threshold=0.05
 
+?text
+
 thresholds = list(logfc_threshold=logfc_threshold,
                    dpsi_threshold=dpsi_threshold,
                    abund_change_threshold=abund_change_threshold,
@@ -71,7 +73,6 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
 plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
-
 
 
 #================================= tumor

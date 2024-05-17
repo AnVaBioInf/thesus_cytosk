@@ -240,7 +240,7 @@ addSpearmanCorr = function(x,y){
   corr.coef = round(result$estimate, digits=2)
   p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
   mtext(paste0('rho = ', corr.coef,  ', p.val ', p.value), side=3,
-        col = "black", cex=0.5)
+        col = "black", cex=0.7)
 }
 
 addRegressionCurve = function(x,y){
@@ -251,7 +251,7 @@ addRegressionCurve = function(x,y){
           c(ci[,2],rev(ci[,3])),
           border=NA,
           col=rgb(c[1],c[2],c[3],0.2*255,maxColorValue = 255))
-  lines(x, ci[,1], col = "red", lwd = 1)
+  lines(x, ci[,1], col = "red", lwd = 2)
 }
 
 getColumnCombinations = function(df, tumor){
@@ -288,15 +288,20 @@ makeDotplots = function(tf, all.jxns, intersections, tissue, tumor, log = ''){
     for (tool in names(col)){
       sign.jxns.tool = which(all.jxns$junction_id_sajr %in% intersections[[tool]])
       points(x[sign.jxns.tool,], col=col[tool], pch = 16, cex=1.1)
+      
       # gene labeles
       if (tool=='diego&dje&sajr'){
-        jxns = x[sign.jxns.tool,]
+        all = all.jxns[sign.jxns.tool,]
+        all = all[order(all$dPSI_sajr),]
+        all = all[!duplicated(all$junction_id), ]
+
+        jxns = x[rownames(all),]
+
         if (nrow(jxns)==0) next
-        print(jxns)
-        labels = all.jxns[sign.jxns.tool,'gene_name']
+        labels = all$gene_name
         # Add text labels to the points
         text(jxns[, par.1], jxns[, par.2],
-             labels = labels, pos = c(2,4), cex = 0.7, font = 2,
+             labels = labels, pos = c(2,4), cex = 0.8, font = 2,
              xpd=TRUE)
         }
     }
@@ -362,12 +367,12 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   
-  png("metrics_plot.png", width = 30, height = 30, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list, tumor, col.fdr.if)
+  png("metrics_plot.png", width = 25, height = 30, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list, tumor, col.metrics.if)
   dev.off()
   
-  png("fdr_plot.png", width = 30, height = 30, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list, tumor, col.metrics.if, log='')
+  png("fdr_plot.png", width = 25, height = 30, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list, tumor, col.fdr.if, log='')
   dev.off()
   
   
