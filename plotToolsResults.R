@@ -20,7 +20,7 @@ getNrowsNcols = function(ncol,nrow){
 }
 
 setPlotParameters <- function(bottom_page_margin=3, left_page_margin=2, top_page_margin=2, right_page_margin=3,
-                              bottom_plot_margin=1.5, left_plot_margin=4, top_plot_margin=0, right_plot_margin=0,
+                              bottom_plot_margin=1.5, left_plot_margin=4, top_plot_margin=0, right_plot_margin=1,
                               title_axis_distance=2, axis_label_distance=0.7, axis_line_distance=0,
                               font_size = 0.9, tick_length=-0.4,
                               layout_matrix, pty="s") {
@@ -155,9 +155,9 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
       }
     }
     # adding x axis names (tool metrix)
-    if (par("mfg")[1]==par("mfg")[3]) {
-      mtext(side=1, text = axis_names_dict[par.1], line = 2, cex= axis_cex)
-    }
+    # if (par("mfg")[1]==par("mfg")[3]) {
+    #   mtext(side=1, text = , line = 2, cex= axis_cex)
+    # }
     # adding tissue names to rows
     if (par("mfg")[2]==1) mtext(side=2, text = tissue, line = 3, cex= title_cex)  
 
@@ -166,7 +166,7 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
       
   })
 }
-
+?mtext
 plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='', 
                       show_all_xtick_labels = FALSE, 
                       add_regression_curve=TRUE, add_spearman_corr=TRUE,
@@ -184,9 +184,9 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
                  axis_cex, title_cex, point_label_cex, col=col)
   }
   if (tumor==TRUE){
-    tool_names = names(col_tum)[grep("tum", names(col_tum), invert = TRUE)]
-    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
-              col=c(col_tum, 'lightgrey'), pch=16, pt.cex=2)
+    # tool_names = names(col_tum)[grep("tum", names(col_tum), invert = TRUE)]
+    # addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
+    #           col=c(col_tum, 'lightgrey'), pch=16, pt.cex=2)
     title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)
   }
@@ -214,12 +214,12 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   
-  png(metrics_png, width = 25, height = 30, units = "cm", res = 700)
+  png(metrics_png, width = 25, height = 35, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list=outputs.prepr.list, 
              cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
   dev.off()
   
-  png(fdr_png, width = 25, height = 30, units = "cm", res = 700)
+  png(fdr_png, width = 25, height = 35, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list=outputs.prepr.list, 
              cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
              add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)

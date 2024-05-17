@@ -170,6 +170,9 @@ addConditionColumn = function(rse){
   rse@colData$age_group[rse@colData$tissue == 'Heart' & rse@colData$age %in% 
                           c("4wpc", "5wpc",  "6wpc" , "7wpc",  "8wpc",  "9wpc",  "10wpc")] = "fetus"
   
+  # newborn+infant
+  rse@colData$age_group[rse@colData$tissue == 'Testis' & rse@colData$age %in% infant] = "infant"
+  
   # adult
   rse@colData$age_group[!(rse@colData$tissue %in% c('Testies', 'Kidney', 'Ovary')) &
                                      rse@colData$age %in% toddler.to.adult] = "adult"
@@ -177,6 +180,7 @@ addConditionColumn = function(rse){
   rse@colData$age_group[rse@colData$tissue == 'Kidney' & rse@colData$age %in% c(infant, toddler.to.adult)] = "adult"
   # excluding teen from Testis, considering developmental peculiarities of testis development
   rse@colData$age_group[rse@colData$tissue == 'Testis' & rse@colData$age %in% adult] = "adult"
+
   rse
 }
 
@@ -223,7 +227,8 @@ prepareRse = function(project.id = 'ERP109002',
   rse.jxn = removeJxnDublicates(rse.jxn)
   rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
   rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list)
-  rse.jxn = rse.jxn[,rse.jxn@colData$age_group %in% c('adult', 'fetus')]
+  rse.jxn = rse.jxn[,!is.na(rse.jxn@colData$age_group)]
+  
   save2RDS(rse.gene, rse.jxn, path='./')
 }
 

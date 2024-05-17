@@ -53,52 +53,62 @@ rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 # outputs_tissue = list()
 # for (tissue in unique.tissues){
-#   outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
+#   if (tissue=='Testis'){
+#     age_group= c('fetus', 'infant')
+#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+#     print(tissue_age)
+#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+#                                         reference_condition='fetus')
+#     age_group= c('infant', 'adult')
+#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+#                                             reference_condition='infant')
+#   } else{
+#     outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
+#   }
 # }
 # saveRDS(outputs_tissue,'outputs_tissue.rds')
 outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # 
 # 
 # #=================================dev
-# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-# outputs_dev_sign_info = list()
-# for (tissue in unique.tissues){
-#   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
-#                                                    logfc_threshold=logfc_threshold,
-#                                                    dpsi_threshold=dpsi_threshold,
-#                                                    abund_change_threshold=abund_change_threshold,
-#                                                    fdr_threshold=fdr_threshold,
-#                                                    add_external_data=FALSE, file='')
-# }
-# saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
+outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+outputs_dev_sign_info = list()
+for (tissue in names(outputs_tissue)){
+  outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
+                                                   logfc_threshold=logfc_threshold,
+                                                   dpsi_threshold=dpsi_threshold,
+                                                   abund_change_threshold=abund_change_threshold,
+                                                   fdr_threshold=fdr_threshold,
+                                                   add_external_data=FALSE, file='')
+}
+saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
 plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds,
                  metrics_png='metrics_plot_dev.png', fdr_png='fdr_plot_dev.png')
 
 
-#================================= tumor
-#-- reading files
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-outputs_gtex2tum = list()
-outputs_norm2tum = list()
-for (tissue in unique.tissues){
-  outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
-                                              logfc_threshold=logfc_threshold,
-                                              dpsi_threshold=dpsi_threshold,
-                                              abund_change_threshold=abund_change_threshold,
-                                              fdr_threshold=fdr_threshold,
-                                              add_external_data=TRUE, file='gtex2tum')
-  outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
-                                              logfc_threshold=logfc_threshold,
-                                              dpsi_threshold=dpsi_threshold,
-                                              abund_change_threshold=abund_change_threshold,
-                                              fdr_threshold=fdr_threshold,
-                                              add_external_data=TRUE, file='norm2tum')
-}
-saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
-saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
+# #================================= tumor
+# #-- reading files
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# outputs_gtex2tum = list()
+# outputs_norm2tum = list()
+# for (tissue in names(outputs_tissue)){
+#   outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
+#                                               logfc_threshold=logfc_threshold,
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='gtex2tum')
+#   outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
+#                                               logfc_threshold=logfc_threshold,
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='norm2tum')
+# }
+# saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
+# saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
 
 outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
 outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
