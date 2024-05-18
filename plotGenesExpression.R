@@ -12,8 +12,9 @@ tissue.col=c('Brain'="#3399CC",
              'Liver'="#339900",
              'Ovary'="#CC3399",
              'Testis'="#FF6600",
-             'BRCA' = 'darkgrey',
-             'Breast normal'='white')
+             'Breast normal'='white',
+             'BRCA' = 'grey',
+             'Metastatic BRCA' = '#666666')
 
 # -----------------------------------------------------------------------------------
 # ------------------------- samples occurrence heatmap ------------------------------
@@ -107,7 +108,6 @@ setAxis = function(x.value, gene.name, gene.rse){
   # Add x-axis only for bottom plots
   if ((boxplot.coord[1] == 5) |
       (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
-    
     axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
   }
   grid(nx = NULL, ny = NULL)
@@ -152,7 +152,6 @@ plotScatterplotExpression = function(gene.rse){
   plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
   legend(x=-0.2, y=0.4, legend = tissues, col = tissue.col[tissues], pch = 16,
          bty = "n", xpd = TRUE, cex=1.5, pt.cex = 2)
-      #   y.intersp = 0.6)
 }
 
 # boxplots
@@ -161,6 +160,8 @@ plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
   # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
   # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
   setParams(gene.rse)
+  par(oma = c(7, 3, 1, 1))  # bottom, left, top, right.
+  
   cpm = as.data.frame(t(gene.rse@assays@data$cpm))
   cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
   tissues = unique(gene.rse@colData$tissue)
@@ -183,6 +184,10 @@ plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
             col=tissue.col[tissues])
     setAxis(tissues, gene.name, gene.rse)
   }
+  # Plot the legend in the last cell
+  plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
+  legend(x=-1, y=0.4, legend = tissues, col = tissue.col[tissues], pch = 16,
+         bty = "n", xpd = TRUE, cex=1.5, pt.cex = 2, ncol=2)
 }
 
 # plotHeatmapSamples()

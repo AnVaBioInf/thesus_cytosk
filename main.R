@@ -72,7 +72,7 @@ dev.off()
 merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk))
 setParams(merged_rse)
 
-png(paste0('cytosk_gene_expression.png'), width = 23, height = 20, units = "cm", res = 700)
+png(paste0('cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
 plotBoxplotExpression(merged_rse)
 dev.off()
 
