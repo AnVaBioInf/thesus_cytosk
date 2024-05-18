@@ -10,7 +10,6 @@ dpsi_threshold=0.1
 abund_change_threshold=1
 fdr_threshold=0.05
 
-?text
 
 thresholds = list(logfc_threshold=logfc_threshold,
                    dpsi_threshold=dpsi_threshold,
@@ -72,17 +71,17 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # 
 # 
 # #=================================dev
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-outputs_dev_sign_info = list()
-for (tissue in names(outputs_tissue)){
-  outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
-                                                   logfc_threshold=logfc_threshold,
-                                                   dpsi_threshold=dpsi_threshold,
-                                                   abund_change_threshold=abund_change_threshold,
-                                                   fdr_threshold=fdr_threshold,
-                                                   add_external_data=FALSE, file='')
-}
-saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
+# outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# outputs_dev_sign_info = list()
+# for (tissue in names(outputs_tissue)){
+#   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
+#                                                    logfc_threshold=logfc_threshold,
+#                                                    dpsi_threshold=dpsi_threshold,
+#                                                    abund_change_threshold=abund_change_threshold,
+#                                                    fdr_threshold=fdr_threshold,
+#                                                    add_external_data=FALSE, file='')
+# }
+# saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
 outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
 plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
 

@@ -5,7 +5,7 @@ library(grid)
 library(gridExtra)
 library(eulerr)
 library(RColorBrewer)
-
+library(VennDiagram)
 
 #==================================================================================
 #=============================== results comparison================================
@@ -43,26 +43,30 @@ setTitles = function(thresholds){
   thresholds_text
 }
 
-addLegend = function(labels, pch, col, pt.cex=1){
+addLegend = function(labels, pch, col, pt.cex=1, inset=c(0,0)){
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
   legend('center',  # Adjust inset as needed
          bty='n', xpd=TRUE,
          legend = labels,
          col = col, pch = pch, # Use filled circle and star 
          pt.cex=pt.cex, cex=1,
-         horiz = FALSE, ncol=1)
+         horiz = FALSE, ncol=1, inset=inset)
 }
 
 addSpearmanCorr = function(df){
-  df = df[complete.cases(df),]
-  df = df[order(df[,1]),]
-  x = df[,1]
-  y = df[,2]
-  result = cor.test(x, y, method = "spearman")
-  corr.coef = round(result$estimate, digits=2)
-  p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
-  mtext(paste0('rho = ', corr.coef,  ', p.val ', p.value), side=3,
-        col = "black", cex=0.7)
+  tryCatch({
+    df = df[complete.cases(df),]
+    df = df[order(df[,1]),]
+    x = df[,1]
+    y = df[,2]
+    result = cor.test(x, y, method = "spearman")
+    corr.coef = round(result$estimate, digits=2)
+    p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
+    return(list(corr.coef=corr.coef, p.value=p.value))
+    }, error = function(e) {
+    cat("Error in cor.test:", conditionMessage(e), "\n")
+      return(list(corr.coef= NaN, p.value=NaN))
+   })
 }
 
 addRegressionCurve = function(df){
@@ -90,9 +94,7 @@ getColumnCombinations = function(df, tumor){
       df[, c(col1_name, col_name)]
     })
   }
-  else{
-    comb = combn(df, 2, simplify = FALSE)
-  }
+  else comb = combn(df, 2, simplify = FALSE)
   comb
 }
 
@@ -160,9 +162,21 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
     }
     # adding tissue names to rows
     if (par("mfg")[2]==1) mtext(side=2, text = tissue, line = 3, cex= title_cex)  
-
+    
     if (add_regression_curve) addRegressionCurve(x)
-    if (add_spearman_corr) addSpearmanCorr(x)
+    if (add_spearman_corr) {
+      tools <- c("dje", "sajr", "diego")
+      tool.1 = tools[sapply(tools, function(tool) grepl(tool, par.1))]
+      tool.2 = tools[sapply(tools, function(tool) grepl(tool, par.2))]
+      matches1 = grep(tool.1, names(intersections), value = TRUE)
+      matches2 = grep(tool.2, names(intersections), value = TRUE)
+      matches_both = c(tool.1, tool.2, intersect(matches1, matches2))
+      all.sign.for.tools = Reduce(append, intersections[matches_both])
+      n = x[which(all.jxns$junction_id_sajr %in% all.sign.for.tools),]
+      results = addSpearmanCorr(n)
+      mtext(paste0('rho = ', results$corr.coef,  ', p.val ', results$p.value), side=3,
+            col = "black", cex=0.7)
+    }
   })
 }
 
@@ -184,17 +198,43 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
   }
   if (tumor==TRUE){
     tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
-    addLegend(labels=c(file, paste(tool_names, "&", file), "not significant"),
-              col=c(col, 'lightgrey'), pch=16, pt.cex=2)
+    plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+    legend('center',  # Adjust inset as needed
+           bty='n', xpd=TRUE,
+           legend = c(file, paste(tool_names, "&", file), "not significant"),
+           col = c(col, 'lightgrey'), pch = 16, # Use filled circle and star 
+           pt.cex=2, cex=1,
+           horiz = FALSE, ncol=1)
+    # Legend for "rho"
+    legend(x = 0.5, y = 0.7,  # Adjust inset as needed
+           bty='n', xpd=TRUE,
+           legend = "rho - Spearman corr. \nbetween sign. events",
+           col = NA, pch = NA, # Use filled circle and star 
+           pt.cex=2, cex=1,
+           horiz = FALSE, ncol=1)
     title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)
   }
   else{
     tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
-    addLegend(labels=c(tool_names, "not significant"),
-              col=c(col[2:length(col)], 'lightgrey'), pch=16, pt.cex=2)
+    plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+    legend('center',  # Adjust inset as needed
+           bty='n', xpd=TRUE,
+           legend = c(tool_names, "not significant"),
+           col = c(col[2:length(col)], 'lightgrey'), pch = 16, # Use filled circle and star 
+           pt.cex=2, cex=1,
+           horiz = FALSE, ncol=1)
+    # Legend for "rho"
+    legend(x = 0.65, y = 0.7,  # Adjust inset as needed
+           bty='n', xpd=TRUE,
+           legend = "rho - Spearman corr. \nbetween sign. events",
+           col = NA, pch = NA, # Use filled circle and star 
+           pt.cex=2, cex=1,
+           horiz = FALSE, ncol=1)
+    
     title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)  }
+  
   thresholds_text = setTitles(thresholds)
   mtext(side=1,  text = thresholds_text, outer=TRUE, cex= title_cex, line=2)
 }
@@ -203,12 +243,7 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
 plotEulerDiagram = function(outputs_tissue, title, thresholds_text, col){
   p=list()
   for (tissue in names(outputs_tissue)){
-    tool_order = c('sajr',
-                    'dje',
-                    'diego',
-                    'dje&sajr',
-                    'diego&sajr',
-                    'diego&dje',
+    tool_order = c('sajr', 'dje', 'diego', 'dje&sajr', 'diego&sajr', 'diego&dje',
                     'diego&dje&sajr')
     intersections = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
     intersections = intersections[tool_order]
@@ -231,6 +266,7 @@ plotEulerDiagram = function(outputs_tissue, title, thresholds_text, col){
   # rc = ceiling(sqrt(length(outputs_tissue)))
   do.call(grid.arrange, c(p, ncol = 1, top = title, bottom = thresholds_text))  
 }
+
 # 
 # plotVennDiagram = function(outputs_tissue, title, thresholds_text, file){
 #   # Find the name containing "tum"
@@ -255,20 +291,15 @@ plotEulerDiagram = function(outputs_tissue, title, thresholds_text, col){
 #                         padding = unit(c(1, 1, 1, 1), "lines"), clip = "off"))
 # }
 
-library(VennDiagram)
-
 plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors){
   # Find the name containing "tum"
     p = list()
   for (tissue in names(outputs_tissue)){
     all.single.tool = outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool
-    
     colors = colors[names(all.single.tool)]
     name_to_replace = names(all.single.tool)[grep("tum", names(all.single.tool))]
     names(all.single.tool)[names(all.single.tool) == name_to_replace] = file
-    
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
-    
     # Create Venn diagram using VennDiagram package
     venn.diagram <- venn.diagram(
       x = all.single.tool, 
@@ -280,18 +311,11 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors)
       margin = 0.1, # Adjust margin as needed
       label.col = "black", # Set label color
       fill = colors, # Set circle colors (adjust as needed)
-   #   cat.cex = 1, # Adjust category label font size
-   #   cat.pos = c(0, 0, 180, 180), # Adjust category label positions
       cat.dist = rep(0.1, length(names(all.single.tool)))
-
     )
-    
     # Convert to grid graphical object
-    p[[tissue]] <- gTree(children = gList(venn.diagram))
+    p[[tissue]] = gTree(children = gList(venn.diagram))
   }
-  
-  rc = ceiling(sqrt(length(outputs_tissue)))
-  
   # Arrange and draw using grid.arrange
   grid.arrange(grobs = p, ncol = 1, top = textGrob(title, gp = gpar(fontsize = 14)), 
                bottom = textGrob(thresholds_text, gp = gpar(fontsize = 12)))
@@ -307,28 +331,22 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
           'diego&sajr' = '#E8FF00',
           'diego&dje' = '#F781BF',
           'diego&dje&sajr' = "#4DAF4A")
-  
-  # col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
-  # col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
-  # 
-  # png(paste0('metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
-  # plotGraphs(outputs.prepr.list=outputs.prepr.list, 
-  #            cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
-  # dev.off()
-  # 
-  # png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
-  # plotGraphs(outputs.prepr.list=outputs.prepr.list, 
-  #            cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
-  #            add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
-  # dev.off()
-  # 
-  # thresholds_text = setTitles(thresholds)
-  # 
-  # if (tumor==TRUE){
-  #   title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
-  # }
-  # else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
-  # 
+  col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
+  col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
+  png(paste0('metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list=outputs.prepr.list,
+             cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
+  dev.off()
+  png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list=outputs.prepr.list,
+             cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
+             add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
+  dev.off()
+  thresholds_text = setTitles(thresholds)
+  if (tumor==TRUE){
+    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
+  }
+  else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
   # png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
   # if (tumor) {colors = c(sajr.norm.tumor = '#979A9A', sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
   # } else colors = c(sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
@@ -338,15 +356,12 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   #   png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
   #   plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
   #   dev.off()
-  #   
-  # }
+
+  #}
 }
 
 
-
-
 #===========fisher
-
 plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
   col=c(sajr = "#984EA3",
         dje = "orange3",

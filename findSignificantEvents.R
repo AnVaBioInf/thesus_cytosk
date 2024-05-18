@@ -320,8 +320,8 @@ downloadExternalOutputs = function(path = './',
   tum <- read.csv(paste0(path, file.name, extenction), header = TRUE, sep = ",")
   tum = tum[,c('X', 'dpsi', 'qv')]
   names(tum) = c('junction_id_sajr', 
-                      paste0('dPSI_', file.name), 
-                      paste0('FDR_', file.name))
+                      paste0('dPSI_sajr_', file.name), 
+                      paste0('FDR_sajr_', file.name))
   print('Finished downloading external data')
   tum
 }
@@ -427,8 +427,8 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
   
   sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
   if (add_external_data){
-    dpsi_file = paste0('dPSI_', file.name)
-    fdr_file = paste0('FDR_', file.name)
+    dpsi_file = paste0('dPSI_sajr_', file.name)
+    fdr_file = paste0('FDR_sajr_', file.name)
     
     tum.sign.tf = abs(jxns.significance.df[, dpsi_file]) >= dpsi_threshold & jxns.significance.df[, fdr_file] <= fdr_threshold  
     all.sign.jxns.tum = jxns.significance.df[tum.sign.tf, 'junction_id_sajr']
