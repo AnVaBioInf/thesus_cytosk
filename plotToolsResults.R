@@ -282,7 +282,8 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors)
       fill = colors, # Set circle colors (adjust as needed)
    #   cat.cex = 1, # Adjust category label font size
    #   cat.pos = c(0, 0, 180, 180), # Adjust category label positions
-    #  cat.dist = c(0.05, 0.05, 0.05, 0.05) # Adjust category label distances from circles
+      cat.dist = rep(0.1, length(names(all.single.tool)))
+
     )
     
     # Convert to grid graphical object
@@ -296,10 +297,6 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors)
                bottom = textGrob(thresholds_text, gp = gpar(fontsize = 12)))
 }
 
-
-
-
-?grid.arrange
 
 plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds){
   col = c('sajr.norm.tumor' = '#979A9A',
@@ -324,25 +321,25 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   #            cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
   #            add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
   # dev.off()
-  
-  thresholds_text = setTitles(thresholds)
-  
-  if (tumor==TRUE){
-    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
-  }
-  else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
-  
-  png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
-  if (tumor) {colors = c(sajr.norm.tumor = '#979A9A', sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
-  } else colors = c(sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
-  plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, colors)
-  dev.off()
-  if (tumor==FALSE){
-    png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
-    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
-    dev.off()
-    
-  }
+  # 
+  # thresholds_text = setTitles(thresholds)
+  # 
+  # if (tumor==TRUE){
+  #   title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
+  # }
+  # else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
+  # 
+  # png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
+  # if (tumor) {colors = c(sajr.norm.tumor = '#979A9A', sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
+  # } else colors = c(sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
+  # plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, colors)
+  # dev.off()
+  # if (tumor==FALSE){
+  #   png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
+  #   plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
+  #   dev.off()
+  #   
+  # }
 }
 
 
@@ -353,34 +350,37 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
 plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
   col=c(sajr = "#984EA3",
         dje = "orange3",
+        diego = "#5DADE2",
+        sajr = "#984EA3",
+        dje = "orange3",
+        diego = "#5DADE2",
+        sajr = "#984EA3",
+        dje = "orange3",
         diego = "#5DADE2")
   
-  png('fisher_plot.png', width = 15, height = 20, units = "cm", res = 700)
+  png('fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
   
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 2
   plots = c(seq(1:nrow), rep(nrow+1,nrow))
   layout_matrix = matrix(plots, nrow = nrow, ncol = ncol, byrow = FALSE)
-  print(layout_matrix)
   setPlotParameters(layout_matrix=layout_matrix,
                     pty = "m", 
-                    top_page_margin = 4, bottom_page_margin = 4, 
+                    top_page_margin = 2, bottom_page_margin = 2, right_page_margin = 0,
                     top_plot_margin=1,
-                    left_plot_margin = 4, right_page_margin = 0,
-                    bottom_plot_margin = 0, title_axis_distance=1.5)
+                    left_plot_margin = 4,
+                    bottom_plot_margin = 2, title_axis_distance=1.5)
   
   names = fisher_results_tissues_list[[1]]$tool_pair
   nbars = length(names)
   
   lapply(names(fisher_results_tissues_list), function(tissue) {
+    
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = fisher_results_tissue$odds_ratio
     if (log) odds_ratio = log2(odds_ratio+0.01)
     q_val = fisher_results_tissue$q_val
-    print(par("mfg")[1])
-    print(nrow)
-    
     bp = barplot(odds_ratio,
                  col= col,
                  ylab = 'log2(odds ratio)',
@@ -397,13 +397,11 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
     }
     axis(1, at=bp, labels = FALSE, lwd = 0)
     if (par("mfg")[1]==nrow){
-      print('here')
-      par(mar=c(4, 0, 1, 0) + 0.1)
       text(bp, -1, labels = names, srt = 90, 
            adj = c(1,1), xpd = TRUE, cex = 0.7)
   }
   #  mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) 
-    mtext(side=2, text = tissue, cex= 0.7, line=2.7)
+    mtext(side=2, text = tissue, cex= 1, line=2.7)
     
     # Add x-axis at y = 0
     abline(h = 0, col = "black", xpd=FALSE) 
@@ -414,7 +412,7 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
             col=c(col, 'black'), pt.cex=1)
   
   thresholds_text = setTitles(thresholds)
-  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
+  mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 1, line=1)
   mtext(side=3, text = 'Fisher Exact Test Results for each pair of methods & condition comaparisons', outer=TRUE, cex= 0.7)
   dev.off()
   
