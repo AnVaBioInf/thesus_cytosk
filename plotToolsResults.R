@@ -15,7 +15,6 @@ getNrowsNcols = function(ncol,nrow){
   total_numb_of_plots = nrow*ncol
   layout_matrix = matrix(1:total_numb_of_plots, nrow = nrow, ncol = ncol, byrow = TRUE)
   layout_matrix = cbind(layout_matrix, rep(total_numb_of_plots+1, nrow))
-  print(layout_matrix)
   layout_matrix
 }
 
@@ -171,35 +170,15 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
     if (add_spearman_corr) {
       tools <- c("dje$", "sajr$", "diego$", 'sajr_norm2tum$', 'sajr_gtex2tum$')
       tool.1 <- tools[sapply(tools, function(tool) grepl(tool, par.1))]
-      tool.2 <- tools[sapply(tools, function(tool) grepl(tool, par.2))] 
+      tool.2 <- tools[sapply(tools, function(tool) grepl(tool, par.2))]
       # Remove the trailing "$"
       tool.1 <- sub("\\$$", "", tool.1)
-      tool.2 <- sub("\\$$", "", tool.2) 
+      tool.2 <- sub("\\$$", "", tool.2)
       sign.jxns.tools = all.sign.tools[c(tool.1, tool.2)]
-      print(tissue)
-      print(par.1)
-      print(par.2)
-      
-      print('sign only in tool1')      
-      print(length(all.sign.tools[[tool.1]]))
-      
-      print('sign only in tool2')      
-      print(length(all.sign.tools[[tool.2]]))
-    
-      
       sign.jxns.tools = Reduce(append, sign.jxns.tools)
-      print('duplicated')
-      print(sum(duplicated(sign.jxns.tools)))
-      
       sign.jxns.tools = unique(sign.jxns.tools)
-      print('sign at least in one')
-      print(length(sign.jxns.tools))
-
-      
       n = x[which(all.jxns$junction_id_sajr %in% sign.jxns.tools),]
-      print(n)
       results = addSpearmanCorr(n)
-      print(results)
       mtext(paste0('rho = ', results$corr.coef,  ', p.val ', results$p.value), side=3,
             col = "black", cex=0.7)
     }
@@ -217,17 +196,18 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
   setPlotParameters(layout_matrix = layout_matrix)
   
   for (tissue in names(outputs.prepr.list)){
-    makeDotplots(outputs.prepr.list[[tissue]], cols.tf, tissue, tumor, log, show_all_xtick_labels, 
+    makeDotplots(outputs.prepr.list[[tissue]], cols.tf, tissue, tumor, log, show_all_xtick_labels,
                  add_regression_curve, add_spearman_corr,
                  axis_cex, title_cex, point_label_cex, col=col)
   }
   if (tumor==TRUE){
-    tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
+    tool_names = !grepl("tum", names(col))
+    
     plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
     legend('center',  # Adjust inset as needed
            bty='n', xpd=TRUE,
-           legend = c(file, paste(tool_names, "&", file), "not significant"),
-           col = c(col, 'lightgrey'), pch = 16, # Use filled circle and star 
+           legend = c(file, paste(names(col[tool_names]), "&", file), "not significant"),
+           col = c(col[!tool_names], col[tool_names], 'lightgrey'), pch = 16, # Use filled circle and star 
            pt.cex=2, cex=1,
            horiz = FALSE, ncol=1)
     # Legend for "rho"
@@ -241,12 +221,11 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
     mtext(side=3, text = title, outer=TRUE, cex= title_cex, line=1)
   }
   else{
-    tool_names = names(col)[grep("tum", names(col), invert = TRUE)]
     plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
     legend('center',  # Adjust inset as needed
            bty='n', xpd=TRUE,
-           legend = c(tool_names, "not significant"),
-           col = c(col[2:length(col)], 'lightgrey'), pch = 16, # Use filled circle and star 
+           legend = c(names(col), "not significant"),
+           col = c(col, 'lightgrey'), pch = 16, # Use filled circle and star 
            pt.cex=2, cex=1,
            horiz = FALSE, ncol=1)
     # Legend for "rho"
@@ -348,41 +327,46 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors)
 
 
 plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds){
-  col = c('sajr.norm.tumor' = '#979A9A',
-          sajr = "#984EA3",
-          dje = "orange3",
-          diego = "#5DADE2",
-          'dje&sajr' = "#FF9900",
-          'diego&sajr' = '#E8FF00',
-          'diego&dje' = '#F781BF',
-          'diego&dje&sajr' = "#4DAF4A")
+  
+  col <- c(
+    "sajr" = "#984EA3",
+    "dje" = "orange3",
+    "diego" = "#5DADE2",
+    "dje&sajr" = "#FF9900",
+    "diego&sajr" = '#E8FF00',
+    "diego&dje" = '#F781BF',
+    "diego&dje&sajr" = "#4DAF4A"
+  )
+  
+  if (tumor==TRUE){
+    # Add the 'sajr_' element separately
+    col[paste0('sajr_', file)] <- '#979A9A' 
+    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
+  }
+  else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
+  
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   png(paste0('metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list=outputs.prepr.list,
              cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
   dev.off()
-  # png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
-  # plotGraphs(outputs.prepr.list=outputs.prepr.list,
-  #            cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
-  #            add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
-  # dev.off()
+  png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  plotGraphs(outputs.prepr.list=outputs.prepr.list,
+             cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
+             add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
+  dev.off()
   thresholds_text = setTitles(thresholds)
-  if (tumor==TRUE){
-    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
-  }
-  else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
-  # png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
-  # if (tumor) {colors = c(sajr.norm.tumor = '#979A9A', sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
-  # } else colors = c(sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
-  # plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, colors)
-  # dev.off()
-  # if (tumor==FALSE){
-  #   png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
-  #   plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
-  #   dev.off()
 
-  #}
+  png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
+
+  plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, col)
+  dev.off()
+  if (tumor==FALSE){
+    png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
+    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
+    dev.off()
+  }
 }
 
 
