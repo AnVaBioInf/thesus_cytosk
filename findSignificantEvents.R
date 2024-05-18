@@ -436,10 +436,10 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
     sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(sub) 
       lapply(sub, function(x) intersect(x, all.sign.jxns.tum)))
     sign.jxns.info$intersections = sign.jxns.info.d
-    sign.jxns.info$intersections$unique.to.tool$sajr.norm.tumor = 
+    tumor_name = paste0('sajr_', file.name)
+    sign.jxns.info$intersections$unique.to.tool[[tumor_name]] = 
       setdiff(all.sign.jxns.tum, unname(unlist(sign.jxns.info.d)))
-    
-    sign.jxns.info$all.single.tool[['sajr.norm.tumor']] = all.sign.jxns.tum
+    sign.jxns.info$all.single.tool[[tumor_name]] = all.sign.jxns.tum
   } 
   print('Finished intersecting junction ids between tools')
   return(sign.jxns.info)
@@ -514,7 +514,7 @@ findCommonJxns = function(outputs_tum){
   for (tissue in unique.tissue){
     intersections = outputs_tum[[tissue]]$sign.jxns.info.list$intersections
     intersections = Reduce(append, intersections)
-    intersections = intersections[names(intersections) != 'sajr.norm.tumor']
+    intersections = intersections[names(intersections) != 'sajr_norm_tumor']
     all.jxns.info = outputs_tum[[tissue]]$all.jxns.info
     intersections = lapply(intersections, function(tool) 
       all.jxns.info[all.jxns.info$junction_id_sajr %in% tool,])

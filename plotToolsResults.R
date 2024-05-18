@@ -65,7 +65,7 @@ addSpearmanCorr = function(df){
     return(list(corr.coef=corr.coef, p.value=p.value))
     }, error = function(e) {
     cat("Error in cor.test:", conditionMessage(e), "\n")
-      return(list(corr.coef= NaN, p.value=NaN))
+      return(list(corr.coef= '= NaN', p.value= '= NaN'))
    })
 }
 
@@ -99,7 +99,7 @@ getColumnCombinations = function(df, tumor){
 }
 
 # calculate corr only between significant values
-makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log, 
+makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log, 
                         show_all_xtick_labels, 
                         add_regression_curve, add_spearman_corr,
                         axis_cex, title_cex, point_label_cex, col){
@@ -108,6 +108,10 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
                   'logFC' = list(lim=c(-4,4), ticks = seq(-4,4,by=2)),
                   'abund_change' = list(lim=c(2,-2), ticks = seq(-2,2,by=1)),
                   'FDR'=list(lim=NULL))
+  
+  intersections = Reduce(append, outputs.prepr.list.tissue$sign.jxns.info.list$intersections)
+  all.jxns = outputs.prepr.list.tissue$all.jxns.info
+  all.sign.tools = outputs.prepr.list.tissue$sign.jxns.info.list$all.single.tool
   
   if (show_all_xtick_labels) par(mar = (c(4, 4, 0, 0) + 0.1))
   comb = getColumnCombinations(all.jxns[,cols.tf], tumor)
@@ -165,15 +169,37 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
     
     if (add_regression_curve) addRegressionCurve(x)
     if (add_spearman_corr) {
-      tools <- c("dje", "sajr", "diego")
-      tool.1 = tools[sapply(tools, function(tool) grepl(tool, par.1))]
-      tool.2 = tools[sapply(tools, function(tool) grepl(tool, par.2))]
-      matches1 = grep(tool.1, names(intersections), value = TRUE)
-      matches2 = grep(tool.2, names(intersections), value = TRUE)
-      matches_both = c(tool.1, tool.2, intersect(matches1, matches2))
-      all.sign.for.tools = Reduce(append, intersections[matches_both])
-      n = x[which(all.jxns$junction_id_sajr %in% all.sign.for.tools),]
+      tools <- c("dje$", "sajr$", "diego$", 'sajr_norm2tum$', 'sajr_gtex2tum$')
+      tool.1 <- tools[sapply(tools, function(tool) grepl(tool, par.1))]
+      tool.2 <- tools[sapply(tools, function(tool) grepl(tool, par.2))] 
+      # Remove the trailing "$"
+      tool.1 <- sub("\\$$", "", tool.1)
+      tool.2 <- sub("\\$$", "", tool.2) 
+      sign.jxns.tools = all.sign.tools[c(tool.1, tool.2)]
+      print(tissue)
+      print(par.1)
+      print(par.2)
+      
+      print('sign only in tool1')      
+      print(length(all.sign.tools[[tool.1]]))
+      
+      print('sign only in tool2')      
+      print(length(all.sign.tools[[tool.2]]))
+    
+      
+      sign.jxns.tools = Reduce(append, sign.jxns.tools)
+      print('duplicated')
+      print(sum(duplicated(sign.jxns.tools)))
+      
+      sign.jxns.tools = unique(sign.jxns.tools)
+      print('sign at least in one')
+      print(length(sign.jxns.tools))
+
+      
+      n = x[which(all.jxns$junction_id_sajr %in% sign.jxns.tools),]
+      print(n)
       results = addSpearmanCorr(n)
+      print(results)
       mtext(paste0('rho = ', results$corr.coef,  ', p.val ', results$p.value), side=3,
             col = "black", cex=0.7)
     }
@@ -184,15 +210,14 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
                       show_all_xtick_labels = FALSE, 
                       add_regression_curve=TRUE, add_spearman_corr=TRUE,
                       axis_cex = 0.7, title_cex=1, point_label_cex=0.7, thresholds=''){
+  
   nrow = length(outputs.prepr.list)
   ncol = ifelse(tumor, sum(cols.tf)-1, sum(cols.tf))
   layout_matrix = getNrowsNcols(ncol,nrow)
   setPlotParameters(layout_matrix = layout_matrix)
   
   for (tissue in names(outputs.prepr.list)){
-    intersections = Reduce(append, outputs.prepr.list[[tissue]]$sign.jxns.info.list$intersections)
-    makeDotplots(outputs.prepr.list[[tissue]]$all.jxns.info, 
-                 intersections, cols.tf, tissue, tumor, log, show_all_xtick_labels, 
+    makeDotplots(outputs.prepr.list[[tissue]], cols.tf, tissue, tumor, log, show_all_xtick_labels, 
                  add_regression_curve, add_spearman_corr,
                  axis_cex, title_cex, point_label_cex, col=col)
   }
@@ -337,11 +362,11 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   plotGraphs(outputs.prepr.list=outputs.prepr.list,
              cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
   dev.off()
-  png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list=outputs.prepr.list,
-             cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
-             add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
-  dev.off()
+  # png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  # plotGraphs(outputs.prepr.list=outputs.prepr.list,
+  #            cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
+  #            add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
+  # dev.off()
   thresholds_text = setTitles(thresholds)
   if (tumor==TRUE){
     title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
