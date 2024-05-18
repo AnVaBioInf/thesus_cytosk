@@ -226,11 +226,10 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
              add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
   dev.off()
   
-  
-  # plotVennDiagram(outputs.prepr.list, title, thresholds_text)
-  # if (tumor==FALSE){
-  #   plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text)
-  # }
+  plotVennDiagram(outputs.prepr.list, title, thresholds_text)
+  if (tumor==FALSE){
+    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text)
+  }
 }
 
 
@@ -282,7 +281,19 @@ plotVennDiagram = function(outputs_tissue, title, thresholds_text){
 
 #===========fisher
 
-plotFisherResults = function(fisher_results_tissues_list, thresholds){
+plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
+  col=c(sajr = "#8F00FF",
+        dje = "darkorange4",
+        diego = "deepskyblue",
+        sajr = "#8F00FF",
+        dje = "darkorange4",
+        diego = "deepskyblue",
+        sajr = "#8F00FF",
+        dje = "darkorange4",
+        diego = "deepskyblue")
+  
+  png('fisher_plot.png', width = 15, height = 20, units = "cm", res = 700)
+  
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 2
@@ -290,30 +301,31 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
   layout_matrix = matrix(plots, nrow = nrow, ncol = ncol, byrow = FALSE)
   print(layout_matrix)
   setPlotParameters(layout_matrix=layout_matrix,
-                    pty = "m", left_page_margin=20, bottom_page_margin = 4,
-                    right_page_margin = 15, bottom_plot_margin = 2)
+                    pty = "m", 
+                    top_page_margin = 4, bottom_page_margin = 4, 
+                    top_plot_margin=1,
+                    left_plot_margin = 4, right_page_margin = 0,
+                    bottom_plot_margin = 0, title_axis_distance=1.5)
   
   names = fisher_results_tissues_list[[1]]$tool_pair
   nbars = length(names)
-  col=c(sajr = "#984EA3",
-        dje = "orange3",
-        diego = "#5DADE2",
-        sajr = "#8F00FF",
-        dje = "darkorange4",
-        diego = "deepskyblue",
-        sajr = "#8F00FF",
-        dje = "darkorange4",
-        diego = "deepskyblue")
-
+  
   lapply(names(fisher_results_tissues_list), function(tissue) {
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = fisher_results_tissue$odds_ratio
+    if (log) odds_ratio = log2(odds_ratio+0.01)
     q_val = fisher_results_tissue$q_val
+    par(xaxs = "i", yaxs = "i") # Force exact axis limits
+    print(par("mfg")[1])
+    print(nrow)
+    if (par("mfg")[1]==nrow){
+      print('here')
+      par(mar=c(4, 0, 1, 0) + 0.1)}
     
     bp = barplot(odds_ratio,
                  col= col,
-                 ylim=c(-3,150),
-                 ylab = 'odds ratio',
+                 ylab = 'log2(odds ratio)',
+                 ylim=c(-7,7),
                  xaxt = "n",
                  cex.lab = 0.7,
                  las=2)
@@ -321,16 +333,21 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
     # Add stars based on significance
     for (i in 1:length(q_val)) {
       if (q_val[i] <= 0.05) {
-        text(bp[i], odds_ratio[i] + 15, "*", cex = 1.5) 
+        text(bp[i], odds_ratio[i] +0.6, "*", cex = 1.5) 
       }
     }
-    axis(1, at=bp, labels = FALSE)
+    axis(1, at=bp, labels = FALSE, lwd = 0)
     if (par("mfg")[1]==nrow){
-      text(bp, par("usr")[3] - 5, labels = names, srt = 15, 
+      text(bp, -1, labels = names, srt = 90, 
            adj = c(1,1), xpd = TRUE, cex = 0.7)
     }
-    mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) 
+  #  mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) 
     mtext(side=2, text = tissue, cex= 0.7, line=2.7)
+    
+    # Add x-axis at y = 0
+    abline(h = 0, col = "black", xpd=FALSE) 
+    
+    
   })
   
   addLegend(labels=c(names, 'q-value <=0.05'),
@@ -340,7 +357,7 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds){
   thresholds_text = setTitles(thresholds)
   mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 0.7, line=1)
   mtext(side=3, text = 'Fisher Exact Test Results for each pair of methods & condition comaparisons', outer=TRUE, cex= 0.7)
-  
+  dev.off()
   
 }
 

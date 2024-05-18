@@ -119,11 +119,13 @@ plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', thresholds = thr
                  metrics_png='metrics_plot_norm2tum.png', fdr_png='fdr_plot_norm2tum.png')
 
 
-
 fisher_results_tissues_list = list()
-for (tissue in unique.tissues){
+for (tissue in names(outputs_tissue)){
+  print(tissue)
   fisher.df = data.frame(tool_pair=character(), odds_ratio = numeric(), p_val = numeric())
+  print(fisher.df)
   fisher.df = getFisher(fisher.df, outputs_dev_sign_info[[tissue]], one_to_all=FALSE,  ref_col='')
+  print(fisher.df)
   fisher.df = getFisher(fisher.df, outputs_gtex2tum[[tissue]], one_to_all=TRUE, ref_col='sajr.norm.tumor')
   fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.gtex2tum",  fisher.df$tool_pair)
   fisher.df = getFisher(fisher.df, outputs_norm2tum[[tissue]], one_to_all=TRUE, ref_col='sajr.norm.tumor')
@@ -131,10 +133,7 @@ for (tissue in unique.tissues){
   fisher.df$q_val = p.adjust(fisher.df$p_val, method = "BH") 
   fisher_results_tissues_list[[tissue]] = fisher.df
 }
-fisher_results_tissues_list
-
-plotFisherResults(fisher_results_tissues_list, thresholds= thresholds)
-
+plotFisherResults(fisher_results_tissues_list, thresholds=thresholds, log=TRUE)
 
 
 
