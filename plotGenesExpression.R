@@ -18,7 +18,7 @@ tissue.col=c('Brain'="#3399CC",
 # -----------------------------------------------------------------------------------
 # ------------------------- samples occurrence heatmap ------------------------------
 # -----------------------------------------------------------------------------------
-plotHeatmapSamples = function(){
+plotHeatmapSamplesTissueAge = function(rse.gene.cytosk){
   par(oma = c(2, 2, 0, 0))  # bottom, left, top, right.
   # occurrence of samples
   sample_occurance = as.data.frame.matrix(
@@ -47,7 +47,6 @@ plotHeatmapSamples = function(){
   axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
   axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
 }
-
 
 # ----------------------------------------------------------------------------------
 # ------------------------ gene expression vs time graphs -------------------------
@@ -88,8 +87,8 @@ setParams = function(gene.rse){
   numb = createGrid(gene.rse)
   par(mfrow = c(numb$numb.graphs, numb$numb.graphs),
       oma = c(5, 3, 1, 1),  # bottom, left, top, right.
-      mar = c(1, 2, 1, 1),  # bottom, left, top, right.
-      cex.axis = 0.7,  # Adjust the value as needed
+      mar = c(1, 1, 1, 1),  # bottom, left, top, right.
+      cex.axis = 1,  # Adjust the value as needed
       bty="l")
 }
 
@@ -108,6 +107,7 @@ setAxis = function(x.value, gene.name, gene.rse){
   # Add x-axis only for bottom plots
   if ((boxplot.coord[1] == 5) |
       (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
+    
     axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
   }
   grid(nx = NULL, ny = NULL)
@@ -150,9 +150,9 @@ plotScatterplotExpression = function(gene.rse){
   }
   # Plot the legend in the last cell
   plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend('bottom', legend = tissues, col = tissue.col, pch = 16,
-         bty = "n", y.intersp = 0.6, xpd = TRUE,
-         inset = c(0, -0.2))
+  legend(x=-0.2, y=0.4, legend = tissues, col = tissue.col[tissues], pch = 16,
+         bty = "n", xpd = TRUE, cex=1.5, pt.cex = 2)
+      #   y.intersp = 0.6)
 }
 
 # boxplots

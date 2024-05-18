@@ -16,37 +16,71 @@ thresholds = list(logfc_threshold=logfc_threshold,
                    fdr_threshold=fdr_threshold)
 
 # #==================== download and filter rse
+# development
 # prepareRse()
 rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
 rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 
-# # # ==================== gene expression
-# # --------------------gene expression vs age
-# plotScatterplotExpression(rse.gene.cytosk)
-# 
-# # #--------------------barplots
+# Breast normal tissue
 # # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
 # # gtex.breast$tissue = 'Breast gtex'
 # # saveRDS(gtex.breast,'gtex.breast.rds')
 # gtex.breast = readRDS('gtex.breast.rds')
-# 
-# # tcga.brca = prepareGeneRseAssay('BRCA', 'gene')
-# # # Define the values to be replaced
-# # old_values = c( "Solid Tissue Normal" = "Breast normal",
-# #                 "Primary Tumor" = "BRCA",
-# #                 "Primary solid Tumor" = "BRCA",
-# #                 "Metastatic" = "Metastatic BRCA")
-# # tcga.brca.cpm@colData$tissue =
-# #   unname(old_values[tcga.brca.cpm@colData$tcga.gdc_cases.samples.sample_type])
-# # saveRDS(tcga.brca.cpm,'tcga.brca.cpm.rds')
-# tcga.brca = readRDS('tcga.brca.cpm.rds')
-# 
-# # Extract assay data
-# merged_rse = mergeRse(list(rse.gene.cytosk, gtex.breast, tcga.brca))
-# setParams(merged_rse)
-# plotBoxplotExpression(merged_rse)
 
-# #=======================running tools
+# # BRCA
+# rse.gene.brca = prepareGeneRseAssay('BRCA', type='gene')
+# rse.jxn.brca = downloadRse('BRCA', type='jxn')
+# saveRDS(rse.gene.brca,'rse.gene.brca.rds')
+# saveRDS(rse.jxn.brca,'rse.jxn.brca.rds')
+# 
+# old_values = c( "Solid Tissue Normal" = "Breast_normal",
+#                 "Primary Tumor" = "BRCA",
+#                 "Primary solid Tumor" = "BRCA",
+#                 "Metastatic" = "Metastatic_BRCA")
+# rse.gene.brca = readRDS('rse.gene.brca.rds')
+# rse.jxn.brca = readRDS('rse.jxn.brca.rds')
+# 
+# rse.brca = annotateJxns(rse.gene.brca, rse.jxn.brca)
+# rse.gene.brca = rse.brca$rse.gene 
+# rse.jxn.brca = rse.brca$rse.jxn
+# rse.jxn.brca = removeJxnDublicates(rse.jxn.brca)
+# 
+# rse.gene.brca@colData$tissue =
+#   unname(old_values[rse.gene.brca@colData$tcga.gdc_cases.samples.sample_type])
+# rse.jxn.brca@colData$tissue =
+#   unname(old_values[rse.jxn.brca@colData$tcga.gdc_cases.samples.sample_type])
+# 
+# saveRDS(rse.gene.brca,'rse.gene.brca.cytosk.rds')
+# saveRDS(rse.jxn.brca, 'rse.jxn.brca.cytosk.rds')
+
+rse.gene.brca.cytosk = readRDS('rse.gene.brca.cytosk.rds')
+rse.jxn.brca.cytosk = readRDS('rse.jxn.brca.cytosk.rds')
+
+###========================samples
+# plotHeatmapSamplesTissueAge(rse.gene.cytosk)
+# table(rse.gene.brca.cytosk@colData$tissue)
+
+# # ==================== gene expression
+# --------------------gene expression vs age
+png(paste0('cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
+plotScatterplotExpression(rse.gene.cytosk)
+dev.off()
+
+
+# #--------------------barplots
+# Extract assay data
+merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk))
+setParams(merged_rse)
+
+png(paste0('cytosk_gene_expression.png'), width = 23, height = 20, units = "cm", res = 700)
+plotBoxplotExpression(merged_rse)
+dev.off()
+
+#==============================================================================
+#=============================== running tools ================================
+#==============================================================================
+
+#================================= development ================================
 # # # -- reading files
 # unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 # outputs_tissue = list()
@@ -69,6 +103,36 @@ rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 # 
 # 
+
+#================================ tum ======================================
+# # -- reading files
+unique.tissues = unique(rse.jxn.brca@colData$tissue)
+tissues_comb = list(c("Breast normal", 'BRCA'), list('BRCA', 'Metastatic BRCA'))
+
+outputs_tissue = list()
+for (tissue in unique.tissues){
+  if (tissue=='Testis'){
+    age_group= c('fetus', 'infant')
+    tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+    print(tissue_age)
+    outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+                                        reference_condition='fetus')
+    age_group= c('infant', 'adult')
+    tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+    outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+                                            reference_condition='infant')
+  } else{
+    outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
+  }
+}
+saveRDS(outputs_tissue,'outputs_tissue.rds')
+outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# 
+# 
+
+
+
+
 # #=================================dev
 outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 outputs_dev_sign_info = list()
