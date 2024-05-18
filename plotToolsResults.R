@@ -163,7 +163,6 @@ makeDotplots = function(all.jxns, intersections, cols.tf, tissue, tumor, log,
 
     if (add_regression_curve) addRegressionCurve(x)
     if (add_spearman_corr) addSpearmanCorr(x)
-      
   })
 }
 
@@ -201,49 +200,18 @@ plotGraphs = function(outputs.prepr.list, cols.tf, tumor,  col, file, log='',
 }
 
 
-plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds,
-                            metrics_png='metrics_plot.png', fdr_png='fdr_plot.png'){
-  col = c('sajr.norm.tumor' = '#979A9A',
-          sajr = "#984EA3",
-          dje = "orange3",
-          diego = "#5DADE2",
-          'dje&sajr' = "#FF9900",
-          'diego&sajr' = '#E8FF00',
-          'diego&dje' = '#F781BF',
-          'diego&dje&sajr' = "#4DAF4A")
-  
-  col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
-  col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
-  
-  png(metrics_png, width = 25, height = 35, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list=outputs.prepr.list, 
-             cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
-  dev.off()
-  
-  png(fdr_png, width = 25, height = 35, units = "cm", res = 700)
-  plotGraphs(outputs.prepr.list=outputs.prepr.list, 
-             cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
-             add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
-  dev.off()
-  
-  plotVennDiagram(outputs.prepr.list, title, thresholds_text)
-  if (tumor==FALSE){
-    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text)
-  }
-}
-
-
-plotEulerDiagram = function(outputs_tissue, title, thresholds_text){
+plotEulerDiagram = function(outputs_tissue, title, thresholds_text, col){
   p=list()
   for (tissue in names(outputs_tissue)){
+    tool_order = c('sajr',
+                    'dje',
+                    'diego',
+                    'dje&sajr',
+                    'diego&sajr',
+                    'diego&dje',
+                    'diego&dje&sajr')
     intersections = Reduce(append, outputs_tissue[[tissue]]$sign.jxns.info.list$intersections)
-    intersections = intersections[c('sajr',
-                            'dje',
-                            'diego',
-                            'dje&sajr',
-                            'diego&sajr',
-                            'diego&dje',
-                            'diego&dje&sajr')]
+    intersections = intersections[tool_order]
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
     data = sapply(intersections, 
                   function(x) length(x))
@@ -253,44 +221,139 @@ plotEulerDiagram = function(outputs_tissue, title, thresholds_text){
                 control = list(area.prop = TRUE))
     p[[tissue]] = plot(fit,
                        quantities = TRUE,
-                       fills = list(fill = col), 
+                       fills = list(fill = col[tool_order]), 
                        newpage = FALSE,
                        legend = TRUE,       # Remove legend
                        main = list(label=paste0("#jxns = ",n_jxns),
                                    fontsize=7)
-                      )
+    )
   }
   # rc = ceiling(sqrt(length(outputs_tissue)))
   do.call(grid.arrange, c(p, ncol = 1, top = title, bottom = thresholds_text))  
 }
+# 
+# plotVennDiagram = function(outputs_tissue, title, thresholds_text, file){
+#   # Find the name containing "tum"
+#   all.single.tool = outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool
+#   
+#   name_to_replace = names(all.single.tool)[grep("tum", names(all.single.tool))]
+#   
+#   # Rename the element
+#   names(all.single.tool)[names(all.single.tool) == name_to_replace] = file
+#   
+#   p=list()
+#   for (tissue in names(outputs_tissue)){
+#     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
+#     p[[tissue]] = ggVennDiagram(all.single.tool, 
+#                                 label_alpha = 0, 
+#                                 label_col = "white") +
+#       labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) +
+#       theme(legend.position = "none", plot.margin = unit(c(1, 1, 1, 1), "lines"))
+#   }
+#   rc = ceiling(sqrt(length(outputs_tissue)))
+#   grid.draw(arrangeGrob(grobs = p, ncol = 1, top = title, bottom = thresholds_text,
+#                         padding = unit(c(1, 1, 1, 1), "lines"), clip = "off"))
+# }
 
-plotVennDiagram = function(outputs_tissue, title, thresholds_text){
-  p=list()
+library(VennDiagram)
+
+plotVennDiagram = function(outputs_tissue, title, thresholds_text, file, colors){
+  # Find the name containing "tum"
+    p = list()
   for (tissue in names(outputs_tissue)){
+    all.single.tool = outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool
+    
+    colors = colors[names(all.single.tool)]
+    name_to_replace = names(all.single.tool)[grep("tum", names(all.single.tool))]
+    names(all.single.tool)[names(all.single.tool) == name_to_replace] = file
+    
     n_jxns = nrow(outputs_tissue[[tissue]]$all.jxns.info)
-    p[[tissue]] = ggVennDiagram(outputs_tissue[[tissue]]$sign.jxns.info.list$all.single.tool, 
-                                label_alpha = 0, 
-                                label_col = "white") +
-      labs(title = paste0(tissue, '( #jxns = ', n_jxns, ' )' )) +
-      theme(legend.position = "none")
+    
+    # Create Venn diagram using VennDiagram package
+    venn.diagram <- venn.diagram(
+      x = all.single.tool, 
+      filename = NULL, # Don't save to file directly
+  #    main = paste0(tissue, '( #jxns = ', n_jxns, ' )' ),
+   #   main.pos = c(0.5, 0.3), # Adjust title position
+      cex = 1, # Adjust font size of labels
+      lwd = 1, # Adjust line width of circles
+      margin = 0.1, # Adjust margin as needed
+      label.col = "black", # Set label color
+      fill = colors, # Set circle colors (adjust as needed)
+   #   cat.cex = 1, # Adjust category label font size
+   #   cat.pos = c(0, 0, 180, 180), # Adjust category label positions
+    #  cat.dist = c(0.05, 0.05, 0.05, 0.05) # Adjust category label distances from circles
+    )
+    
+    # Convert to grid graphical object
+    p[[tissue]] <- gTree(children = gList(venn.diagram))
   }
+  
   rc = ceiling(sqrt(length(outputs_tissue)))
-  do.call(grid.arrange, c(p, ncol = 2, top = title, bottom = thresholds_text))
+  
+  # Arrange and draw using grid.arrange
+  grid.arrange(grobs = p, ncol = 1, top = textGrob(title, gp = gpar(fontsize = 14)), 
+               bottom = textGrob(thresholds_text, gp = gpar(fontsize = 12)))
 }
+
+
+
+
+?grid.arrange
+
+plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds){
+  col = c('sajr.norm.tumor' = '#979A9A',
+          sajr = "#984EA3",
+          dje = "orange3",
+          diego = "#5DADE2",
+          'dje&sajr' = "#FF9900",
+          'diego&sajr' = '#E8FF00',
+          'diego&dje' = '#F781BF',
+          'diego&dje&sajr' = "#4DAF4A")
+  
+  # col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
+  # col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
+  # 
+  # png(paste0('metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  # plotGraphs(outputs.prepr.list=outputs.prepr.list, 
+  #            cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
+  # dev.off()
+  # 
+  # png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  # plotGraphs(outputs.prepr.list=outputs.prepr.list, 
+  #            cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,  
+  #            add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
+  # dev.off()
+  
+  thresholds_text = setTitles(thresholds)
+  
+  if (tumor==TRUE){
+    title=paste0(file, " and development. Tool comparison. (Base conditions: before birth and norm accordingly)")
+  }
+  else title = "Development (before*-after birth). Tool comparison (Base condition: before birth)"
+  
+  png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
+  if (tumor) {colors = c(sajr.norm.tumor = '#979A9A', sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
+  } else colors = c(sajr = "#984EA3", dje = "orange3", diego = "#5DADE2")
+  plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, colors)
+  dev.off()
+  if (tumor==FALSE){
+    png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
+    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
+    dev.off()
+    
+  }
+}
+
+
 
 
 #===========fisher
 
 plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
-  col=c(sajr = "#8F00FF",
-        dje = "darkorange4",
-        diego = "deepskyblue",
-        sajr = "#8F00FF",
-        dje = "darkorange4",
-        diego = "deepskyblue",
-        sajr = "#8F00FF",
-        dje = "darkorange4",
-        diego = "deepskyblue")
+  col=c(sajr = "#984EA3",
+        dje = "orange3",
+        diego = "#5DADE2")
   
   png('fisher_plot.png', width = 15, height = 20, units = "cm", res = 700)
   
@@ -315,12 +378,8 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
     odds_ratio = fisher_results_tissue$odds_ratio
     if (log) odds_ratio = log2(odds_ratio+0.01)
     q_val = fisher_results_tissue$q_val
-    par(xaxs = "i", yaxs = "i") # Force exact axis limits
     print(par("mfg")[1])
     print(nrow)
-    if (par("mfg")[1]==nrow){
-      print('here')
-      par(mar=c(4, 0, 1, 0) + 0.1)}
     
     bp = barplot(odds_ratio,
                  col= col,
@@ -338,16 +397,16 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
     }
     axis(1, at=bp, labels = FALSE, lwd = 0)
     if (par("mfg")[1]==nrow){
+      print('here')
+      par(mar=c(4, 0, 1, 0) + 0.1)
       text(bp, -1, labels = names, srt = 90, 
            adj = c(1,1), xpd = TRUE, cex = 0.7)
-    }
+  }
   #  mtext(side = 2, text = "odds ratio", line = 1.7, cex = 0.6) 
     mtext(side=2, text = tissue, cex= 0.7, line=2.7)
     
     # Add x-axis at y = 0
     abline(h = 0, col = "black", xpd=FALSE) 
-    
-    
   })
   
   addLegend(labels=c(names, 'q-value <=0.05'),
