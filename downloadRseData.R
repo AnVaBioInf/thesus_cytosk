@@ -195,10 +195,33 @@ formatAnnotation = function(rse, tissue.pairs.to.replace.list){
   rse
 }
 
-save2RDS = function(rse.gene, rse.jxn, path){
+formatTumorAnnotation = function(rse){
+  rse = rse[,!is.na(rse@colData$tcga.gdc_cases.samples.days_to_collection)]
+  rse = rse[,!is.na(rse@colData$tcga.cgc_sample_sample_type)]
+  rse = rse[,!is.na(rse@colData$tcga.gdc_cases.diagnoses.tumor_stage)]
+  
+  rse@colData$tissue=NA
+  
+  rse@colData[
+    (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage=='stage iv') & 
+      (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                       'Metastasis')),]$tissue = 'metastatic'
+  rse@colData[
+    (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage %in% c('stage i', 'stage ia', 'stage ib')) &
+      (rse@colData$tcga.gdc_cases.samples.days_to_collection<= 60) &
+      (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                       'Metastasis')),]$tissue = 'non_metastatic'
+  rse@colData[rse@colData$tcga.cgc_sample_sample_type=='Solid Tissue Normal',]$tissue = "normal"
+  rse=rse[, !is.na(rse@colData$tissue)]
+  
+  rse@colData$age_group = 'adult'
+  rse
+}
+
+save2RDS = function(rse.gene, rse.jxn, path, file_name_gene_rse, file_name_jxn_rse){
   # -- saving files
-  saveRDS(rse.gene,'rse.gene.cytosk.rds')
-  saveRDS(rse.jxn,'rse.jxn.cytosk.rds')
+  saveRDS(rse.gene, paste0(path, file_name_gene_rse))
+  saveRDS(rse.jxn, paste0(path, file_name_jxn_rse))
 }
 
 prepareGeneRseAssay = function(project.id, type='gene'){
@@ -215,21 +238,30 @@ prepareRse = function(project.id = 'ERP109002',
                                                  data.frame(gene_name=c('ARPC1A','ARPC1B','ARPC2','ARPC3','ARPC4','ARPC5','ACTR2','ACTR3','ACTR3B'),group='Arp2/3')),
                       tissue.pairs.to.replace.list = list(c("Forebrain", "Brain"),
                                                           c("Hindbrain", "Cerebellum"),
-                                                          c("KidneyTestis", "Kidney"))
+                                                          c("KidneyTestis", "Kidney")),
+                      condition_col_name = "age_group",
+                      path = './', file_name_jxn_rse = 'rse.jxn.cytosk.rds', file_name_gene_rse = 'rse.gene.cytosk.rds',
+                      tumor=FALSE
                       ){
   rse.jxn = downloadRse(project.id, type='jxn')
   rse.gene = prepareGeneRseAssay(project.id, type='gene')
-
+ # save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
   rse = annotateJxns(rse.gene, rse.jxn)
   rse.jxn = rse$rse.jxn
   rse.gene = rse$rse.gene 
-  
   rse.jxn = removeJxnDublicates(rse.jxn)
-  rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
-  rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list)
-  rse.jxn = rse.jxn[,!is.na(rse.jxn@colData$age_group)]
-  
-  save2RDS(rse.gene, rse.jxn, path='./')
+  if (tumor){
+    rse.jxn = formatTumorAnnotation(rse.jxn)
+    rse.gene = formatTumorAnnotation(rse.gene) 
+    rse.jxn = rse.jxn[,!is.na(rse.jxn@colData[,condition_col_name])]
+    rse.gene = rse.gene[,!is.na(rse.gene@colData[,condition_col_name])]
+  }
+  else{
+    rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
+    rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list) 
+    rse.jxn = rse.jxn[,!is.na(rse.jxn@colData[,condition_col_name])]
+  }
+  save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
 }
 
 mergeRse = function(gene.rse.list){

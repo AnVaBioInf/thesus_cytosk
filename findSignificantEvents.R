@@ -15,14 +15,15 @@ rse2countDf = function(rse){
 
 # проверить!
 filterRse = function(rse, tissue, age_group=c('fetus', 'adult'), mim_row_sum=10, min_variance=0){
-  rse = rse[, (rse@colData$tissue == tissue) & (rse@colData$age_group %in% age_group)]
+  rse = rse[, (rse@colData$tissue %in% tissue) & (rse@colData$age_group %in% age_group)]
   rse = rse[apply(rse@assays@data$counts, 1, sum) >= mim_row_sum &
               apply(rse@assays@data$counts, 1, var) >= min_variance, ]
   rse
 }
 
-findConditionIds = function(rse_filtered, age_group){
-  rownames(rse_filtered@colData[rse_filtered@colData$age_group == age_group,])
+# HERE!!!
+findConditionIds = function(rse_filtered, condition_col_name, condition_name){
+  rownames(rse_filtered@colData[rse_filtered@colData[,condition_col_name] == condition_name,])
 }
 
 #=================================DIEGO=======================================
@@ -40,18 +41,21 @@ makeAFile = function(rse.filtered, tissue, age_group, path_input){
   junction_table = junction_table[,c('junction', 'type', sample_ids, 'geneID', 'geneName')]
   junction_table = junction_table[order(junction_table$geneID),]
   write.table(junction_table,
-              paste0(path_input, "/junction_table_", tissue, "_", age_group, ".txt"),
+              paste0(path_input, "/junction_table_", paste(tissue, collapse = "_"), "_", 
+                     age_group, ".txt"),
               sep = "\t",
               row.names = FALSE, col.names = TRUE, quote = FALSE)
 }
 
 # --b file (condition to sample relation in the format: condition tab-delimiter sampleName)
-makeBFile = function(rse.filtered, tissue, age_group, path_input){
-  group_table = rse.filtered@colData[,'age_group',drop=F]
+makeBFile = function(rse.filtered, tissue, age_group, path_input, 
+                     condition_col_name){
+  group_table = rse.filtered@colData[,condition_col_name,drop=F]
   group_table$sample_id = rownames(group_table)
-  group_table = group_table[order(group_table$age_group), ]
+  group_table = group_table[order(group_table[,condition_col_name]), ]
   write.table(group_table,
-              paste0(path_input, "/group_table_", tissue, "_", age_group, ".txt"),
+              paste0(path_input, "/group_table_", paste(tissue, collapse = "_"), "_", 
+                     age_group, ".txt"),
               sep = "\t",
               row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
@@ -75,15 +79,17 @@ makeBFile = function(rse.filtered, tissue, age_group, path_input){
 #   system(paste("chmod +x", filename))
 # }
 
-makeDiegoInputFiles = function(rse.filtered, tissue, age_group, path_input){
+makeDiegoInputFiles = function(rse.filtered, tissue, age_group, path_input,
+                               condition_col_name){
   makeAFile(rse.filtered, tissue, age_group, path_input)
-  makeBFile(rse.filtered, tissue, age_group, path_input)
+  makeBFile(rse.filtered, tissue, age_group, path_input, condition_col_name)
   # makeDiegoBashFile(tissue, path_input, path_output, reference_condition, 
   #                   min_support, min_samples, FDR_threashold, FC_threashold)
 }
 
 readDiegoOutput = function(path_output, tissue, age_group){
-  file_path = paste0(path_output, '/DIEGO_output_', tissue, "_", age_group, '.txt')
+  file_path = paste0(path_output, '/DIEGO_output_', paste(tissue, collapse = "_"), "_", 
+                     age_group, '.txt')
   diego_output = read.delim(file_path, sep = "\t")
   diego_output
 }
@@ -94,18 +100,21 @@ readDiegoOutput = function(path_output, tissue, age_group){
 #' wget http://legacy.bioinf.uni-leipzig.de/Software/DIEGO/DIEGO.tar.gz
 #' tar -xzf DIEGO.tar.gz
 runDiego = function(rse.filtered, tissue, age_group, reference_condition, path_input, path_output, 
-                    min_support, min_samples, FC_threshold, FDR_threshold){
-  makeDiegoInputFiles(rse.filtered, tissue, age_group, path_input)
+                    min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name){
+  makeDiegoInputFiles(rse.filtered, tissue, age_group, path_input, condition_col_name)
   use_condaenv("DIEGO_1")
   system2(py_exe(), c("/home/an/DIEGO/diego.py", 
-                      paste0('-a ', path_input, '/junction_table_', tissue, "_", age_group, '.txt'), 
-                      paste0('-b ', path_input, '/group_table_', tissue, "_", age_group, '.txt'), 
+                      paste0('-a ', path_input, '/junction_table_', paste(tissue, collapse = "_"), 
+                             "_", age_group, '.txt'), 
+                      paste0('-b ', path_input, '/group_table_', paste(tissue, collapse = "_"), 
+                             "_", age_group, '.txt'), 
                       paste0('-x ', reference_condition),
                       paste0('--minsupp ', min_support),
                       paste0('--minsamples ', min_samples),
                       paste0('--foldchangeThreshold ', FC_threshold),
                       paste0('--significanceThreshold ', FDR_threshold),
-                      paste0('> ', path_output, '/DIEGO_output_', tissue, "_", age_group, '.txt')
+                      paste0('> ', path_output, '/DIEGO_output_', paste(tissue, collapse = "_"), 
+                             "_", age_group, '.txt')
   )
   )  
   diego.output = readDiegoOutput(path_output, tissue, age_group)
@@ -126,21 +135,21 @@ makeDjeCoordinates <- function(coordinates_vector) {
 }
 
 # instead of DJEimport() etc, because input data differ (recount3 jxns instead of STAR raw out file)
-makePrepOutObj = function(rse.filtered, tissue, reference_condition){
+makePrepOutObj = function(rse.filtered, tissue, condition_col_name, reference_condition){
   JunctExprfilt = rse2countDf(rse.filtered)
   rownames(JunctExprfilt) = makeDjeCoordinates(rownames(JunctExprfilt))
   featureID = rownames(JunctExprfilt)
   groupID = rse.filtered@rowRanges$gene_name
-  age_group_factor = relevel(as.factor(rse.filtered@colData$age_group),
+  group_factor = relevel(as.factor(rse.filtered@colData[,condition_col_name]),
                              ref = reference_condition)
-  design = model.matrix(~age_group_factor)
+  design = model.matrix(~group_factor)
   list(JunctExprfilt=JunctExprfilt, featureID=featureID, groupID=groupID, design=design)
 }
 
 
-runDJExpress = function(rse.filtered, tissue, reference_condition, FDR_threshold, logFC_threshold){
-  prep_out = makePrepOutObj(rse.filtered, tissue, reference_condition)
-  reference_sample_ids = findConditionIds(rse.filtered, reference_condition)
+runDJExpress = function(rse.filtered, tissue, condition_col_name, reference_condition, FDR_threshold, logFC_threshold){
+  prep_out = makePrepOutObj(rse.filtered, tissue, condition_col_name, reference_condition)
+  reference_sample_ids = findConditionIds(rse.filtered, condition_col_name, reference_condition)
   anlz_out <- DJEanalyze(prepare.out = prep_out,
                          Group1 = reference_sample_ids,
                          FDR = FDR_threshold,
@@ -279,21 +288,22 @@ calculateMetrics = function(sajr, reference.sample.ids){
   dPSI #, logFC=logFC)
 }
 
-runSAJR = function(rse.filtered, tissue, reference_condition){
+runSAJR = function(rse.filtered, tissue, condition_col_name, reference_condition){
   sajr.tissue = makeSAJR(rse.filtered)
-  mod = rse.filtered@colData$age_group
-  mod = list(age_group=factor(mod)) # ~ model data
-  reference.sample.ids = findConditionIds(rse.filtered, reference_condition)
+  mod = rse.filtered@colData[,condition_col_name]
+  mod = list(group=factor(mod)) # ~ model data
+  reference.sample.ids = findConditionIds(rse.filtered, condition_col_name, reference_condition)
   
-  alt.glm = as.data.frame( fitSAGLM(sajr.tissue, terms(x ~ age_group, keep.order=T),mod,return.pv=T) )
+  alt.glm = as.data.frame( fitSAGLM(sajr.tissue, terms(x ~ group, keep.order=T),mod,return.pv=T) )
   alt.glm$dPSI = calculateMetrics(sajr.tissue, reference.sample.ids)
-  alt.glm$FDR.sajr = p.adjust(alt.glm$age_group,m='BH')
-  names(alt.glm)[names(alt.glm) == "age_group"] = "p.value.sajr"
+  alt.glm$FDR.sajr = p.adjust(alt.glm$group,m='BH')
+  names(alt.glm)[names(alt.glm) == "group"] = "p.value.sajr"
   
   alt.glm
 }
-
-#============================Running tools and processing outputs===========================================
+#==========================================================================================================
+#============================Running tools and processing outputs==========================================
+#==========================================================================================================
 runTools = function(rse, tissue, age_group=c('fetus','adult'), reference_condition='fetus',
                     path_input = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_input',
                     path_output = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_output',
@@ -301,15 +311,17 @@ runTools = function(rse, tissue, age_group=c('fetus','adult'), reference_conditi
                     min_samples = 1, #  minimum number of samples that must show the minimum support
                     FC_threshold = 1, # ? ratio of read counts of a splice junction in one condition compared to another
                     FDR_threshold = 0.05, # adjusted p-value threshold
-                    logFC_threshold = 0
+                    logFC_threshold = 0,
+                    condition_col_name='age_group'
 ){
   rse.filtered = filterRse(rse, tissue, age_group)
-  diego.output = runDiego(rse.filtered, tissue, paste0(age_group, collapse = "_"), reference_condition, path_input, path_output,
-                          min_support, min_samples, FC_threshold, FDR_threshold)
+  diego.output = runDiego(rse.filtered, tissue, age_group, reference_condition, path_input, path_output,
+                          min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name)
   print('diego running complete')
-  dje.output = runDJExpress(rse.filtered, tissue, reference_condition, FDR_threshold, logFC_threshold)
+  dje.output = runDJExpress(rse.filtered, tissue, condition_col_name, reference_condition, FDR_threshold, logFC_threshold)
+
   print('dje running complete')
-  sajr.output = runSAJR(rse.filtered, tissue, reference_condition)
+  sajr.output = runSAJR(rse.filtered, tissue, condition_col_name, reference_condition)
   print('sajr running complete')
   list(diego.output=diego.output, dje.output=dje.output, sajr.output=sajr.output)
 }
@@ -531,15 +543,6 @@ findCommonJxns = function(outputs_tum){
 }
 
 #getFisher(outputs_dev_sign_info[['Brain']])
-
-
-
-
-
-
-
-
-
 
 
 
