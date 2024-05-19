@@ -19,13 +19,16 @@ tissue.col=c('Brain'="#3399CC",
 # -----------------------------------------------------------------------------------
 # ------------------------- samples occurrence heatmap ------------------------------
 # -----------------------------------------------------------------------------------
-plotHeatmapSamplesTissueAge = function(rse.gene.cytosk){
-  par(oma = c(2, 2, 0, 0))  # bottom, left, top, right.
+plotHeatmapSamplesTissueAge = function(rse.gene.cytosk, col_to_plot = 'age_group_specific',
+                                       age=TRUE, xlabels = FALSE){
+  par(oma = c(5, 9, 0, 0))  # bottom, left, top, right.
   # occurrence of samples
   sample_occurance = as.data.frame.matrix(
-    table(rse.gene.cytosk@colData$tissue, rse.gene.cytosk@colData$age_group_specific) )
+    table(rse.gene.cytosk@colData$tissue, rse.gene.cytosk@colData[,col_to_plot]) )
   # The table() function takes these two vectors as input and creates a contingency table. This table shows the frequency distribution of cells across different combinations of tissue types and age groups.
-  sample_occurance = sample_occurance[,names(order)]
+  if (age){
+    sample_occurance = sample_occurance[,names(order)]
+  }
   sample_occurance = t(sample_occurance)
   # # making a column for tissues
   # sample_occurance$tissue = rownames(sample_occurance)
@@ -45,7 +48,13 @@ plotHeatmapSamplesTissueAge = function(rse.gene.cytosk){
        col = "black")
   
   # Add axes and labels
-  axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
+  if (xlabels==FALSE){
+    axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
+  } else {
+    xlabels = c(metastatic='Stage IV', non_metastatic="Stage I",
+                   normal='Normal breast tissue')
+    axis(1, at = 1:ncol(sample_occurance), labels = xlabels[colnames(sample_occurance)], las = 2)
+  }
   axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
 }
 

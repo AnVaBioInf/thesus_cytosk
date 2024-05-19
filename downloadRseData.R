@@ -277,3 +277,16 @@ mergeRse = function(gene.rse.list){
   )
   merged_rse
 }
+
+
+downloadBigWigLinks = function(rse.jxn, path='bigWig_tumor/', url_file = "bigwig_urls.txt"){
+  #--write bigwig file links
+  selected_rownames <- rownames(rse.jxn@colData)
+  # Create a vector to store the URLs
+  bigwig_urls <- c()
+  for (sample in selected_rownames){
+    bigwig_urls <- c(bigwig_urls, rse.jxn[, sample]$BigWigURL)
+  }
+  # Write the URLs to the file
+  writeLines(bigwig_urls, con = paste0(path,url_file))
+}

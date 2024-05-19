@@ -2,6 +2,7 @@ source("downloadRseData.R")
 source("findSignificantEvents.R")
 source('plotToolsResults.R')
 source('plotGenesExpression.R')
+source('runTools.R')
 library(SummarizedExperiment)
 
 logfc_threshold=1.5
@@ -18,30 +19,35 @@ thresholds = list(logfc_threshold=logfc_threshold,
 # #==================== download and filter rse
 # development
 # prepareRse()
-rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
-rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
+rse.gene.cytosk = readRDS('rds/rse.gene.cytosk.rds', refhook = NULL)
+rse.jxn.cytosk = readRDS('rds/rse.jxn.cytosk.rds', refhook = NULL)
 
 # Breast normal tissue
 # # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
 # # gtex.breast$tissue = 'Breast gtex'
-# # saveRDS(gtex.breast,'gtex.breast.rds')
-# gtex.breast = readRDS('gtex.breast.rds')
+# # saveRDS(gtex.breast,'rds/gtex.breast.rds')
+# gtex.breast = readRDS('rds/gtex.breast.rds')
 
 # # BRCA
-prepareRse(project.id = 'BRCA', condition_col_name = "tissue", 
-           file_name_jxn_rse = 'rse.jxn.brca.cytosk.rds', file_name_gene_rse = 'rse.gene.brca.cytosk.rds',
-           tumor=TRUE)
-rse.gene.brca.cytosk = readRDS('rse.gene.brca.cytosk.rds')
-rse.jxn.brca.cytosk = readRDS('rse.jxn.brca.cytosk.rds')
-table(rse.jxn.brca.cytosk$tissue)
+# prepareRse(project.id = 'BRCA', condition_col_name = "tissue", 
+#            file_name_jxn_rse = 'rse.jxn.brca.cytosk.rds', file_name_gene_rse = 'rse.gene.brca.cytosk.rds',
+#            tumor=TRUE)
+rse.gene.brca.cytosk = readRDS('rds/rse.gene.brca.cytosk.rds')
+rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
+#downloadBigWigLinks(rse.jxn.brca.cytosk, path='/media/an/Backup Plus/BigWig_tumor/')
 
 ###========================samples
 plotHeatmapSamplesTissueAge(rse.gene.cytosk)
-table(rse.jxn.brca.cytosk@colData$tissue)
+table(rse.jxn.brca.cytosk@colData[,c('tissue', 'tcga.cgc_case_histological_diagnosis')])
+
+png(paste0('plots/hist_samples_cancer.png'), width = 15, height = 15, units = "cm", res = 700)
+plotHeatmapSamplesTissueAge(rse.jxn.brca.cytosk, col_to_plot='tcga.cgc_case_histological_diagnosis',
+                            age=F, xlabels=TRUE)
+dev.off()
 
 # # ==================== gene expression
 # # --------------------gene expression vs age
-# png(paste0('cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
+# png(paste0('plots/cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
 # plotScatterplotExpression(rse.gene.cytosk)
 # dev.off()
 
@@ -51,7 +57,7 @@ table(rse.jxn.brca.cytosk@colData$tissue)
 # merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk))
 # setParams(merged_rse)
 # 
-# png(paste0('cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
+# png(paste0('plots/cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
 # plotBoxplotExpression(merged_rse)
 # dev.off()
 
@@ -78,51 +84,53 @@ table(rse.jxn.brca.cytosk@colData$tissue)
 #     outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
 #   }
 # }
-# saveRDS(outputs_tissue,'outputs_tissue.rds')
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+# saveRDS(outputs_tissue,'rds/outputs_tissue.rds')
+outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 # 
 # 
 
 #================================ tum ======================================
 # # -- reading files
-unique.tissues = unique(rse.jxn.brca.cytosk@colData$tissue)
-tissues_comb = list(c("normal", 'non_metastatic'), c('non_metastatic', 'metastatic'))
-
-outputs_brca = list()
-for (tissue_list in tissues_comb){
-  print('comapring now:')
-  print(tissue_list)
-  print('reference confition:')
-  print(tissue_list[1])
-  
-  tissue = paste(tissue_list, collapse = "_")
-  outputs_brca[[tissue]] = 
-    runTools(rse.jxn.brca.cytosk, tissue_list, age_group='adult',
-             reference_condition=tissue_list[1], condition_col_name='tissue')
-}
-
-saveRDS(outputs_brca,'outputs_brca.rds')
-outputs_brca = readRDS('outputs_brca.rds', refhook = NULL)
+# unique.tissues = unique(rse.jxn.brca.cytosk@colData$tissue)
+# tissues_comb = list(c("normal", 'non_metastatic'), c('non_metastatic', 'metastatic'))
+# 
+# outputs_brca = list()
+# for (tissue_list in tissues_comb){
+#   print('comapring now:')
+#   print(tissue_list)
+#   print('reference confition:')
+#   print(tissue_list[1])
+# 
+#   tissue = paste(tissue_list, collapse = "_")
+#   outputs_brca[[tissue]] =
+#     runTools(rse.jxn.brca.cytosk, tissue_list, age_group='adult',
+#              reference_condition=tissue_list[1], condition_col_name='tissue')
+# }
+# saveRDS(outputs_brca,'rds/outputs_brca.rds')
+outputs_brca = readRDS('rds/outputs_brca.rds', refhook = NULL)
 # 
 # 
 
+normal_non_metastatic = mergeOutputs(outputs_brca$normal_non_metastatic)
+all_cancer = findSignificantJxnsIds(normal_non_metastatic, logfc_threshold=logfc_threshold,
+                       dpsi_threshold=dpsi_threshold,
+                       abund_change_threshold=abund_change_threshold,
+                       fdr_threshold=fdr_threshold, suffix = '_normal_non_metastatic')
 
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-outputs_dev_sign_info = list()
+
+outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
+dev_outputs = list()
 for (tissue in names(outputs_tissue)){
-  outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
-                                                   logfc_threshold=logfc_threshold,
-                                                   dpsi_threshold=dpsi_threshold,
-                                                   abund_change_threshold=abund_change_threshold,
-                                                   fdr_threshold=fdr_threshold,
-                                                   add_external_data=FALSE, file='')
+  dev = mergeOutputs(outputs_tissue[[tissue]])
+  dev_outputs[[tissue]]$all_dev = findSignificantJxnsIds(dev, logfc_threshold=logfc_threshold,
+                                                 dpsi_threshold=dpsi_threshold,
+                                                 abund_change_threshold=abund_change_threshold,
+                                                 fdr_threshold=fdr_threshold, suffix = '_dev')
+  dev_outputs[[tissue]]$intersection = compareOutputs(dev_outputs[[tissue]]$all_dev, all_cancer)
 }
-
-
 
 
 # #=================================dev
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 outputs_dev_sign_info = list()
 for (tissue in names(outputs_tissue)){
   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
