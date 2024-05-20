@@ -175,12 +175,12 @@ addConditionColumn = function(rse){
   
   # adult
   rse@colData$age_group[!(rse@colData$tissue %in% c('Testies', 'Kidney', 'Ovary')) &
-                                     rse@colData$age %in% toddler.to.adult] = "adult"
+                          rse@colData$age %in% toddler.to.adult] = "adult"
   # including infant in adult group for kidney, since otherwise there are not enough of samples
   rse@colData$age_group[rse@colData$tissue == 'Kidney' & rse@colData$age %in% c(infant, toddler.to.adult)] = "adult"
   # excluding teen from Testis, considering developmental peculiarities of testis development
   rse@colData$age_group[rse@colData$tissue == 'Testis' & rse@colData$age %in% adult] = "adult"
-
+  
   rse
 }
 
@@ -195,10 +195,42 @@ formatAnnotation = function(rse, tissue.pairs.to.replace.list){
   rse
 }
 
-save2RDS = function(rse.gene, rse.jxn, path){
+formatTumorAnnotation = function(rse){
+  rse = rse[,!is.na(rse@colData$tcga.gdc_cases.samples.days_to_collection)]
+  rse = rse[,!is.na(rse@colData$tcga.cgc_sample_sample_type)]
+  rse = rse[,!is.na(rse@colData$tcga.gdc_cases.diagnoses.tumor_stage)]
+  
+  rse@colData$tissue=NA
+  rse@colData$stage=NA
+  
+  rse@colData$stage = rse@colData[
+      (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage=='stage iv') & 
+        (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                         'Metastasis')),]$tissue = 'stage_four'
+  rse@colData$stage = rse@colData[
+      (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage %in% c('stage i', 'stage ia', 'stage ib')) &
+        (rse@colData$tcga.gdc_cases.samples.days_to_collection<= 60) &
+        (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                         'Metastasis')),]$tissue = 'stage_one'
+  rse@colData$stage = 
+    rse@colData[rse@colData$tcga.cgc_sample_sample_type=='Solid Tissue Normal',]$tissue = "normal"
+  
+  old_values = c( "Solid Tissue Normal" = "Breast_normal",
+                    "Primary Tumor" = "BRCA",
+                    "Primary solid Tumor" = "BRCA",
+                    "Metastatic" = "BRCA")
+  rse@colData$tissue =
+      unname(old_values[rse@colData$tcga.gdc_cases.samples.sample_type])
+  rse@colData$age_group = 'adult'
+  # rse=rse[, !is.na(rse@colData$)]
+  
+  rse
+}
+
+save2RDS = function(rse.gene, rse.jxn, path, file_name_gene_rse, file_name_jxn_rse){
   # -- saving files
-  saveRDS(rse.gene,'rse.gene.cytosk.rds')
-  saveRDS(rse.jxn,'rse.jxn.cytosk.rds')
+  saveRDS(rse.gene, paste0(path, file_name_gene_rse))
+  saveRDS(rse.jxn, paste0(path, file_name_jxn_rse))
 }
 
 prepareGeneRseAssay = function(project.id, type='gene'){
@@ -215,21 +247,30 @@ prepareRse = function(project.id = 'ERP109002',
                                                  data.frame(gene_name=c('ARPC1A','ARPC1B','ARPC2','ARPC3','ARPC4','ARPC5','ACTR2','ACTR3','ACTR3B'),group='Arp2/3')),
                       tissue.pairs.to.replace.list = list(c("Forebrain", "Brain"),
                                                           c("Hindbrain", "Cerebellum"),
-                                                          c("KidneyTestis", "Kidney"))
-                      ){
+                                                          c("KidneyTestis", "Kidney")),
+                      condition_col_name = "age_group",
+                      path = './', file_name_jxn_rse = 'rse.jxn.cytosk.rds', file_name_gene_rse = 'rse.gene.cytosk.rds',
+                      tumor=FALSE
+){
   rse.jxn = downloadRse(project.id, type='jxn')
   rse.gene = prepareGeneRseAssay(project.id, type='gene')
-
+  # save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
   rse = annotateJxns(rse.gene, rse.jxn)
   rse.jxn = rse$rse.jxn
   rse.gene = rse$rse.gene 
-  
   rse.jxn = removeJxnDublicates(rse.jxn)
-  rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
-  rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list)
-  rse.jxn = rse.jxn[,!is.na(rse.jxn@colData$age_group)]
-  
-  save2RDS(rse.gene, rse.jxn, path='./')
+  if (tumor){
+    rse.jxn = formatTumorAnnotation(rse.jxn)
+    rse.gene = formatTumorAnnotation(rse.gene) 
+    rse.jxn = rse.jxn[,!is.na(rse.jxn@colData[,condition_col_name])]
+    rse.gene = rse.gene[,!is.na(rse.gene@colData[,condition_col_name])]
+  }
+  else{
+    rse.jxn = formatAnnotation(rse.jxn, tissue.pairs.to.replace.list)
+    rse.gene = formatAnnotation(rse.gene, tissue.pairs.to.replace.list) 
+    rse.jxn = rse.jxn[,!is.na(rse.jxn@colData[,condition_col_name])]
+  }
+  save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
 }
 
 mergeRse = function(gene.rse.list){
@@ -244,4 +285,17 @@ mergeRse = function(gene.rse.list){
     colData = merged.col.data
   )
   merged_rse
+}
+
+
+downloadBigWigLinks = function(rse.jxn, path='bigWig_tumor/', url_file = "bigwig_urls.txt"){
+  #--write bigwig file links
+  selected_rownames <- rownames(rse.jxn@colData)
+  # Create a vector to store the URLs
+  bigwig_urls <- c()
+  for (sample in selected_rownames){
+    bigwig_urls <- c(bigwig_urls, rse.jxn[, sample]$BigWigURL)
+  }
+  # Write the URLs to the file
+  writeLines(bigwig_urls, con = paste0(path,url_file))
 }

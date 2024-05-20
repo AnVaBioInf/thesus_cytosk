@@ -1,0 +1,452 @@
+        "sample_description": "Metastatic breast adenocarcinoma cell line",
+SRP017465
+        "cell_type": "Ductal breast carcinoma",
+SRP047065
+        "description": "NextSeq 2000 sequencing: GSM7622008: intact Hi-C from breast epithelium (ENCLB561FEI) Homo sapiens Hi-C",
+SRP013565
+        "cell_line": "MCF-7 is a human breast adenocarcinoma cell line",
+SRP066365
+        "project_name": "RNA-seq of breast cancer cell lines post ligand treatment II",
+SRP189565
+        "project_name": "Acquired HER2 mutations in ER+ metastatic breast cancer confer resistance to ER-directed therapies",
+SRP166112
+        "description": "Illumina HiSeq 2500 sequencing: GSM3104254: Human breast cancer xenograft 2665 Homo sapiens RNA-Seq",
+SRP141118
+        "description": "Illumina MiSeq sequencing: RNA-seq of human: breast cancer",
+SRP101418
+        "study_title": "Molecular profiling of human mammary gland links breast cancer risk to a p27+ cell population with progenitor characteristics",
+SRP008218
+        "project_name": "Metabolic reprogramming and chemoresistance in breast cancer.",
+ERP116618
+        "study_title": "RNA-seq data from MCF-7 cells (breast cancer model) treated with soy extracts",
+SRP040418
+        "study_title": "ChIP-seq of ER and RUNX2 in MCF7 breast cancer cell lines",
+SRP087481
+        "cell_type": "BT549 breast cancer cell line",
+SRP179781
+        "cell_type": "breast cancer cell line",
+SRP065220
+        "library_construction_protocol": "The frozen breast tissue specimens were weighed, transferred to a 15 mL conical tube containing ceramic beads, and RLT Buffer (Qiagen) plus 1% BME was added so that the tube contained 35 uL of buffer for each milligram of tissue. The conical tubes containing tissue, ceramic beads and buffer were then shaken in a MP Biomedicals FastPrep machine until the tissue was visibly homogenized (90 seconds at 6.5 meters per second). The homogenized tissue was stored at -80\u00c2\u00b0C. Total RNA was extracted from 5 million cultured cells or 350 uL of tissue homogenate (equivalent to 10 mg of tissue) using the Norgen Animal Tissue RNA Purification Kit (Norgen Biotek Corporation). Cell lysate was treated with Proteinase K before it was applied to the column and on-column DNase treatment was performed according to the manufacturer\u00e2\u0080\u0099s instructions. Total RNA was eluted from the columns and quantified using the Qubit RNA Assay Kit and the Qubit 2.0 fluorometer (Invitrogen). RNA-seq libraries for each sample were constructed from 250 ng total RNA using the polyA selection and transposase-based non-stranded library construction (Tn-RNA-seq) described previously (Gertz et al. Transposase mediated construction of RNA-seq libraries.2012. Genome Res 22 (1):134-141). RNA-seq libraries were barcoded during PCR using Nextera barcoded primers according to the manufacturer (Epicentre). The RNA-seq libraries were quantified using the Qubit dsDNA HS Assay Kit and the Qubit 2.0 fluorometer (Invitrogen) and three barcoded libraries were pooled in equimolar quantities for sequencing. The pooled libraries were sequenced on an Illumina HiSeq 2000 sequencing machine using paired-end 50 bp reads and a 6 bp index read, and we obtained at least 50 million read pairs from each library.",
+SRP042620
+        "project_name": "Gene expression profile in breast cancer cells",
+SRP136720
+        "project_name": "GRHL2 is a key lineage determining factor which collaborates with FOXA1 to establish a targetable collateral pathway in the setting of endocrine therapy-resistant breast cancer (RNA-Seq data set 1)",
+SRP124620
+        "project_name": "A transcriptome dataset revealing the molecular features of breast cancer stem cells",
+SRP200157
+        "description": "Illumina HiSeq 2000 sequencing: MCTP_SAMPLE_6_tissue_breast_carcinoma",
+SRP071557
+        "description": "Illumina HiSeq 2000 paired end sequencing: Variation in RNA expression in a panel of 30 breast cancer cell lines",
+ERP113092
+        "cell_type": "breast cancer",
+SRP075592
+        "cell_type": "breast cancer cell",
+ERP000992
+        "cell_line": "breast",
+SRP131198
+        "description": "Illumina HiSeq 2000 sequencing: Whole transcriptome profiling of 63 breast cancer tumours",
+ERP016798
+        "study_title": "Next Generation Sequencing Facilitates Quantitative Analysis of miR-29b-1 and miR-29a targets in tamoxifen-sensitive and tamoxifen-resistant human breast cancer cells",
+SRP075398
+        "study_title": "Ridaforolimus (MK-8669) synergizes with Dalotuzumab (MK-0646) in hormone-sensitive breast cancer",
+SRP072176
+        "cell_type": "MCF10A breast epithelial cells",
+SRP009276
+        "study_title": "Gene expression, single nucleotide variant and fusion transcript discovery in archival material from breast tumors",
+SRP030401
+        "project_name": "Expression profiling by RNA-Seq of breast cancer samples from patients in walnut-consuming and control groups",
+SRP133401
+        "study_title": "Ancestry as a potential modifier of gene expression in breast tumors from Colombian women",
+SRP113639
+        "description": "Illumina HiSeq 2500 paired end sequencing: RNA-seq of MCF-7 (breast adenocarcinoma) and 2102Ep (embryonic carcinoma) cells upon LINE-1 knockdown.",
+ERP011233
+        "description": "Illumina HiSeq 4000 sequencing: RNAseq of BRCA1-deficient breast cancer PDX models treated with PARP-inhibitors: PARP-i Resistant control arm (BR:4,TR:1)",
+SRP149433
+        "tissue_type": "breast cancer",
+SRP141444
+        "tissue_type": "breast",
+SRP157044
+        "study_title": "Gene expression profiling of histone deacetylase inhibition in triple-negative breast cancer",
+SRP095644
+        "tissue_type": "Mammary gland breast, from metastatic site",
+SRP050249
+        "isolate": "MCF10DCIS.com is a clonal breast cancer cell line derived from a xenograft originating from premalignant MCF10AT cells that were injected into severe combined immune-deficient mice.",
+SRP068149
+        "project_name": "Single-cell RNA sequencing on breast cancer cells enriched for cancer stem cell properties using functional assays",
+SRP178543
+        "cell_type": "Whole human breast tumor",
+SRP111343
+        "cell_type": "metastatic ER+ breast cancer",
+SRP110043
+        "tissue_type": "breast cancer",
+SRP108743
+        "description": "NextSeq 500 paired end sequencing: RNA-Seq of human breast cancer cells MCF7 and LCC2 treated with Tamoxifen EPZ or DMSO",
+ERP109295
+        "project_name": "Short-term effect of Boost versus Radical doses of Intraoperative electron Radiotherapy in breast cancer tumor bed using high-throughput approaches",
+SRP159095
+        "tissue_type": "Human breast cancer cell line MCF7",
+SRP115395
+        "description": "Illumina HiSeq 2000 sequencing: PA-seq for human breast",
+SRP017395
+        "cell_type": "breast cancer cell line",
+SRP071806
+        "cell_type": "breast cancer cell line",
+SRP078006
+        "cell_type": "breast epithelial",
+SRP054971
+        "study_title": "Somatic cell fusions reveal extensive heterogeneity in basal-like breast cancer [RNA-Seq]",
+SRP058571
+        "cell_type": "ER+ breast cancer cell line",
+SRP194127
+        "cell_line": "T47D breast cancer cell line variants",
+SRP185827
+        "tissue_type": "mammary gland/breast derived from metastatic site: pleural effusion",
+SRP111915
+        "experiment_alias": "SF3B1 mutation in breast cancer Sample 426-271",
+SRP033115
+        "library_construction_protocol": "Multiple 2 mm-diameter core punches were taken from FFPE tissue blocks to collect dense areas of neoplasia and adjacent normal breast epithelial content separately. When ductal carcinoma in situ (DCIS) and/or invasive ductal carcinoma (IDC) were present, these were also cored. Three to ten tissue cores were pooled for each diagnosis per patient, and tissue cores were re-embedded in paraffin and re-evaluated histologically for lesion purity by sectioning length-wise along the core. Only samples which possessed >90% of luminal cells with the appropriate diagnosis within the epithelial compartment were included among our samples. Adjacent normal cores contained no identifiable pathologies, and cancer cores possessed less than 5% early neoplasia or normal epithelial cells. In all cases stromal cells were present in the core samples. DNA and total RNA were purified from paraffin slices of the embedded tissue cores following deparaffination with a xylene incubation, ethanol wash, and a protease digestion, using the RecoverAll Total Nucleic Acid Isolation Kit (Ambion/Life Technologies catalog #1975). 3SEQ libraries were prepared from as little as 5 ug total RNA. RNA was enriched for 3\u00e2\u0080\u0099 ends by using the Oligotex mRNA mini Kit (QIAgen). The 3\u00e2\u0080\u0099- poly(A)-enriched RNA pools were made into directional 3SEQ Illumina sequencing libraries as follows. RNA that was not sufficiently fragmented was heat-sheared to a size of approximately 100-200 bases by incubation with First Strand Buffer (Invitrogen/Life Technologies) and oligo-dT-P7 primer (5\u00e2\u0080\u0099- CAA GCA GAA GAC GGC ATA CGA GCT CTT CCG ATC TTT TTT TTT TTT TTT TTT TTT TTT TVN -3\u00e2\u0080\u0099) at 85oC for 3-5 minutes, depending on the extent of fragmentation required. The mixture was cooled to 50oC and first strand cDNA synthesis was performed in a 20 ul reaction using Superscript III Reverse Transcriptase (Invitrogen/Life Technologies) for 1 hour at 50oC. Second strand cDNA was synthesized using Second Strand Buffer (Invitrogen/Life Technologies), DNA ligase (Invitrogen/Life Technologies), DNA polymerase I (New England Biolabs), and RNaseH (Epicentre Biotechnologies/Illumina), and purified using the QIAquick PCR Purification Kit (QIAgen). 3\u00e2\u0080\u0099 end repair and modification used dATP, Klenow exo (New England Biolabs) and Klenow Buffer, and was purified using the QIAgen MinElute PCR Purification Kit (QIAgen). cDNA was then ligated to the double-stranded P5 Linker (Adapter Oligo Mix Illumina) for 15 minutes at 22oC. SPRI bead purification (Agencourt Biosciences/Beckman Coulter) was performed both prior to and following PCR amplification of the linker-ligated cDNA using 5' - AAT GAT ACG GCG ACC ACC GAG ATC TAC ACT CTT TCC CTA CAC GAC GCT CTT CCG ATC T - 3' and 5' - CAA GCA GAA GAC GGC ATA CGA GCT CTT CCG ATC - 3' primers and the Phusion PCR Master Mix (New England Biolabs) using a 15 cycle program (98oC for 30 sec 15 cycles of 98oC for 10 sec, 65oC for 30 sec, 72oC for 30 sec 72oC for 5 min). The libraries were then size selected for 200\u00e2\u0080\u0093300 bp fragments by agarose gel fractionation (3% Nusieve GTG Lonza/Fisher Scientific) and purified using the QIAquick Gel Extraction Kit (QIAgen). The libraries contain P7 sequence at the 3\u00e2\u0080\u0099 end downstream of poly(A) and P5 at the 5\u00e2\u0080\u0099 end.",
+SRP023262
+        "cell_type": "breast carcinoma epithelial cell line",
+SRP092362
+        "study_title": "Discovery of naturally occurring ESR1 mutations during acquisition of resistance to endocrine therapy in widely used estrogen receptor positive breast cancer cell lines [RNA-Seq]",
+SRP109286
+        "study_title": "Gene expression profiling of drug-tolerant persister BT474 breast cancer cells derived from lapatinib treatment",
+SRP079968
+        "cell_type": "breast cancer cell line",
+SRP194282
+        "study_title": "Human basal-like breast cancer cell line HCC1143 treated with BET inhibitor JQ1 in combination with MEK inhibitor Trametinib or PI3K/mTOR inhibitor BEZ235",
+SRP075882
+        "tissue_type": "breast cancer tumor sample",
+SRP144382
+        "project_name": "Estrogen responsive transcriptome of estrogen receptor positive normal human breast cells in 3D cultures",
+SRP149366
+        "project_name": "Hypoxia-mediated translational activation of ITGB3 in breast cancer cells enhances TGF-\u00ce\u00b2 signalling and malignant features in vitro and in vivo",
+SRP118788
+        "cell_type": "breast cancer",
+SRP083129
+        "cell_type": "Non-tumorigenic immortalized breast epithelia line",
+SRP044854
+        "tissue_type": "breast cancer",
+SRP194623
+        "cell_type": "established breast cancer cell line",
+SRP063623
+        "project_name": "Acquisition of a hybrid E/M state is essential for tumorigenicity of basal breast cancer cells",
+SRP159023
+        "library_construction_protocol": "Total RNA were simultaneously extracted with DNA and miRNA using All Prep DNA/RNA/miRNA Universal kit (Qiagen) according to the manufacturer protocol. RNA-Sequencing libraries for 22 breast tumors and paired adjacent tissues were constructed from 500 ng of total RNA, using the TruSeq\u00c2\u00ae Stranded Total RNA kit and Ribo-Zero rRNA Removal kit (Illumina). A step of chemical fragmentation generated RNA fragment of 180 pb.",
+SRP116023
+        "project_name": "Preclinical model of obesity and ER-positive breast cancer",
+SRP132902
+        "study_title": "Next generation sequencing facilitates quantitative analysis of changes in mRNA after knock-down of putative master regulators of the breast cancer metastasis transcriptome.",
+SRP072302
+        "study_title": "Genome-wide multi-omics profiling reveals extensive genetic complexity in 8p11-p12 amplified breast carcinomas [RNA-seq]",
+SRP111102
+        "project_name": "RNA-seq analysis of breast cancer",
+SRP142602
+        "study_title": "Spatial proximity to fibroblasts impacts molecular features and therapeutic sensitivity of breast cancer cells influencing clinical outcomes",
+SRP073375
+        "cell_type": "HER2-positive breast cancer",
+SRP037775
+        "project_name": "Highly-motile versus unsorted MDA-MB-231 breast cancer cells",
+SRP188447
+        "cell_line": "SUM229 breast carcinoma cell line, EpCAM/CD49f positive subpopulation",
+SRP090547
+        "library_construction_protocol": "Snap frozen human breast cancer tissues were disrupted using TissueLyser II (Qiagen). Total RNA including small RNAs from both human breast cancer tissue as well as the cell lines were isolated using miRNeasy Mini Kit (Qiagen, cat. 217004) according manual. RNA-seq libraries were generated by using the cDNA amplification kit SMARTer\u00c2\u00ae Ultra\u00e2\u0084\u00a2 Low RNA Kit (Cat. No. 634935, Clontech Laboratories, Inc. Mountain View, USA) for small amount of RNA or less than 200 cells according to manufacturer's manual followed by DNA library construction using the NEBNext\u00c2\u00ae DNA Library Prep Master Mix Set for Illumina\u00c2\u00ae kit (Cat. No. E6040S, New England Biolabs). In brief, c.a. 50 ng of total RNAs or 200 tumor cells were first lysed in reverse transcription buffer and the reaction is initiated with oligodT containing primer. Complete first strand synthesis is followed by template switching and the incorporation of SMARTer oligonucleotide. Full-length cDNAs are amplified using PCR to obtain DNA. Fragmentation and adapter introduction was performed using acoustic shearing to approximately 200 to 500 bp length and NEBNext\u00c2\u00ae DNA Library Prep kit incorporating multiplex index primers. A pooled multiplexed library consisting equal amount of 6 individual libraries were sequenced on The HiSeq 2500 System by core facility.",
+SRP077930
+        "tissue_type": "xenograft breast tumor",
+SRP132630
+        "project_name": "Separation of breast cancer and organ microenvironment transcriptomes in metastases",
+SRP158730
+        "cell_type": "breast cancer",
+SRP026537
+        "study_title": "Effects of plasticizers (bisphenol A, bisphenol AF) and an herbicide in MCF7 human breast cancer cells",
+SRP090937
+        "study_title": "A class of GATA3 mutation reprograms the breast cancer transcriptional network through gain and loss of function",
+SRP108337
+        "project_name": "Response of triple negative breast cancer to BAZ2A/B inhibition and BET bromodomain inhibition alone and in combination (RNAseq)",
+SRP153037
+        "description": "Illumina HiSeq 1000 sequencing: RNAseq of human breast tumor",
+SRP133840
+        "project_name": "GRHL2 is a key lineage determining factor which collaborates with FOXA1 to establish a targetable collateral pathway in the setting of endocrine therapy-resistant breast cancer (RNA-Seq data set 2)",
+SRP124640
+        "project_name": "HMGA1 and FOXM1 synergistically regulate a common gene network modulating angiogenesis in breast cancer",
+SRP192772
+        "tissue_type": "breast cancer tissue",
+SRP132172
+        "project_name": "Short and long-term effects of CDK4/6 inhibition on early stage breast cancer",
+SRP197105
+        "study_title": "Functional and genomic characterization of a xenograft model system for the study of metastasis in triple-negative breast cancer.",
+SRP113305
+        "isolate": "human breast (adenocarcinoma)",
+SRP161905
+        "study_title": "Selective expression of long non-coding RNAs in a breast cancer cell progression model",
+SRP105778
+        "description": "Illumina HiSeq 2500 paired end sequencing: Unliganded Estrogen Receptor Beta cooperates with Argonaute 2 in the modulation of transcription rate and splicing of target genes in breast cancer cells. Part 1",
+ERP015178
+        "project_name": "ETS1 acts as a tumor suppressor in breast cancer by inhibiting growth-related factors",
+SRP124496
+        "tissue_type": "mammary gland/breast derived from metastatic site: pleural effusion",
+SRP075396
+        "isolate": "female_51_breast",
+SRP189259
+        "project_name": "Profiling of protrusion-enriched RNAs from human breast cancer cell line MDA-MB-231",
+SRP193759
+        "tissue_type": "breast",
+SRP065559
+        "library_construction_protocol": "Cells isolated from PDXs and normal breast tissues were used for total RNA extraction with Zymo Research kit (cat# 1055) according to manufacturer protocol libraries were constructed using Illumina TruSeq RNA Sample Prep Kit (Cat#RS-122-2001) starting from at least 200 ng of total RNA",
+SRP191759
+        "study_title": "CDK12 regulates alternative last exon mRNA splicing and promotes invasion of a breast cancer cell line",
+SRP073459
+        "cell_type": "breast carcinoma epithelial cell line",
+SRP092359
+        "cell_type": "breast cancer cell line",
+SRP064259
+        "tissue_type": "breast cancer",
+SRP194624
+        "study_title": "Transcriptional signature of lymphoblastoid cell lines of BRCA1, BRCA2 and non-BRCA1/2 high risk breast cancer families",
+SRP090124
+        "cell_type": "Radioresistant breast cancer cell line",
+SRP163253
+        "cell_line": "primary breast",
+SRP029953
+        "study_title": "RNA sequencing in comparison to immunohistochemistry for measuring cancer biomarkers in breast cancer and lung cancer specimens",
+SRP221385
+        "project_name": "Genomic agonism and phenotypic antagonism between estrogen and progesterone receptors in breast cancer.",
+SRP073061
+        "study_title": "Messenger RNA expression after silencing or inhibition of MEN1in MCF-7 breast cancer cells",
+SRP083916
+        "library_construction_protocol": "The tissue was collected fresh and sterile from the operating room and transported on ice to the pathologist in the absence of formalin fixative. Following pathological examination, tissue in excess of diagnostic requirements was collected and subsequently de-identified at the tissue bank. The tissue was then transported on ice to the laboratory. Samples that were collected in the evening were stored in media at 4C overnight. The duration from surgery to the commencement of tissue dissociation did not exceed 24 hrs, the majority of the samples were processed on the same day as surgery. Fragments of normal ER+ breast tissue were of insufficient cell number to utilize FACS after they were dissociated as described above, so epithelial cell enrichment was performed by utilizing magnetic EasySEP EpCAM beads (StemCell Technologies). Once the cells were washed in cold PBS, the appropriate amount of selection media and magnetic particles was added and incubated on ice for 15 minutes. Next, the tube was placed on the magnet at room temperature for five minutes and eluted with chilled media and this process was repeated for a total of four times to enrich for the ER+/EpCAM+ epithelial tumor cells. Immuno-labelling of normal cells was performed at 4C using PBS as a buffer and wash solution. Incubating the cell pellet with 0.1 mg/ml DNase, 1 mg/ml rat immunoglobulin and a 1/10 dilution of anti-CD16/CD32 receptor antibody for 10 min. was sufficient to block non-specific antibody binding. The cell suspension was then made up to a final concentration of 106 cells /40 \u00ef\u0081\u00adl with dilution buffer. For primary human breast tissue, antibodies directed against human lineage markers CD31 (endothelial cells), CD45 (leukocytes) and CD235a (red blood cells) were used to prepare a Lin- cell population, and these PE-linked antibodies were negatively selected against. Primary antibodies were added at optimized dilutions and incubated for 25 min at 4C. The suspension was then washed, filtered using 40uM tube cap filters (Falcon) and centrifuged. Cells were resuspended in 0.5 \u00ef\u0081\u00adg/ml propidium iodide (Sigma) before cell analysis and sorting to allow for only the selection of viable cells. Cell analysis and sorting was performed on either a FACS DIVA or FACS Aria (BD Biosciences) using a sheath pressure of 30 psi and nozzle size of 70 um. Cells were sorted into polystyrene FACS tubes (Westnet #352063) and collected into a mixture of 50% primary MEC media and 50% CDT. Reanalysis of the sorted populations routinely revealed a purity of more than 95%.",
+SRP108616
+        "project_name": "Gene expression profiling in two dimensional and extracellular matrix based three-dimensional cultures of lung and breast cancer cells",
+SRP194416
+        "cell_type": "Triple negative breast cancer cell line",
+SRP110516
+        "study_title": "ChIPseq and RNAseq of ER mutant breast cancer cell lines",
+SRP098916
+        "tissue_type": "patient-derived xenograft (PDX) breast tumor",
+SRP144426
+        "tissue_type": "excess skin from breast reduction",
+SRP159926
+        "tissue_type": "FFPE;breast cancer",
+SRP194626
+        "description": "Illumina Genome Analyzer sequencing: GSM603082: epitheliumbreast-normal-N6",
+SRP003726
+        "study_title": "Global transcriptome profiling of triple-negative breast cancer cell lines treated with small-molecules targeting Bromodomain and Extra Terminal (BET) proteins",
+SRP100726
+        "project_name": "The influence of PPFIA1 silencing to gene expression in breast carcinoma cell line and head and neck squamous cell carcinoma cell lines by RNA-sequencing in three dimensional collagen I",
+SRP127326
+        "tissue_type": "selected tamoxifen resistant MCF7 breast cancer cells",
+SRP125951
+        "library_construction_protocol": "Cells were isolated by centrifugation from either prepartum secretions or human milk. mRNA was extracted using the Qiagen mini RNeasy extraction kit using extraction techniques previously described (Hassiotou et al 2012). Mammary tissue mRNA from breast biopsies was purchased from Agilent Technologies, representative of a pool of donors. Library preparation was done by degrading DNA contaminant, enrichment with oligo(dT) magnetic beads and fragmentation with fragmentation buffer using the standard Illumina reagents. RNA libraries were prepared for sequencing using standard Illumina protocols",
+SRP081287
+        "cell_type": "triple negative breast cancer cell line",
+SRP062287
+        "tissue_type": "breast",
+SRP186687
+        "cell_type": "breast cancer",
+SRP044187
+        "study_title": "The effect of knockdown Abl kinases on breast cancer cells'' global transcriptome",
+SRP058587
+        "project_name": "Gene expression analysis of previously treated hormone receptor-positive metastatic breast cancer",
+SRP188769
+        "study_title": "Estrogen therapy induces an unfolded protein response to drive cell death in ER+ breast cancer",
+SRP166169
+        "tissue_type": "mammary gland/breast",
+SRP211963
+        "project_name": "Nuclear receptor ROR\u00ce\u00b3 is a targetable master regulator of cholesterol in a subtype of breast cancer [RNA-Seq]",
+SRP199663
+        "project_name": "TRPS1 is a lineage-specific transcriptional dependency in breast cancer [Seq]",
+SRP148163
+        "tissue_type": "breast adenocarcinoma",
+SRP074063
+        "study_title": "Cytokine sensitivity screening highlights BMP4 signaling as a therapeutic opportunity in ER+ breast cancer",
+SRP150014
+        "library_construction_protocol": "Tumor samples were reviewed by a central breast pathologist, who was blinded to participant group assignment, and were macrodissected to include areas with at least 10% tumor cellularity. RNA was isolated using the RNeasy FFPE kit (Qiagen). Capture RNA-sequencing of the transcriptome coding regions was performed using the Illumina Truseq RNA access platform.",
+SRP191514
+        "study_title": "Effect of low-dose sorafenib and alkylating agents in inflammation and angiogenesis in breast cancer",
+SRP108414
+        "cell_type": "breast cancer cell",
+SRP094435
+        "tissue_type": "normal breast tissue",
+SRP218935
+        "project_name": "Driver mutations escalating the risk of distant metastasis in Korean breast cancers",
+ERP010142
+        "tissue_type": "breast",
+SRP050242
+        "study_title": "SILAC identifies LAD1 as an oncogenic filamin binder regulating actin dynamics in response to EGF and marking aggressive breast tumors",
+SRP117048
+        "study_title": "UBR7 is a novel E3 ubiquitin ligase for H2BK120 and acts as a tumor-suppressor in breast cancer [RNA-Seq]",
+SRP096948
+        "study_title": "Loss of CSL unlocks a hypoxic response and enhanced tumor growth potential in breast cancer cells",
+SRP068970
+        "project_name": "LATS1 and LATS2 suppress breast cancer progression by maintaining cell identity and metabolic state [human]",
+SRP152870
+        "project_name": "MCF-7 as a model for functional analysis of breast cancer risk variants",
+SRP197070
+        "cell_type": "breast cancer cell line",
+SRP145507
+        "project_name": "Characterizing steroid hormone receptor chromatin binding landscapes in male and female breast cancer",
+SRP119607
+        "tissue_type": "breast",
+SRP019807
+        "cell_type": "invasive breast ductal carcinoma",
+SRP070694
+        "cell_line": "breast cancer cell line MDA-MB-231",
+SRP105199
+        "tissue_type": "breast",
+SRP103099
+        "study_title": "Ligand-dependent genomic function of glucocorticoid receptor in triple-negative breast cancer",
+SRP040300
+        "cell_line": "MDA-MB-231 breast cancer cells",
+SRP115100
+        "project_name": "Gene expression profiling in lung and breast cancer cells treated by Bloom-specific siRNAs",
+SRP218977
+        "tissue_type": "breast cancer FFPE specimen",
+SRP065193
+        "cell_type": "breast cancer",
+ERP015593
+        "cell_type": "breast cancer cells",
+SRP020493
+        "study_title": "PR isoform-specific ER and PR chromatin binding and gene expression observed in-vitro in breast cancer cells.",
+SRP073393
+        "study_title": "Response and resistance to BET bromodomain inhibitors in triple negative breast cancer [RNA-Seq]",
+SRP050193
+        "library_construction_protocol": "Cal51 breast adenocarcinoma cells were cultured in Dulbecco\u00e2\u0080\u0099s Modified Eagle Medium (DMEM, Thermo Fisher) with 10% fetal calf serum (FCS, Thermo Fisher) and 1\u00c3\u0097 penicillin-streptomycin (P/S, Thermo Fisher). For siRNA-mediated depletion of PRPF8, Cal51 cells were transfected with DharmaFECT1 (Dharmafect) with 25 nM siRNA against human PRPF8. Transfected cells were harvested 54 hrs later, exposed to UV-C light and used for iCLIP. For collection of samples from different stages of the cell cycle, Cal51 cells were synchronized in G1/S by standard double thymidine block. Briefly, cells were treated with 1.5 mM thymidine for 8 hrs, washed and released for 8 hrs, then treated again with thymidine for a further 8 hrs. Cells were also collected 3 hrs (S-phase) and 7 hrs (G2) after release from the thymidine block. The iCLIP protocol was followed to isolate RNA bound to the spliceosome and amplify a cDNA library as described in the manuscript. An anti-SmB antibody was used for immunoprecipitation. Specific barcodes were used for each RT reaction, with random nucleotides also incorporated into cDNAs to distinguish between PCR duplication of cDNA products.",
+ERP109693
+        "cell_type": "metastatic breast cancer",
+SRP100645
+        "description": "Illumina HiSeq 2000 sequencing: Expression RNA-Seq data of matched cases of pre-treatment Fine-needle aspiration (FNA) and the respective post neo-adjuvant treatment operative sample of breast cancer patients.",
+ERP015145
+        "project_name": "Comparing oestrogen-responsive genes in endometrial and breast cancer cell lines",
+SRP126145
+        "cell_line": "SKBR7 triple-negative breast cancer cell line",
+SRP198732
+        "study_title": "RNAseq analysis of patient-derived luminal breast cancer xenografts treated with progestins",
+SRP095932
+        "study_title": "Next Generation Sequencing Transcriptomes of breast cancer",
+SRP062132
+        "cell_line": "breast cancer cell line MCF7",
+SRP064832
+        "project_name": "ZRANB2 and SYF2 mediated splicing programs converging on ECT2 are involved in breast cancer cell resistance to doxorubicin",
+SRP185438
+        "description": "Illumina HiSeq 2000 sequencing: GSM742940: human_breast.single",
+SRP007338
+        "tissue_type": "mammary gland/breast",
+SRP082419
+        "project_name": "RNA-sequencing of tamoxifen-resistant and -sensitive breast cancer cell lines.",
+SRP133519
+        "study_title": "RNA-sequencing of metaplastic carcinoma of the breast",
+SRP070780
+        "cell_type": "Triple negative breast cancer",
+SRP152713
+        "study_title": "Identification and functional characterization of long noncoding RNAs in breast cancer",
+SRP049713
+        "project_name": "Role of SUMOylation in differential ER\u00ce\u00b1 transcriptional repression by SERMs and pure antiestrogens in breast cancer cells",
+SRP128564
+        "study_title": "The transcriptional characterization of different states of cancer stem cells in triple-negative breast cancer",
+SRP100664
+        "cell_type": "triple-negative breast cancer",
+SRP194056
+        "project_name": "Combined inhibition of STAT3 and DNA repair in palbociclib-resistant ER-positive breast cancer",
+SRP187956
+        "study_title": "Characterization of macrophage - cancer cell crosstalk in estrogen receptor positive and triple-negative breast cancer",
+SRP066356
+        "project_name": "Targeting tumour re-wiring by triple blockade of mTORC1, epidermal growth factor and estrogen receptor signalling pathways in endocrine resistant breast cancer",
+SRP136721
+        "cell_type": "breast cancer cell line",
+SRP056552
+        "cell_type": "breast carcinoma",
+SRP126925
+        "cell_line": "breast cancer cell line BT-549",
+SRP153058
+        "cell_type": "ER+ breast cancer cell line",
+SRP057758
+        "study_title": "Regulatory T cells exhibit distinct features in human breast cancer",
+SRP092158
+        "study_title": "Discovery of biomarkers predictive of GSI response in triple negative breast cancer and adenoid cystic carcinoma",
+SRP044917
+        "tissue_type": "Normal tissue adjacent to breast cancer",
+SRP069760
+        "study_title": "A cytoplasmic COMPASS is necessary for cell survival and triple-negative breast cancer pathogenesis by regulating metabolism",
+SRP089784
+        "cell_type": "breast cancer cell line",
+SRP137884
+        "cell_type": "basal-like breast cancer cells",
+SRP126141
+        "description": "NextSeq 500 paired end sequencing: RNA-seq of human breast cancer cell lines: CAL120 MDAMB468 and BT549 incubated in DMEM-F12 and Plasmax in normoxia (21%O2) and hypoxia (0.1% O2)",
+ERP112241
+        "cell_type": "breast cancer cell line",
+SRP125141
+        "project_name": "An assessment of prognostic immunity markers in breast cancer",
+SRP144041
+        "project_name": "Decoding breast cancer tissue-stroma interactions using species-specific sequencing",
+SRP056041
+        "isolate": "breast cancer patient 9",
+SRP171141
+        "cell_type": "Human breast adenocarcinoma",
+SRP040136
+        "cell_type": "breast cancer cell line",
+SRP096736
+        "study_title": "Modeling the ESR1 tyrosine 537 mutation with CRISPR-Cas9 for mechanistic studies and evaluation of therapeutic approaches for metastatic breast cancer [RNA-Seq]",
+SRP070779
+        "project_name": "RNA-seq of breast cancer cell lines post ligand treatment I",
+SRP155879
+        "cell_type": "Immortalized normal breast epithelial cell line",
+SRP127579
+        "project_name": "Genes that mediate leptomeningeal metastasis from breast and lung solid tumor primaries",
+SRP076297
+        "cell_line": "breast cancer cell line MCF-7",
+SRP066204
+        "cell_type": "breast cancer cell",
+SRP108473
+        "cell_type": "breast cancer cell line",
+SRP034873
+        "library_construction_protocol": "Normal human tissue RNA was obtained from the FirstChoice Tissue Panel (Ambion AM6000) and Human Breast Total RNA (Ambion AM6952). Melanoma RNA was obtained from patient cell lines, including 3 originating from metastasized stage IV melanoma (A-series) and 10 originating from resected lymph nodes from patients with stage 3 disease (C-series. RNA was extracted with RNeasy columns (Qiagen). Breast cancer cell lines were grown in RPMI medium supplemented with 10% fetal calf serum (FCS), sodium pyruvate, 10\u00ef\u0081\u00adg/ml insulin and antibiotics. Normal breast epithelial cell line, Bre-80 (provided as a gift from Roger Reddel, CMRI, Sydney) was grown in DMEM/F12 medium with 5% horse serum (HS), 10\u00ef\u0081\u00adg/ml insulin, 0.5\u00ef\u0081\u00adg/ml hydrocortisone, 20ng/ml epidermal growth factor, 100ng/ml cholera toxin and antibiotics. Cell lines were maintained under standard conditions routinely tested for Mycoplasma and short tandem repeat (STR) profiled for authentication. RNA was extracted with RNeasy columns (Qiagen). RNA was DNAse treated with TurboDNase (Life Technologies), confirmed DNA-free, RNA integrity was confirmed by Agilent 2100 Bioanalyzer (Agilent Technologies). rRNA depletion (Ribo-Zero\u00e2\u0084\u00a2 (Epicentre)) was performed on 5\u00ce\u00bcg of total RNA. ERCC RNA Spike-In Control mix 1 or mix 2 (Life Technologies) were added to ribodepleted RNA to a final dilution of 1/100. Libraries were prepared with the TruSeq Stranded mRNA Sample Preparation Kit (Illumina) and 9-12 cycles of pre-capture LM-PCR performed as required. Multiplex library pools were created by mixing equal amounts of 5 pre-capture sample libraries and capture hybridization performed on 1 \u00ce\u00bcg of the pooled library. Melanoma A-series samples were each randomly assigned to one of three capture hybridizations to ensure any expression differences between the A and C-series samples were not due to an A-series batch effect. Post-capture LMPCR was performed for 17 cycles.",
+ERP023890
+        "study_title": "Amplification of WHSC1L1 regulates expression and estrogen\u00e2\u0080\u0090independent activation of ER\u00ce\u00b1 in SUM\u00c2\u00ad\u00e2\u0080\u009044 cells and is associated with ER\u00ce\u00b1 overexpression in breast cancer",
+ERP011490
+        "description": "NextSeq 500 sequencing: RNA-Seq of homo sapiens: female prophylactic normal breast epithelial",
+SRP157590
+        "project_name": "A non-canonical role of YAP/TEAD is required for activation of estrogen-regulated enhancers in breast cancer [RNA-seq]",
+SRP181909
+        "project_name": "RNAseq analysis of ruxolitinib treated breast cancers",
+SRP125109
+        "description": "HiSeq X Ten sequencing: Whole exome sequencing of Homo sapiens: triple negative breast cancer from FUSCCTNBC project",
+SRP157974
+        "study_title": "Generating STAT3/5 resistant human breast cancer cell lines (MDA-MB-231 & T47D) using chronic treatment with SH-4-54",
+SRP078574
+        "study_title": "DNA methylation signature defines genes modulated by stromal cell contents of human breast tumors [RNA-seq]",
+SRP100803
+        "project_name": "Chronic cadmium exposure decreases the dependency of MCF7 breast cancer cells on ER\u00ce\u00b1",
+SRP214203
+        "tissue_type": "breast",
+ERP000546
+        "study_title": "Next Generation Sequencing Analysis of ADHFE1 and vector control Transcriptomes in breast cancer cells",
+SRP073667
+        "cell_line": "ER-positive breast cancer cell line MCF-7",
+SRP065310
+        "cell_type": "breast organoids",
+SRP144189
+        "project_name": "A consensus hypoxia signature in breast cancer",
+SRP134389
+        "study_title": "Immune escape in breast cancer during in situ to invasive carcinoma transition",
+SRP090689
+        "study_title": "mRNA-sequencing of breast cancer subtypes and normal tissue",
+SRP032789
+        "description": "Illumina HiSeq 2500 sequencing: RNA-Seq of homo sapiens: breast cancer SUM159PT cells",
+SRP077683
+        "library_construction_protocol": "RNA was isolated and purified using TRIzol reagent (Life Technologies) and RNeasy mini kit (Qiagen). RNA concentration and integrity were measured on a Agilent 2100 Bioanalyzer (Agilent Technologies). Only RNA samples with RNA integrity values (RIN) over 8.0 were considered for subsequent analysis. mRNA from normal breast epithelial samples and DCIS samples were processed for directional mRNA-seq library construction using the ScriptSeq v2 RNA-Seq Library Preparation Kit (Epicentre) according to the manufacturer's protocol.",
+SRP058722
+        "cell_type": "breast cancer cell line",
+SRP045322
+        "study_title": "Expression changes in BRCA1-deficient breast cancer PDX models treated with PARP-inhibitors.",
+ERP108822
+        "description": "Illumina HiSeq 2500 sequencing: RNA-Seq of Homo sapiens: early stage breast cancer",
+SRP156355
+        "cell_type": "breast cancer cell line",
+SRP111855
+        "description": "NextSeq 500 sequencing: MDA-MB-231/1833 bone-metastatic breast cancer cell gene expression after conditioning in conditioned medium from HUVECs conditioned in conditioned medium from static and flow-stimulated MLO-Y4 osteocytes",
+ERP110628
+        "cell_type": "Human breast cancer cells",
+SRP034528
+        "sample_title": "Transcriptomic analysis of breast cancer tumor treated with iodine",
+ERP110028
