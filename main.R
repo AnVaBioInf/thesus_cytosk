@@ -52,6 +52,7 @@ dev.off()
 # dev.off()
 
 
+<<<<<<< HEAD
 # #--------------------barplots
 # # Extract assay data
 # merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk))
@@ -60,6 +61,11 @@ dev.off()
 # png(paste0('plots/cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
 # plotBoxplotExpression(merged_rse)
 # dev.off()
+=======
+png(paste0('cytosk_gene_expression.png'), width = 23, height = 20, units = "cm", res = 700)
+plotBoxplotExpression(merged_rse)
+dev.off()
+>>>>>>> parent of 78dadbf (fixed boxplots)
 
 #==============================================================================
 #=============================== running tools ================================
