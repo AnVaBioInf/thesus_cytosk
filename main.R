@@ -14,19 +14,18 @@ fdr_threshold=0.05
 
 
 thresholds = list(logfc_threshold=logfc_threshold,
-                   dpsi_threshold=dpsi_threshold,
-                   abund_change_threshold=abund_change_threshold,
-                   fdr_threshold=fdr_threshold)
+                  dpsi_threshold=dpsi_threshold,
+                  abund_change_threshold=abund_change_threshold,
+                  fdr_threshold=fdr_threshold)
 
 #===============================================================================
 # #==================== DOWNLOAD AND FILTER rse ================================
 # ==============================================================================
 # development
 # prepareRse()
-rse.gene.cytosk = readRDS('rds/rse.gene.cytosk.rds', refhook = NULL)
-rse.jxn.cytosk = readRDS('rds/rse.jxn.cytosk.rds', refhook = NULL)
+rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
+rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
 
-<<<<<<< HEAD
 # # Breast normal tissue
 # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
 # gtex.breast$tissue = 'Breast_normal'
@@ -62,59 +61,16 @@ dev.off()
 # Extract assay data
 merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk, gtex.breast))
 setParams(merged_rse)
-=======
-# Breast normal tissue
-# # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
-# # gtex.breast$tissue = 'Breast gtex'
-# # saveRDS(gtex.breast,'rds/gtex.breast.rds')
-# gtex.breast = readRDS('rds/gtex.breast.rds')
 
-# # BRCA
-# prepareRse(project.id = 'BRCA', condition_col_name = "tissue", 
-#            file_name_jxn_rse = 'rse.jxn.brca.cytosk.rds', file_name_gene_rse = 'rse.gene.brca.cytosk.rds',
-#            tumor=TRUE)
-rse.gene.brca.cytosk = readRDS('rds/rse.gene.brca.cytosk.rds')
-rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
-#downloadBigWigLinks(rse.jxn.brca.cytosk, path='/media/an/Backup Plus/BigWig_tumor/')
-
-###========================samples
-plotHeatmapSamplesTissueAge(rse.gene.cytosk)
-table(rse.jxn.brca.cytosk@colData[,c('tissue', 'tcga.cgc_case_histological_diagnosis')])
-
-png(paste0('plots/hist_samples_cancer.png'), width = 15, height = 15, units = "cm", res = 700)
-plotHeatmapSamplesTissueAge(rse.jxn.brca.cytosk, col_to_plot='tcga.cgc_case_histological_diagnosis',
-                            age=F, xlabels=TRUE)
-dev.off()
-
-# # ==================== gene expression
-# # --------------------gene expression vs age
-# png(paste0('plots/cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
-# plotScatterplotExpression(rse.gene.cytosk)
-# dev.off()
-
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
-
-<<<<<<< HEAD
-# #--------------------barplots
-# # Extract assay data
-# merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk))
-# setParams(merged_rse)
-# 
-# png(paste0('plots/cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
-# plotBoxplotExpression(merged_rse)
-# dev.off()
-=======
-png(paste0('cytosk_gene_expression.png'), width = 23, height = 20, units = "cm", res = 700)
+png(paste0('cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
 plotBoxplotExpression(merged_rse)
 dev.off()
->>>>>>> parent of 78dadbf (fixed boxplots)
 
 #==============================================================================
 #=============================== RUNNING TOOLS ================================
 #==============================================================================
 
 #================================= development ================================
-<<<<<<< HEAD
 # # -- reading files
 unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
 outputs_tissue = list()
@@ -124,7 +80,7 @@ for (tissue in unique.tissues){
     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
     print(tissue_age)
     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
-                                        reference_condition='fetus')
+                                            reference_condition='fetus')
     age_group= c('infant', 'adult')
     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
@@ -143,81 +99,14 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 outputs_gtex2tum = downloadExternalOutputs(file='gtex2tum')
 outputs_norm2tum = downloadExternalOutputs(file='norm2tum')
 
-=======
-# # # -- reading files
-# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-# outputs_tissue = list()
-# for (tissue in unique.tissues){
-#   if (tissue=='Testis'){
-#     age_group= c('fetus', 'infant')
-#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
-#     print(tissue_age)
-#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
-#                                         reference_condition='fetus')
-#     age_group= c('infant', 'adult')
-#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
-#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
-#                                             reference_condition='infant')
-#   } else{
-#     outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
-#   }
-# }
-# saveRDS(outputs_tissue,'rds/outputs_tissue.rds')
-outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
-# 
-# 
-
-#================================ tum ======================================
-# # -- reading files
-# unique.tissues = unique(rse.jxn.brca.cytosk@colData$tissue)
-# tissues_comb = list(c("normal", 'non_metastatic'), c('non_metastatic', 'metastatic'))
-# 
-# outputs_brca = list()
-# for (tissue_list in tissues_comb){
-#   print('comapring now:')
-#   print(tissue_list)
-#   print('reference confition:')
-#   print(tissue_list[1])
-# 
-#   tissue = paste(tissue_list, collapse = "_")
-#   outputs_brca[[tissue]] =
-#     runTools(rse.jxn.brca.cytosk, tissue_list, age_group='adult',
-#              reference_condition=tissue_list[1], condition_col_name='tissue')
-# }
-# saveRDS(outputs_brca,'rds/outputs_brca.rds')
-outputs_brca = readRDS('rds/outputs_brca.rds', refhook = NULL)
-# 
-# 
-
-normal_non_metastatic = mergeOutputs(outputs_brca$normal_non_metastatic)
-all_cancer = findSignificantJxnsIds(normal_non_metastatic, logfc_threshold=logfc_threshold,
-                       dpsi_threshold=dpsi_threshold,
-                       abund_change_threshold=abund_change_threshold,
-                       fdr_threshold=fdr_threshold, suffix = '_normal_non_metastatic')
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
 
 #===============================================================================
 #========================= FINDING SIGNIFICANT EVENTS ==========================
 #===============================================================================
 
-outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
-dev_outputs = list()
-for (tissue in names(outputs_tissue)){
-  dev = mergeOutputs(outputs_tissue[[tissue]])
-  dev_outputs[[tissue]]$all_dev = findSignificantJxnsIds(dev, logfc_threshold=logfc_threshold,
-                                                 dpsi_threshold=dpsi_threshold,
-                                                 abund_change_threshold=abund_change_threshold,
-                                                 fdr_threshold=fdr_threshold, suffix = '_dev')
-  dev_outputs[[tissue]]$intersection = compareOutputs(dev_outputs[[tissue]]$all_dev, all_cancer)
-}
 
-
-<<<<<<< HEAD
 #================================= development =================================
 outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
-=======
-# #=================================dev
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
 outputs_dev_sign_info = list()
 for (tissue in names(outputs_tissue)){
   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
