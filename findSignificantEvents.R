@@ -4,13 +4,13 @@ downloadExternalOutputs = function(path = './',
   tum <- read.csv(paste0(path, file.name, extenction), header = TRUE, sep = ",")
   tum = tum[,c('X', 'dpsi', 'qv')]
   names(tum) = c('junction_id_sajr', 
-                      paste0('dPSI_sajr_', file.name), 
-                      paste0('FDR_sajr_', file.name))
+                 paste0('dPSI_sajr_', file.name), 
+                 paste0('FDR_sajr_', file.name))
   print('Finished downloading external data')
   tum
 }
 
-mergeOutputs = function(output.list, add_external_data, file){
+mergeOutputs = function(output.list){
   diego.output = output.list$diego.output 
   dje.output = output.list$dje.output 
   sajr.output = output.list$sajr.output
@@ -34,11 +34,6 @@ mergeOutputs = function(output.list, add_external_data, file){
                       'logFC_dje', 'FDR_dje', 'dPSI_sajr', 'FDR_sajr',
                       'abund_change_diego', 'FDR_diego')]
   
-  if (add_external_data){
-    tum = downloadExternalOutputs(file.name=file)
-    output.merged.df = merge(output.merged.df, tum, by = "junction_id_sajr", all = TRUE)
-  }
-  
   print('Finished merging outputs')
   return(output.merged.df) 
 }
@@ -46,55 +41,8 @@ mergeOutputs = function(output.list, add_external_data, file){
 #=================================================================================
 #=================================================================================
 #=================================================================================
-compareOutputs = function(jxn.ids.list) {
-  jxn.ids.list = lapply(jxn.ids.list, function(x) x[!is.na(x)])
-  # 1. Find elements present in all vectors
-  all.tools = Reduce(intersect, jxn.ids.list)
-  
-  # 2. Find elements unique to each vector
-  unique.to.tool = lapply(seq_along(jxn.ids.list), function(i) {
-    unique = setdiff(jxn.ids.list[[i]], unname(unlist(jxn.ids.list[-i])))
-    return(unique)
-  })
-  names(unique.to.tool) = names(jxn.ids.list)
-  
-  # 3. Find elements unique to subsets of jxn.ids.list (excluding those in all)
-  only.pair.tools = list()
-  tool.pairs = combn(seq_along(jxn.ids.list), 2, simplify = FALSE)  # Get all pairs of vector indices
-  for (pair in tool.pairs) {
-    i = pair[[1]]
-    j = pair[[2]]
-    common.pair = intersect(jxn.ids.list[[i]], jxn.ids.list[[j]])
-    common.pair = setdiff(common.pair, all.tools)
-    pair.name = paste(names(jxn.ids.list)[c(i, j)], collapse = "&")
-    only.pair.tools[[pair.name]] = common.pair
-  }
-  all.tools = list(all.tools)
-  names(all.tools) = paste(names(jxn.ids.list), collapse = "&")
-  
-  # ids2df = function(ids) jxn.sign.df[jxn.sign.df$junction_id_sajr %in% ids, ]
-  
-  # sign.jxns.info = 
-  #   list(list(all.tools = all.tools),
-  #        only.pair.tools = only.pair.tools,
-  #        unique.to.tool = unique.to.tool)
-  
-  sign.jxns.info =list(
-        unique.to.tool = unique.to.tool,
-        only.pair.tools = only.pair.tools,
-        all.tools = all.tools)
-  
-  # jxn.ids.list = lapply(jxn.ids.list, ids2df)
-
-  return(list(
-    all.single.tool =  jxn.ids.list,
-    intersections = sign.jxns.info ))
-}
-
-# сделать ее универсальной и все сохранить в список
-# то есть на вход один параметр за раз
 findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_threshold, dpsi_threshold, abund_change_threshold,
-                                  add_external_data, file.name){
+                                  suffix=''){
   # 1. Define filtering conditions for each tool
   diego.sign.tf = abs(jxns.significance.df$abund_change_diego) >= abund_change_threshold & jxns.significance.df$FDR_diego <= fdr_threshold
   dje.sign.tf = abs(jxns.significance.df$logFC_dje) >= logfc_threshold & jxns.significance.df$FDR_dje <= fdr_threshold
@@ -105,30 +53,54 @@ findSignificantJxnsIds = function(jxns.significance.df, logfc_threshold, fdr_thr
   all.sign.jxns.dje = jxns.significance.df[dje.sign.tf, 'junction_id_sajr']
   all.sign.jxns.sajr = jxns.significance.df[sajr.sign.tf, 'junction_id_sajr']
   
-  all.sign.jxn.ids.tool.list = list(diego = all.sign.jxns.diego, 
-                                    dje = all.sign.jxns.dje, 
-                                    sajr = all.sign.jxns.sajr)
+  all.sign.jxn.ids.tool.list = list(diego = all.sign.jxns.diego[!is.na(all.sign.jxns.diego)], 
+                                    dje = all.sign.jxns.dje[!is.na(all.sign.jxns.dje)], 
+                                    sajr = all.sign.jxns.sajr[!is.na(all.sign.jxns.sajr)])
   
-  sign.jxns.info = compareOutputs(all.sign.jxn.ids.tool.list)
-  if (add_external_data){
-    dpsi_file = paste0('dPSI_sajr_', file.name)
-    fdr_file = paste0('FDR_sajr_', file.name)
-    
-    tum.sign.tf = abs(jxns.significance.df[, dpsi_file]) >= dpsi_threshold & jxns.significance.df[, fdr_file] <= fdr_threshold  
-    all.sign.jxns.tum = jxns.significance.df[tum.sign.tf, 'junction_id_sajr']
-    all.sign.jxns.tum = all.sign.jxns.tum[!is.na(all.sign.jxns.tum)]
-    sign.jxns.info.d = lapply(sign.jxns.info$intersections, function(sub) 
-      lapply(sub, function(x) intersect(x, all.sign.jxns.tum)))
-    sign.jxns.info$intersections = sign.jxns.info.d
-    tumor_name = paste0('sajr_', file.name)
-    sign.jxns.info$intersections$unique.to.tool[[tumor_name]] = 
-      setdiff(all.sign.jxns.tum, unname(unlist(sign.jxns.info.d)))
-    sign.jxns.info$all.single.tool[[tumor_name]] = all.sign.jxns.tum
-  } 
-  print('Finished intersecting junction ids between tools')
-  return(sign.jxns.info)
+  # Set the names of the list elements
+  names(all.sign.jxn.ids.tool.list) <- c(paste0('diego', suffix), 
+                                         paste0('dje', suffix), 
+                                         paste0('sajr', suffix))
   
+  print('Significant junction in tools found')
+  return(all.sign.jxn.ids.tool.list)
 }
+
+compareOutputs =  function(list1, list2) {
+  all_commons <- list()
+  combined_list <- c(list1, list2)
+  combined_names <- names(combined_list)
+  num_vectors <- length(combined_list)
+  
+  # Level 0: Common to all vectors
+  all_commons[["all"]] <- Reduce(intersect, combined_list)
+  
+  # Levels 1 to num_vectors - 1: Common to all except 1, 2, ... vectors
+  for (exclusion_level in 1:(num_vectors - 1)) {
+    excluded_combos <- combn(1:num_vectors, exclusion_level, simplify = FALSE)
+    
+    for (excluded_indices in excluded_combos) {
+      included_indices <- setdiff(1:num_vectors, excluded_indices)
+      selected_vectors <- combined_list[included_indices]
+      selected_names <- combined_names[included_indices]
+      intersection <- Reduce(intersect, selected_vectors)
+      
+      # Exclude elements found at higher levels
+      intersection <- setdiff(intersection, unlist(all_commons))
+      
+      if (length(intersection) > 0) {
+        # Name using included vectors
+        key_name <- paste(selected_names, collapse = "_") 
+        all_commons[[key_name]] <- intersection
+      } else { # If intersection is empty
+        key_name <- paste(selected_names, collapse = "_") 
+        all_commons[[key_name]] <- character(0) # Assign character(0)
+      }
+    }
+  }
+  return(all_commons)
+}
+
 
 getJxnSignInfo = function(tools.outputs.list, 
                           logfc_threshold, dpsi_threshold, abund_change_threshold, fdr_threshold,
@@ -140,6 +112,10 @@ getJxnSignInfo = function(tools.outputs.list,
   print('Finished running')
   list(all.jxns.info = all.jxns.info.df, sign.jxns.info.list = sign.jxns.info.list)
 }
+
+
+
+
 
 # outputs_tissue = runTools(rse.jxn.cytosk, 'Brain')
 # getJxnSignInfo(outputs_tissue)
@@ -163,14 +139,14 @@ getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
   all.tool.pairs.comb = makePairs(names(all.sign.jxns.tool),
                                   one_to_all=one_to_all, 
                                   ref_col=ref_col)
-
+  
   for (tool.pair in all.tool.pairs.comb){
     tool1.name = tool.pair[1]
     tool2.name = tool.pair[2]
     all.sign.jxns.tool.pair.ids = all.sign.jxns.tool[tool.pair]
     sign.jxns.intersect.ids = compareOutputs(all.sign.jxns.tool.pair.ids)
     
-
+    
     sign.both.tools = length(sign.jxns.intersect.ids$intersections$all.tools[[1]])
     sign.tool.1 = length(sign.jxns.intersect.ids$intersections$unique.to.tool[[tool1.name]])
     sign.tool.2 = length(sign.jxns.intersect.ids$intersections$unique.to.tool[[tool2.name]])
@@ -218,15 +194,6 @@ findCommonJxns = function(outputs_tum){
 
 
 
-
-
-
-
-
-
-
-
-
 #=================================
 #######################-----coverage
 #=================================
@@ -236,7 +203,7 @@ bigWig2Cov = function(bw){
   bw = bw[order(bw$start),] # ordering bw df my start coordinate column
   start = bw$start[1] # starting coordinate of the gene
   stop = bw$end[nrow(bw)] # end coordinate of the gene
-
+  
   cov = rep(0,stop-start+1) # vector with 0s of length the gene
   
   for(i in 1:nrow(bw)){ # for every record in bw
@@ -337,18 +304,3 @@ prepareCovs = function(gene, rse.gene.cytosk, tissue){
   
   list(fetus.covs.summed.gene=fetus.covs.summed.gene, adult.covs.summed.gene=adult.covs.summed.gene)
 } 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

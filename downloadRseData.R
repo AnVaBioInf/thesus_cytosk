@@ -201,6 +201,7 @@ formatTumorAnnotation = function(rse){
   rse = rse[,!is.na(rse@colData$tcga.gdc_cases.diagnoses.tumor_stage)]
   
   rse@colData$tissue=NA
+<<<<<<< HEAD
   rse@colData$stage=NA
   
   rse@colData$stage = rse@colData[
@@ -224,6 +225,22 @@ formatTumorAnnotation = function(rse){
   rse@colData$age_group = 'adult'
   # rse=rse[, !is.na(rse@colData$)]
   
+=======
+  
+  rse@colData[
+    (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage=='stage iv') & 
+      (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                       'Metastasis')),]$tissue = 'metastatic'
+  rse@colData[
+    (rse@colData$tcga.gdc_cases.diagnoses.tumor_stage %in% c('stage i', 'stage ia', 'stage ib')) &
+      (rse@colData$tcga.gdc_cases.samples.days_to_collection<= 60) &
+      (!rse@colData$tcga.cgc_sample_sample_type %in% c('Solid Tissue Normal',
+                                                       'Metastasis')),]$tissue = 'non_metastatic'
+  rse@colData[rse@colData$tcga.cgc_sample_sample_type=='Solid Tissue Normal',]$tissue = "normal"
+  rse=rse[, !is.na(rse@colData$tissue)]
+  
+  rse@colData$age_group = 'adult'
+>>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
   rse
 }
 
@@ -251,10 +268,17 @@ prepareRse = function(project.id = 'ERP109002',
                       condition_col_name = "age_group",
                       path = './', file_name_jxn_rse = 'rse.jxn.cytosk.rds', file_name_gene_rse = 'rse.gene.cytosk.rds',
                       tumor=FALSE
+<<<<<<< HEAD
 ){
   rse.jxn = downloadRse(project.id, type='jxn')
   rse.gene = prepareGeneRseAssay(project.id, type='gene')
   # save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
+=======
+                      ){
+  rse.jxn = downloadRse(project.id, type='jxn')
+  rse.gene = prepareGeneRseAssay(project.id, type='gene')
+ # save2RDS(rse.gene, rse.jxn, path=path, file_name_gene_rse, file_name_jxn_rse)
+>>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
   rse = annotateJxns(rse.gene, rse.jxn)
   rse.jxn = rse$rse.jxn
   rse.gene = rse$rse.gene 

@@ -4,6 +4,9 @@
 .Ruserdata
 *.bw
 *.rds
+<<<<<<< HEAD
 *.png
 *.log
 gtex.breast.rds
+=======
+>>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c

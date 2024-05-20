@@ -12,20 +12,22 @@ tissue.col=c('Brain'="#3399CC",
              'Liver'="#339900",
              'Ovary'="#CC3399",
              'Testis'="#FF6600",
-             'Breast normal'='white',
-             'BRCA' = 'grey',
-             'Metastatic BRCA' = '#666666')
+             'BRCA' = 'darkgrey',
+             'Breast normal'='white')
 
 # -----------------------------------------------------------------------------------
 # ------------------------- samples occurrence heatmap ------------------------------
 # -----------------------------------------------------------------------------------
-plotHeatmapSamplesTissueAge = function(rse.gene.cytosk){
-  par(oma = c(2, 2, 0, 0))  # bottom, left, top, right.
+plotHeatmapSamplesTissueAge = function(rse.gene.cytosk, col_to_plot = 'age_group_specific',
+                                       age=TRUE, xlabels = FALSE){
+  par(oma = c(5, 9, 0, 0))  # bottom, left, top, right.
   # occurrence of samples
   sample_occurance = as.data.frame.matrix(
-    table(rse.gene.cytosk@colData$tissue, rse.gene.cytosk@colData$age_group_specific) )
+    table(rse.gene.cytosk@colData$tissue, rse.gene.cytosk@colData[,col_to_plot]) )
   # The table() function takes these two vectors as input and creates a contingency table. This table shows the frequency distribution of cells across different combinations of tissue types and age groups.
-  sample_occurance = sample_occurance[,names(order)]
+  if (age){
+    sample_occurance = sample_occurance[,names(order)]
+  }
   sample_occurance = t(sample_occurance)
   # # making a column for tissues
   # sample_occurance$tissue = rownames(sample_occurance)
@@ -45,7 +47,13 @@ plotHeatmapSamplesTissueAge = function(rse.gene.cytosk){
        col = "black")
   
   # Add axes and labels
-  axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
+  if (xlabels==FALSE){
+    axis(1, at = 1:ncol(sample_occurance), labels = colnames(sample_occurance), las = 2)
+  } else {
+    xlabels = c(metastatic='Stage IV', non_metastatic="Stage I",
+                   normal='Normal breast tissue')
+    axis(1, at = 1:ncol(sample_occurance), labels = xlabels[colnames(sample_occurance)], las = 2)
+  }
   axis(2, at = 1:nrow(sample_occurance), labels = rownames(sample_occurance), las = 2)
 }
 
@@ -108,6 +116,7 @@ setAxis = function(x.value, gene.name, gene.rse){
   # Add x-axis only for bottom plots
   if ((boxplot.coord[1] == 5) |
       (boxplot.coord[2] == numb$numb.graphs & boxplot.coord[1] == (numb$numb.graphs-numb$numb.empty)) ){
+    
     axis(1, at = 1:length(x.value), labels = x.value, las = 2) 
   }
   grid(nx = NULL, ny = NULL)
@@ -152,6 +161,7 @@ plotScatterplotExpression = function(gene.rse){
   plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
   legend(x=-0.2, y=0.4, legend = tissues, col = tissue.col[tissues], pch = 16,
          bty = "n", xpd = TRUE, cex=1.5, pt.cex = 2)
+      #   y.intersp = 0.6)
 }
 
 # boxplots
@@ -160,8 +170,6 @@ plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
   # Median Line: A horizontal line inside the box that marks the median (Q2) of the data.
   # Whiskers: Lines extending from the box that represent the range of the data, excluding outliers.
   setParams(gene.rse)
-  par(oma = c(7, 3, 1, 1))  # bottom, left, top, right.
-  
   cpm = as.data.frame(t(gene.rse@assays@data$cpm))
   cpm$tissue <- gene.rse@colData[rownames(cpm),'tissue']
   tissues = unique(gene.rse@colData$tissue)
@@ -184,10 +192,6 @@ plotBoxplotExpression = function(gene.rse, xlab = "Tissue", ...){
             col=tissue.col[tissues])
     setAxis(tissues, gene.name, gene.rse)
   }
-  # Plot the legend in the last cell
-  plot(x=0, y=0, type = "n", axes = FALSE, xlab = "", ylab = "")
-  legend(x=-1, y=0.4, legend = tissues, col = tissue.col[tissues], pch = 16,
-         bty = "n", xpd = TRUE, cex=1.5, pt.cex = 2, ncol=2)
 }
 
 # plotHeatmapSamples()
