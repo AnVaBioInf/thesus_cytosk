@@ -5,8 +5,6 @@ source('plotGenesExpression.R')
 source('runTools.R')
 library(SummarizedExperiment)
 
-dev.off()
-
 logfc_threshold=1.5
 dpsi_threshold=0.1
 abund_change_threshold=1
@@ -23,14 +21,14 @@ thresholds = list(logfc_threshold=logfc_threshold,
 # ==============================================================================
 # development
 # prepareRse()
-rse.gene.cytosk = readRDS('rse.gene.cytosk.rds', refhook = NULL)
-rse.jxn.cytosk = readRDS('rse.jxn.cytosk.rds', refhook = NULL)
+rse.gene.cytosk = readRDS('rds/rse.gene.cytosk.rds', refhook = NULL)
+rse.jxn.cytosk = readRDS('rds/rse.jxn.cytosk.rds', refhook = NULL)
 
 # # Breast normal tissue
 # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
 # gtex.breast$tissue = 'Breast_normal'
 # saveRDS(gtex.breast,'gtex.breast.rds')
-gtex.breast = readRDS('gtex.breast.rds')
+gtex.breast = readRDS('rds/gtex.breast.rds')
 
 # # BRCA
 # prepareRse(project.id = 'BRCA', condition_col_name = "tissue",
@@ -39,32 +37,32 @@ gtex.breast = readRDS('gtex.breast.rds')
 # rse.gene.brca.cytosk = readRDS('rds/rse.gene.brca.cytosk.rds')
 # rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
 
-rse.gene.brca.cytosk = readRDS('rse.gene.brca.cytosk.rds')
-rse.jxn.brca.cytosk = readRDS('rse.jxn.brca.cytosk.rds')
+rse.gene.brca.cytosk = readRDS('rds/rse.gene.brca.cytosk.rds')
+rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
 
-# ==============================================================================
-# ============================= SAMPLES HEATMAP ================================
-# ==============================================================================
-plotHeatmapSamplesTissueAge(rse.gene.cytosk)
-table(rse.gene.brca.cytosk@colData$tissue)
-
-# ==============================================================================
-# # ========================= GENE EXPRESSION PLOT =============================
-# ==============================================================================
-
-# ========================== gene expression vs age ============================
-png(paste0('cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
-plotScatterplotExpression(rse.gene.cytosk)
-dev.off()
-
-# ============================ barplots ========================================
-# Extract assay data
-merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk, gtex.breast))
-setParams(merged_rse)
-
-png(paste0('cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
-plotBoxplotExpression(merged_rse)
-dev.off()
+# # ==============================================================================
+# # ============================= SAMPLES HEATMAP ================================
+# # ==============================================================================
+# plotHeatmapSamplesTissueAge(rse.gene.cytosk)
+# table(rse.gene.brca.cytosk@colData$tissue)
+# 
+# # ==============================================================================
+# # # ========================= GENE EXPRESSION PLOT =============================
+# # ==============================================================================
+# 
+# # ========================== gene expression vs age ============================
+# png(paste0('plots/cytosk_gene_expression_vs_age.png'), width = 45, height = 30, units = "cm", res = 700)
+# plotScatterplotExpression(rse.gene.cytosk)
+# dev.off()
+# 
+# # ============================ barplots ========================================
+# # Extract assay data
+# merged_rse = mergeRse(list(rse.gene.cytosk, rse.gene.brca.cytosk, gtex.breast))
+# setParams(merged_rse)
+# 
+# png(paste0('plots/cytosk_gene_expression.png'), width = 45, height = 30, units = "cm", res = 700)
+# plotBoxplotExpression(merged_rse)
+# dev.off()
 
 #==============================================================================
 #=============================== RUNNING TOOLS ================================
@@ -73,25 +71,27 @@ dev.off()
 #================================= development ================================
 # # -- reading files
 unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+rse.jxn.cytosk@colData$age_group
 outputs_tissue = list()
 for (tissue in unique.tissues){
+  print(tissue)
   if (tissue=='Testis'){
     age_group= c('fetus', 'infant')
     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
     print(tissue_age)
     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
                                             reference_condition='fetus')
+    
     age_group= c('infant', 'adult')
     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
                                             reference_condition='infant')
   } else{
-    print(tissue)
     outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
   }
 }
-saveRDS(outputs_tissue,'outputs_tissue.rds')
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+saveRDS(outputs_tissue,'rds/outputs_tissue.rds')
+outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 # 
 # 
 
@@ -99,16 +99,16 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 outputs_gtex2tum = downloadExternalOutputs(file='gtex2tum')
 outputs_norm2tum = downloadExternalOutputs(file='norm2tum')
 
-
 #===============================================================================
 #========================= FINDING SIGNIFICANT EVENTS ==========================
 #===============================================================================
 
 
 #================================= development =================================
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 outputs_dev_sign_info = list()
 for (tissue in names(outputs_tissue)){
+  print(tissue)
   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
                                                    logfc_threshold=logfc_threshold,
                                                    dpsi_threshold=dpsi_threshold,
@@ -116,7 +116,11 @@ for (tissue in names(outputs_tissue)){
                                                    fdr_threshold=fdr_threshold,
                                                    add_external_data=FALSE, file='')
 }
-saveRDS(outputs_dev_sign_info,'outputs_dev_sign_info.rds')
+saveRDS(outputs_dev_sign_info,'rds/outputs_dev_sign_info.rds')
+
+outputs_dev_sign_info = readRDS('rds/outputs_dev_sign_info.rds', refhook = NULL)
+plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
+
 
 
 # #================================= tumor =====================================
@@ -125,8 +129,8 @@ outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
 outputs_gtex2tum = list()
 outputs_norm2tum = list()
 
-# переделать!
 for (tissue in names(outputs_tissue)){
+  print(tissue)
   outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
                                               logfc_threshold=logfc_threshold,
                                               dpsi_threshold=dpsi_threshold,
@@ -140,18 +144,17 @@ for (tissue in names(outputs_tissue)){
                                               fdr_threshold=fdr_threshold,
                                               add_external_data=TRUE, file='norm2tum')
 }
-saveRDS(outputs_gtex2tum,'dev_vs_gtex2tum_tools.rds')
-saveRDS(outputs_norm2tum,'dev_vs_norm2tum_tools.rds')
+saveRDS(outputs_gtex2tum,'rds/dev_vs_gtex2tum_tools.rds')
+saveRDS(outputs_norm2tum,'rds/dev_vs_norm2tum_tools.rds')
 
-outputs_gtex2tum = readRDS('dev_vs_gtex2tum_tools.rds', refhook = NULL)
-outputs_norm2tum = readRDS('dev_vs_norm2tum_tools.rds', refhook = NULL)
+outputs_gtex2tum = readRDS('rds/dev_vs_gtex2tum_tools.rds', refhook = NULL)
+outputs_norm2tum = readRDS('rds/dev_vs_norm2tum_tools.rds', refhook = NULL)
 
 
 # ============================================================================
 # =============================== METRICS PLOT ===============================
 # ============================================================================
-outputs_dev_sign_info = readRDS('outputs_dev_sign_info.rds', refhook = NULL)
-plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
+
 plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum', thresholds = thresholds)
 plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', thresholds = thresholds)
 

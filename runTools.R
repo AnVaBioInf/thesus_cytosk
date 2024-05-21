@@ -21,10 +21,6 @@ filterRse = function(rse, tissue, age_group=c('fetus', 'adult'), mim_row_sum=10,
   rse
 }
 
-<<<<<<< HEAD
-=======
-# HERE!!!
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
 findConditionIds = function(rse_filtered, condition_col_name, condition_name){
   rownames(rse_filtered@colData[rse_filtered@colData[,condition_col_name] == condition_name,])
 }
@@ -44,44 +40,26 @@ makeAFile = function(rse.filtered, tissue, age_group, path_input){
   junction_table = junction_table[,c('junction', 'type', sample_ids, 'geneID', 'geneName')]
   junction_table = junction_table[order(junction_table$geneID),]
   write.table(junction_table,
-<<<<<<< HEAD
               paste0(path_input, "/junction_table_", paste(tissue, collapse = "_"), "_",
                      paste0(age_group, collapse = "_"), ".txt"),
-=======
-              paste0(path_input, "/junction_table_", paste(tissue, collapse = "_"), "_", 
-                     age_group, ".txt"),
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
               sep = "\t",
               row.names = FALSE, col.names = TRUE, quote = FALSE)
 }
 
 # --b file (condition to sample relation in the format: condition tab-delimiter sampleName)
-<<<<<<< HEAD
 makeBFile = function(rse.filtered, tissue, age_group, path_input,
-=======
-makeBFile = function(rse.filtered, tissue, age_group, path_input, 
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
                      condition_col_name){
   group_table = rse.filtered@colData[,condition_col_name,drop=F]
   group_table$sample_id = rownames(group_table)
   group_table = group_table[order(group_table[,condition_col_name]), ]
   write.table(group_table,
-<<<<<<< HEAD
               paste0(path_input, "/group_table_", paste(tissue, collapse = "_"), "_",
                      paste(age_group, collapse = "_"), ".txt"),
-=======
-              paste0(path_input, "/group_table_", paste(tissue, collapse = "_"), "_", 
-                     age_group, ".txt"),
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
               sep = "\t",
               row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
-<<<<<<< HEAD
 # makeDiegoBashFile = function(tissue, path_input, path_output, reference_condition,
-=======
-# makeDiegoBashFile = function(tissue, path_input, path_output, reference_condition, 
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
 #                              min_support, min_samples, FDR_threashold, FC_threashold){
 #   # Define the Bash script content
 #   diego_bash_file_content = paste0(
@@ -104,22 +82,13 @@ makeDiegoInputFiles = function(rse.filtered, tissue, age_group, path_input,
                                condition_col_name){
   makeAFile(rse.filtered, tissue, age_group, path_input)
   makeBFile(rse.filtered, tissue, age_group, path_input, condition_col_name)
-<<<<<<< HEAD
   # makeDiegoBashFile(tissue, path_input, path_output, reference_condition,
-=======
-  # makeDiegoBashFile(tissue, path_input, path_output, reference_condition, 
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
   #                   min_support, min_samples, FDR_threashold, FC_threashold)
 }
 
 readDiegoOutput = function(path_output, tissue, age_group){
-<<<<<<< HEAD
   file_path = paste0(path_output, '/DIEGO_output_', paste(tissue, collapse = "_"), "_",
                      paste(age_group, collapse = "_"), '.txt')
-=======
-  file_path = paste0(path_output, '/DIEGO_output_', paste(tissue, collapse = "_"), "_", 
-                     age_group, '.txt')
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
   diego_output = read.delim(file_path, sep = "\t")
   diego_output
 }
@@ -129,7 +98,6 @@ readDiegoOutput = function(path_output, tissue, age_group){
 #' conda create -n DIEGO_1 numpy=1.9 scipy matplotlib
 #' wget http://legacy.bioinf.uni-leipzig.de/Software/DIEGO/DIEGO.tar.gz
 #' tar -xzf DIEGO.tar.gz
-<<<<<<< HEAD
 runDiego = function(rse.filtered, tissue, age_group, reference_condition, path_input, path_output,
                     min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name){
   makeDiegoInputFiles(rse.filtered, tissue, age_group, path_input, condition_col_name)
@@ -139,33 +107,15 @@ runDiego = function(rse.filtered, tissue, age_group, reference_condition, path_i
                              "_", paste(age_group, collapse = "_"), '.txt'),
                       paste0('-b ', path_input, '/group_table_', paste(tissue, collapse = "_"),
                              "_", paste(age_group, collapse = "_"), '.txt'),
-=======
-runDiego = function(rse.filtered, tissue, age_group, reference_condition, path_input, path_output, 
-                    min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name){
-  makeDiegoInputFiles(rse.filtered, tissue, age_group, path_input, condition_col_name)
-  use_condaenv("DIEGO_1")
-  system2(py_exe(), c("/home/an/DIEGO/diego.py", 
-                      paste0('-a ', path_input, '/junction_table_', paste(tissue, collapse = "_"), 
-                             "_", age_group, '.txt'), 
-                      paste0('-b ', path_input, '/group_table_', paste(tissue, collapse = "_"), 
-                             "_", age_group, '.txt'), 
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
                       paste0('-x ', reference_condition),
                       paste0('--minsupp ', min_support),
                       paste0('--minsamples ', min_samples),
                       paste0('--foldchangeThreshold ', FC_threshold),
                       paste0('--significanceThreshold ', FDR_threshold),
-<<<<<<< HEAD
                       paste0('> ', path_output, '/DIEGO_output_', paste(tissue, collapse = "_"),
                              "_", paste(age_group, collapse = "_"), '.txt')
   )
   )
-=======
-                      paste0('> ', path_output, '/DIEGO_output_', paste(tissue, collapse = "_"), 
-                             "_", age_group, '.txt')
-  )
-  )  
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
   diego.output = readDiegoOutput(path_output, tissue, age_group)
   diego.output
 }
@@ -183,27 +133,34 @@ makeDjeCoordinates <- function(coordinates_vector) {
   coordinates_vector
 }
 
+create_binary_design_matrix <- function(values, reference_condition) {
+  # Create a matrix with two columns
+  design_matrix <- matrix(1, nrow = length(values), ncol = 2)
+  # Set the second column based on the condition
+  design_matrix[values == reference_condition, 2] = 0
+  # Return the design matrix
+  return(design_matrix)
+}
+
+
 # instead of DJEimport() etc, because input data differ (recount3 jxns instead of STAR raw out file)
-makePrepOutObj = function(rse.filtered, tissue, condition_col_name, reference_condition){
+makePrepOutObj = function(rse.filtered, tissue, reference_sample_ids){
   JunctExprfilt = rse2countDf(rse.filtered)
   rownames(JunctExprfilt) = makeDjeCoordinates(rownames(JunctExprfilt))
   featureID = rownames(JunctExprfilt)
   groupID = rse.filtered@rowRanges$gene_name
-  group_factor = relevel(as.factor(rse.filtered@colData[,condition_col_name]),
-<<<<<<< HEAD
-                         ref = reference_condition)
-=======
-                             ref = reference_condition)
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
-  design = model.matrix(~group_factor)
+  
+  isFromGroup1 = colnames(JunctExprfilt) %in% reference_sample_ids
+  design       = cbind(1, ifelse(isFromGroup1, 0, 1))
+  
   list(JunctExprfilt=JunctExprfilt, featureID=featureID, groupID=groupID, design=design)
 }
 
 
 runDJExpress = function(rse.filtered, tissue, condition_col_name, reference_condition, FDR_threshold, logFC_threshold){
-  prep_out = makePrepOutObj(rse.filtered, tissue, condition_col_name, reference_condition)
   reference_sample_ids = findConditionIds(rse.filtered, condition_col_name, reference_condition)
-  anlz_out <- DJEanalyze(prepare.out = prep_out,
+  prep_out = makePrepOutObj(rse.filtered, tissue, reference_sample_ids)
+  anlz_out = DJEanalyze(prepare.out = prep_out,
                          Group1 = reference_sample_ids,
                          FDR = FDR_threshold,
                          logFC = logFC_threshold)
@@ -336,7 +293,7 @@ makeSAJR = function(rse.filtered){
 
 calculateMetrics = function(sajr, reference.sample.ids){
   reference.indices = match(reference.sample.ids, colnames(sajr$ir))
-  dPSI = apply(sajr$ir, 1, function(x) mean(x[-reference.indices],na.rm=T)-mean(x[reference.indices],na.rm=T))
+  dPSI = apply(sajr$ir, 1, function(x) mean(x[reference.indices],na.rm=T)-mean(x[-reference.indices],na.rm=T))
   #logFC = apply(sajr$ir, 1, function(x) log2(mean(x[adult.samples.ids],na.rm=T)/mean(x[fetus.samples.ids],na.rm=T)))
   dPSI #, logFC=logFC)
 }
@@ -357,53 +314,25 @@ runSAJR = function(rse.filtered, tissue, condition_col_name, reference_condition
 #==========================================================================================================
 #============================Running tools and processing outputs==========================================
 #==========================================================================================================
-<<<<<<< HEAD
 runTools = function(rse, tissue, age_group=c('fetus','adult'), 
                     condition_col_name='age_group', reference_condition='fetus',
-=======
-runTools = function(rse, tissue, age_group=c('fetus','adult'), reference_condition='fetus',
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
                     path_input = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_input',
                     path_output = '/home/an/Documents/GitHub/thesus_cytosk/DIEGO_output',
                     min_support = 1, # minimum jxn count for a splice site to be considered.
                     min_samples = 1, #  minimum number of samples that must show the minimum support
                     FC_threshold = 1, # ? ratio of read counts of a splice junction in one condition compared to another
                     FDR_threshold = 0.05, # adjusted p-value threshold
-<<<<<<< HEAD
                     logFC_threshold = 0
-=======
-                    logFC_threshold = 0,
-                    condition_col_name='age_group'
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c
 ){
   rse.filtered = filterRse(rse, tissue, age_group)
   diego.output = runDiego(rse.filtered, tissue, age_group, reference_condition, path_input, path_output,
                           min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name)
   print('diego running complete')
   dje.output = runDJExpress(rse.filtered, tissue, condition_col_name, reference_condition, FDR_threshold, logFC_threshold)
-
+  
   print('dje running complete')
   sajr.output = runSAJR(rse.filtered, tissue, condition_col_name, reference_condition)
   print('sajr running complete')
-<<<<<<< HEAD
-  # list(diego.output=diego.output, dje.output=dje.output, sajr.output=sajr.output)
-}
-
-=======
   list(diego.output=diego.output, dje.output=dje.output, sajr.output=sajr.output)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> 5f9531edd4def0a30f3b25d6a8202a032c651a6c

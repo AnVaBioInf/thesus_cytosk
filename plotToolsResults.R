@@ -52,13 +52,13 @@ addLegend = function(labels, pch, col, pt.cex=1, inset=c(0,0)){
          horiz = FALSE, ncol=1, inset=inset)
 }
 
-addSpearmanCorr = function(df){
+addCorr = function(df, method='spearman'){
   tryCatch({
     df = df[complete.cases(df),]
     df = df[order(df[,1]),]
     x = df[,1]
     y = df[,2]
-    result = cor.test(x, y, method = "spearman")
+    result = cor.test(x, y, method = method)
     corr.coef = round(result$estimate, digits=2)
     p.value = ifelse(result$p.value <= 0.05, "<= 0.05", "> 0.05")
     return(list(corr.coef=corr.coef, p.value=p.value))
@@ -69,6 +69,7 @@ addSpearmanCorr = function(df){
 }
 
 addRegressionCurve = function(df){
+  tryCatch({
   df = df[complete.cases(df),]
   df = df[order(df[,1]),]
   x = df[,1]
@@ -79,8 +80,12 @@ addRegressionCurve = function(df){
   polygon(c(x,rev(x)),
           c(ci[,2],rev(ci[,3])),
           border=NA,
-          col=rgb(c[1],c[2],c[3],0.2*255,maxColorValue = 255))
-  lines(x, ci[,1], col = '#8b0000', lwd = 2)
+          col=rgb(c[1],c[2],c[3],0.2*255,maxColorValue = 255),
+          xpd=FALSE)
+  lines(x, ci[,1], col = '#8b0000', lwd = 2, xpd=FALSE) 
+  }, error = function(e) {
+    cat("Error in cor.test:", conditionMessage(e), "\n")
+  })
 }
 
 getColumnCombinations = function(df, tumor){
@@ -102,10 +107,13 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
                         show_all_xtick_labels, 
                         add_regression_curve, add_spearman_corr,
                         axis_cex, title_cex, point_label_cex, col){
+  print('')
+  print(tissue)
+  print('Preparing to plot dotplots')
   
   lim_dict = list('dPSI' = list(lim = c(-1,1), ticks =  seq(-1,1,by=0.5)),
-                  'logFC' = list(lim=c(-4,4), ticks = seq(-4,4,by=2)),
-                  'abund_change' = list(lim=c(2,-2), ticks = seq(-2,2,by=1)),
+                  'logFC' = list(lim=c(4,-4), ticks = seq(-4,4,by=2)),
+                  'abund_change' = list(lim=c(-2,2), ticks = seq(-2,2,by=1)),
                   'FDR'=list(lim=NULL))
   
   intersections = Reduce(append, outputs.prepr.list.tissue$sign.jxns.info.list$intersections)
@@ -115,6 +123,8 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
   if (show_all_xtick_labels) par(mar = (c(4, 4, 0, 0) + 0.1))
   comb = getColumnCombinations(all.jxns[,cols.tf], tumor)
   lapply(comb, function(x) {
+    print('Beginning to plot dotplots')
+    
     par.1 = colnames(x)[1]
     par.2 = colnames(x)[2]
     xlims = lim_dict[sapply(names(lim_dict), function(tool) grepl(tool, par.1))][[1]]
@@ -130,6 +140,8 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
          bty = "L")
     # points
     for (tool in names(intersections)){
+      print('Adding colored points to plot dotplots')
+  
       sign.jxns.tool = which(all.jxns$junction_id_sajr %in% intersections[[tool]])
       points(x[sign.jxns.tool,], col=col[tool], pch = 16, cex=1.1)
       # gene labeles
@@ -148,6 +160,8 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
              xpd=TRUE)
         }
     }
+    print('Setting axis to plot dotplots')
+    
     if (show_all_xtick_labels){
       axis(1, labels = TRUE)
       axis(2, labels = TRUE)
@@ -159,6 +173,8 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
         axis(2, at=ylims$ticks, labels = TRUE)
       }
     }
+    print('Adding axis names to plot dotplots')
+    
     # adding x axis names (tool metrix)
     if (par("mfg")[1]==par("mfg")[3]) {
       mtext(side=1, text = par.1, line = 2, cex= axis_cex)
@@ -166,22 +182,26 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
     # adding tissue names to rows
     if (par("mfg")[2]==1) mtext(side=2, text = tissue, line = 3, cex= title_cex)  
     
-    if (add_regression_curve) addRegressionCurve(x)
+    tools <- c("dje$", "sajr$", "diego$", 'sajr_norm2tum$', 'sajr_gtex2tum$')
+    tool.1 <- tools[sapply(tools, function(tool) grepl(tool, par.1))]
+    tool.2 <- tools[sapply(tools, function(tool) grepl(tool, par.2))]
+    # Remove the trailing "$"
+    tool.1 <- sub("\\$$", "", tool.1)
+    tool.2 <- sub("\\$$", "", tool.2)
+    sign.jxns.tools = all.sign.tools[c(tool.1, tool.2)]
+    sign.jxns.tools = Reduce(append, sign.jxns.tools)
+    sign.jxns.tools = unique(sign.jxns.tools)
+    n = x[which(all.jxns$junction_id_sajr %in% sign.jxns.tools),]
+    
+    if (add_regression_curve) addRegressionCurve(n)
+    
     if (add_spearman_corr) {
-      tools <- c("dje$", "sajr$", "diego$", 'sajr_norm2tum$', 'sajr_gtex2tum$')
-      tool.1 <- tools[sapply(tools, function(tool) grepl(tool, par.1))]
-      tool.2 <- tools[sapply(tools, function(tool) grepl(tool, par.2))]
-      # Remove the trailing "$"
-      tool.1 <- sub("\\$$", "", tool.1)
-      tool.2 <- sub("\\$$", "", tool.2)
-      sign.jxns.tools = all.sign.tools[c(tool.1, tool.2)]
-      sign.jxns.tools = Reduce(append, sign.jxns.tools)
-      sign.jxns.tools = unique(sign.jxns.tools)
-      n = x[which(all.jxns$junction_id_sajr %in% sign.jxns.tools),]
-      results = addSpearmanCorr(n)
+      results = addCorr(n, method='pearson')
       mtext(paste0('rho = ', results$corr.coef,  ', p.val ', results$p.value), side=3,
             col = "black", cex=0.7)
     }
+    print('Ploting dotplots complete')
+    
   })
 }
 
@@ -347,23 +367,23 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
   
   col.metrics.if = !grepl("FDR|gene|id", colnames(outputs.prepr.list[[1]]$all.jxns.info))
   col.fdr.if = grepl("FDR", colnames(outputs.prepr.list[[1]]$all.jxns.info))
-  png(paste0('metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  png(paste0('plots/metrics_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list=outputs.prepr.list,
              cols.tf=col.metrics.if, tumor=tumor, thresholds=thresholds, col=col, file=file)
   dev.off()
-  png(paste0('fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
+  png(paste0('plots/fdr_plot_', file, '.png'), width = 25, height = 35, units = "cm", res = 700)
   plotGraphs(outputs.prepr.list=outputs.prepr.list,
              cols.tf=col.fdr.if, tumor=tumor, log='xy', show_all_xtick_labels=TRUE,
              add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
   dev.off()
   thresholds_text = setTitles(thresholds)
 
-  png(paste0('Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
+  png(paste0('plots/Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
 
   plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, col)
   dev.off()
   if (tumor==FALSE){
-    png(paste0('Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
+    png(paste0('plots/Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
     plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
     dev.off()
   }
@@ -382,7 +402,7 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
         dje = "orange3",
         diego = "#5DADE2")
   
-  png('fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
+  png('plots/fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
   
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
