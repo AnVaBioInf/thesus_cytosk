@@ -102,12 +102,16 @@ runDiego = function(rse.filtered, tissue, age_group, reference_condition, path_i
                     min_support, min_samples, FC_threshold, FDR_threshold, condition_col_name){
   makeDiegoInputFiles(rse.filtered, tissue, age_group, path_input, condition_col_name)
   use_condaenv("DIEGO_1")
+  # considering that DIEGO counts abundance change as control-test
+  conditions = unique(rse.filtered@colData[,condition_col_name])
+  test_condition = setdiff(conditions, reference_condition)
+  print(test_condition)
   system2(py_exe(), c("/home/an/DIEGO/diego.py",
                       paste0('-a ', path_input, '/junction_table_', paste(tissue, collapse = "_"),
                              "_", paste(age_group, collapse = "_"), '.txt'),
                       paste0('-b ', path_input, '/group_table_', paste(tissue, collapse = "_"),
                              "_", paste(age_group, collapse = "_"), '.txt'),
-                      paste0('-x ', reference_condition),
+                      paste0('-x ', test_condition),
                       paste0('--minsupp ', min_support),
                       paste0('--minsamples ', min_samples),
                       paste0('--foldchangeThreshold ', FC_threshold),
@@ -293,7 +297,7 @@ makeSAJR = function(rse.filtered){
 
 calculateMetrics = function(sajr, reference.sample.ids){
   reference.indices = match(reference.sample.ids, colnames(sajr$ir))
-  dPSI = apply(sajr$ir, 1, function(x) mean(x[reference.indices],na.rm=T)-mean(x[-reference.indices],na.rm=T))
+  dPSI = apply(sajr$ir, 1, function(x) mean(x[-reference.indices],na.rm=T)-mean(x[reference.indices],na.rm=T))
   #logFC = apply(sajr$ir, 1, function(x) log2(mean(x[adult.samples.ids],na.rm=T)/mean(x[fetus.samples.ids],na.rm=T)))
   dPSI #, logFC=logFC)
 }

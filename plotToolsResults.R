@@ -112,8 +112,8 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
   print('Preparing to plot dotplots')
   
   lim_dict = list('dPSI' = list(lim = c(-1,1), ticks =  seq(-1,1,by=0.5)),
-                  'logFC' = list(lim=c(4,-4), ticks = seq(-4,4,by=2)),
-                  'abund_change' = list(lim=c(-2,2), ticks = seq(-2,2,by=1)),
+                  'logFC' = list(lim=c(-4,4), ticks = seq(-4,4,by=2)),
+                  'abund_change' = list(lim=c(-3,3), ticks = seq(-3,3,by=1)),
                   'FDR'=list(lim=NULL))
   
   intersections = Reduce(append, outputs.prepr.list.tissue$sign.jxns.info.list$intersections)
@@ -377,16 +377,16 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
              add_regression_curve=FALSE, thresholds=thresholds, col=col, file=file)
   dev.off()
   thresholds_text = setTitles(thresholds)
-
-  png(paste0('plots/Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
-
-  plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, col)
-  dev.off()
-  if (tumor==FALSE){
-    png(paste0('plots/Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
-    plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
-    dev.off()
-  }
+# 
+#   png(paste0('plots/Venn_diagram_', file, '.png'), width = 10, height = 50, units = "cm", res = 700)
+# 
+#   plotVennDiagram(outputs.prepr.list, title, thresholds_text, file, col)
+#   dev.off()
+#   if (tumor==FALSE){
+#     png(paste0('plots/Euler_diagram', file, '.png'), width = 20, height = 30, units = "cm", res = 700)
+#     plotEulerDiagram(outputs.prepr.list, title = title, thresholds_text = thresholds_text, col=col)
+#     dev.off()
+#  }
 }
 
 

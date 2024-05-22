@@ -16,12 +16,15 @@ mergeOutputs = function(output.list, add_external_data, file){
   sajr.output = output.list$sajr.output
 
   diego.output = diego.output[, c('junction', 'abundance_change', 'q_val', 'geneID', 'geneName')]
-  dje.output = dje.output$dje.out[, c('junctionID', 'logFC', 'FDR')]
+  dje.output = dje.output$dje.out[, c('junctionID', 'logFC.ebayes', 'adj.P.Val.ebayes')]
   sajr.output = sajr.output[,c('dPSI', 'FDR.sajr')]
   
   colnames(diego.output) = c("junction_id", "abund_change_diego", "FDR_diego", 'gene_id', 'gene_name')
   colnames(dje.output) = c("junction_id", "logFC_dje", "FDR_dje")
   colnames(sajr.output) = c("dPSI_sajr", "FDR_sajr")
+  
+  # consideting that diego substracts from base-test
+  #diego.output$abund_change_diego = (diego.output$abund_change_diego)*(-1)
   
   dje.output$junction_id = sub(":.$", "", dje.output$junction_id)
   dje.output$junction_id = sub("([0-9]{3,})(:)([0-9]{3,})", "\\1-\\3", dje.output$junction_id)
