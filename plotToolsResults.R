@@ -389,8 +389,9 @@ plotResultsRepot = function(outputs.prepr.list, tumor=FALSE, file='', thresholds
 #  }
 }
 
-
-#===========fisher
+#===============================================================================
+#============================= ODD RATIO BARPLOT ===============================
+#===============================================================================
 plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
   col=c(sajr = "#984EA3",
         dje = "orange3",
@@ -401,9 +402,6 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
         sajr = "#984EA3",
         dje = "orange3",
         diego = "#5DADE2")
-  
-  png('plots/fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
-  
   # Create the plot matrix
   nrow = length(fisher_results_tissues_list)
   ncol = 2
@@ -420,7 +418,6 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
   nbars = length(names)
   
   lapply(names(fisher_results_tissues_list), function(tissue) {
-    
     fisher_results_tissue = fisher_results_tissues_list[[tissue]]
     odds_ratio = fisher_results_tissue$odds_ratio
     if (log) odds_ratio = log2(odds_ratio+0.01)
@@ -458,8 +455,6 @@ plotFisherResults = function(fisher_results_tissues_list, thresholds, log){
   thresholds_text = setTitles(thresholds)
   mtext(side=1,  text = thresholds_text, outer=TRUE, cex= 1, line=1)
   mtext(side=3, text = 'Fisher Exact Test Results for each pair of methods & condition comaparisons', outer=TRUE, cex= 0.7)
-  dev.off()
-  
 }
 
 

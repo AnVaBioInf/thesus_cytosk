@@ -144,6 +144,7 @@ getJxnSignInfo = function(tools.outputs.list,
 # outputs_tissue = runTools(rse.jxn.cytosk, 'Brain')
 # getJxnSignInfo(outputs_tissue)
 
+
 #===============================================================================
 #============================ FISHER EXACT TEST ================================
 #===============================================================================
@@ -161,18 +162,18 @@ makePairs = function(names, ref_col='', one_to_all){
 }
 
 getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
-  all.sign.jxns.tool.ids = outputs_tissue$sign.jxns.info.list$all.single.tool
+  all.sign.jxns.ids.list.tool = outputs_tissue$sign.jxns.info.list$all.single.tool
   
   # from df overall number of input junctions
   all.jxns.df = outputs_tissue$all.jxns.info
   
-  all.tool.pairs.comb = makePairs(names(all.sign.jxns.tool.ids),
+  all.tool.pairs.comb = makePairs(names(all.sign.jxns.ids.list.tool),
                                   one_to_all=one_to_all, 
                                   ref_col=ref_col)
   for (tool.pair in all.tool.pairs.comb){
     tool1.name = tool.pair[1]
     tool2.name = tool.pair[2]
-    all.sign.jxns.tool.pair.ids = all.sign.jxns.tool.ids[tool.pair]
+    all.sign.jxns.tool.pair.ids = all.sign.jxns.ids.list.tool[tool.pair]
     sign.jxns.intersect.ids = compareOutputs(all.sign.jxns.tool.pair.ids)
     
     
@@ -197,6 +198,12 @@ getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
   fisher.df
 }
 
+#getFisher(outputs_dev_sign_info[['Brain']])
+
+#===================================
+#===================================
+#================================================================================
+
 findCommonJxns = function(outputs_tum){
   unique.tissue = names(outputs_tum)
   common_sign_jxns_outputs_tum = list()
@@ -218,10 +225,6 @@ findCommonJxns = function(outputs_tum){
   common_sign_jxns_outputs_tum = do.call(rbind, common_sign_jxns_outputs_tum)
   common_sign_jxns_outputs_tum
 }
-
-#getFisher(outputs_dev_sign_info[['Brain']])
-
-
 
 
 
