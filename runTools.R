@@ -137,16 +137,6 @@ makeDjeCoordinates <- function(coordinates_vector) {
   coordinates_vector
 }
 
-create_binary_design_matrix <- function(values, reference_condition) {
-  # Create a matrix with two columns
-  design_matrix <- matrix(1, nrow = length(values), ncol = 2)
-  # Set the second column based on the condition
-  design_matrix[values == reference_condition, 2] = 0
-  # Return the design matrix
-  return(design_matrix)
-}
-
-
 # instead of DJEimport() etc, because input data differ (recount3 jxns instead of STAR raw out file)
 makePrepOutObj = function(rse.filtered, tissue, reference_sample_ids){
   JunctExprfilt = rse2countDf(rse.filtered)

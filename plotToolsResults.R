@@ -196,7 +196,7 @@ makeDotplots = function(outputs.prepr.list.tissue, cols.tf, tissue, tumor, log,
     if (add_regression_curve) addRegressionCurve(n)
     
     if (add_spearman_corr) {
-      results = addCorr(n, method='pearson')
+      results = addCorr(n, method='spearman')
       mtext(paste0('rho = ', results$corr.coef,  ', p.val ', results$p.value), side=3,
             col = "black", cex=0.7)
     }

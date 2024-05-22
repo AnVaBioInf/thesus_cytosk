@@ -16,7 +16,7 @@ mergeOutputs = function(output.list, add_external_data, file){
   sajr.output = output.list$sajr.output
 
   diego.output = diego.output[, c('junction', 'abundance_change', 'q_val', 'geneID', 'geneName')]
-  dje.output = dje.output$dje.out[, c('junctionID', 'logFC.ebayes', 'adj.P.Val.ebayes')]
+  dje.output = dje.output$dje.out[, c('junctionID', 'logFC', 'FDR')]
   sajr.output = sajr.output[,c('dPSI', 'FDR.sajr')]
   
   colnames(diego.output) = c("junction_id", "abund_change_diego", "FDR_diego", 'gene_id', 'gene_name')
@@ -46,9 +46,6 @@ mergeOutputs = function(output.list, add_external_data, file){
   return(output.merged.df) 
 }
 
-#=================================================================================
-#=================================================================================
-#=================================================================================
 compareOutputs = function(jxn.ids.list) {
   jxn.ids.list = lapply(jxn.ids.list, function(x) x[!is.na(x)])
   # 1. Find elements present in all vectors

@@ -27,7 +27,7 @@ rse.jxn.cytosk = readRDS('rds/rse.jxn.cytosk.rds', refhook = NULL)
 # # Breast normal tissue
 # gtex.breast = prepareGeneRseAssay('BREAST', 'gene')
 # gtex.breast$tissue = 'Breast_normal'
-# saveRDS(gtex.breast,'gtex.breast.rds')
+# saveRDS(gtex.breast,'rds/gtex.breast.rds')
 gtex.breast = readRDS('rds/gtex.breast.rds')
 
 # # BRCA
@@ -70,27 +70,27 @@ rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
 
 #================================= development ================================
 # # -- reading files
-unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
-rse.jxn.cytosk@colData$age_group
-outputs_tissue = list()
-for (tissue in unique.tissues){
-  print(tissue)
-  if (tissue=='Testis'){
-    age_group= c('fetus', 'infant')
-    tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
-    print(tissue_age)
-    outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
-                                            reference_condition='fetus')
-    
-    age_group= c('infant', 'adult')
-    tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
-    outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
-                                            reference_condition='infant')
-  } else{
-    outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
-  }
-}
-saveRDS(outputs_tissue,'rds/outputs_tissue.rds')
+# unique.tissues = unique(rse.jxn.cytosk@colData$tissue)
+# rse.jxn.cytosk@colData$age_group
+# outputs_tissue = list()
+# for (tissue in unique.tissues){
+#   print(tissue)
+#   if (tissue=='Testis'){
+#     age_group= c('fetus', 'infant')
+#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+#     print(tissue_age)
+#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+#                                             reference_condition='fetus')
+#     
+#     age_group= c('infant', 'adult')
+#     tissue_age = paste(tissue, paste(age_group, collapse='_'), sep = "_")
+#     outputs_tissue[[tissue_age]] = runTools(rse.jxn.cytosk, tissue, age_group = age_group,
+#                                             reference_condition='infant')
+#   } else{
+#     outputs_tissue[[tissue]] = runTools(rse.jxn.cytosk, tissue)
+#   }
+# }
+# saveRDS(outputs_tissue,'rds/outputs_tissue.rds')
 outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 # 
 # 
@@ -125,7 +125,7 @@ plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
 
 # #================================= tumor =====================================
 #-- reading files
-outputs_tissue = readRDS('outputs_tissue.rds', refhook = NULL)
+outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 outputs_gtex2tum = list()
 outputs_norm2tum = list()
 
