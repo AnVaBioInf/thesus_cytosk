@@ -1,6 +1,9 @@
 #=================================
 #######################-----coverage
 #=================================
+# sid - sample id
+# jxn - rse object
+# gene.grange - granges of genes of interest
 
 bigWig2Cov = function(bw){
   bw = as.data.frame(bw) # columns: seqnames, start, end, width, strand, score
@@ -8,106 +11,105 @@ bigWig2Cov = function(bw){
   start = bw$start[1] # starting coordinate of the gene
   stop = bw$end[nrow(bw)] # end coordinate of the gene
   
-  cov = rep(0,stop-start+1) # vector with 0s of length the gene
+  r = rep(0,stop-start+1) # vector with 0s with length of the gene
   
   for(i in 1:nrow(bw)){ # for every record in bw
-    cov[(bw$start[i]:bw$end[i])-start+1] = bw$score[i] # assigning score to every position of gene
+    r[(bw$start[i]:bw$end[i])-start+1] = bw$score[i] # assigning score to every position of gene
     # every position of a range is asigned with the same score
   }
-  list(cov=cov,x=start:stop) # coverage, start and end gene coordinates on a chromosome
+  list(cov=r,x=start:stop) # coverage, start and end gene coordinates on a chromosome
 }
 
-# sid - sample id
-# jxn - rse object
-# gene.grange - granges of genes of interest
-import = function(sample.id, gene.grange){
-  folder.path = '/home/an/Manananggal/Input/bigWig/'
-  sample.path = paste0(folder.path, sample.id, '.bw')
-  # download and subset bw file
-  bw = rtracklayer::import.bw(sample.path, which=gene.grange) 
-  bw
-}
-
-get.counts = function(sample.id, rse.gene.tissue){
+# что такое gene.grange here?
+getRecountCov = function(sample.id, rse.jxn.filtered,
+                           path='/home/an/Manananggal/Input/bigWig/'){
   # rse for one sample
-  rse.tissue.samples = rse.gene.tissue[, sample.id]
-  all.genejxn.info = cbind(as.data.frame(rse.gene.tissue@rowRanges)[,c('start','end','strand')],
-                           counts = rse.gene.tissue@assays@data$counts[,sample.id]) # ?? зачем еще раз выбирать sample.id?
-  all.genejxn.info
-}
-
-getRecountCov = function(sample.id, rse.gene.tissue, gene.grange){
-  bw = import(sample.id, gene.grange)
+  sample.path = paste0(path, sample.id, '.bw')
+  # download and subset bw file
+  bw = rtracklayer::import.bw(sample.path, which=rse.jxn.filtered@rowRanges) 
+  print("BigWig files imported and filtered for gene")
   # coverage on a gene, start:stop 
-  cov.list.sample = bigWig2Cov(bw) 
-  cov.list.sample$juncs =  get.counts(sample.id, rse.gene.tissue)
-  # coverages and counts for the entire gene (all jxns)
-  cov.list.sample
+  r = bigWig2Cov(bw) 
+  
+  r$juncs =  
+    cbind(as.data.frame(rse.jxn.filtered@rowRanges)[,c('start','end','strand')],
+                     score=rse.jxn.filtered@assays@data$counts[,sample.id])
+  print('Junction counts added')
+  r
 }
 
-sumCovs = function(gene.cov.samples.list){
+sumCovs = function(l){
   # launched for each of the conditions (2ce)
   # launched for every tissue where significant junction was found
   # creating a template of merged object
-  cov.merged = gene.cov.samples.list[[1]] # read coverages for the first sample
+  r = l[[1]] # read coverages for the first sample
+  juncs = 
+    unique(do.call(rbind,unname(lapply(l,function(c)c$juncs[,1:3]))))
+  juncs$score = 0
+  juncs[rownames(r$juncs),'score'] = r$juncs$score
   
-  # Extract "val" elements from each sublist
-  cov.list <- lapply(gene.cov.samples.list, `[[`, "cov")
-  # Sum corresponding elements using Reduce
-  cov.merged$cov <- Reduce("+", cov.list)
-  
-  juncs.list <- lapply(gene.cov.samples.list, `[[`, "juncs")
-  counts.list <- lapply(juncs.list, `[[`, "counts")
-  cov.merged$juncs$counts <- Reduce("+", counts.list)
-  cov.merged
+  for(i in 2:length(l)){
+    if(!all(r$x==l[[i]]$x))
+      stop("objects should cover identicall intervals")
+    r$cov = r$cov + l[[i]]$cov
+    juncs[rownames(l[[i]]$juncs),'score'] = 
+      juncs[rownames(l[[i]]$juncs),'score'] + l[[i]]$juncs$score
+  }
+  r$juncs = juncs
+  r
+}
+
+loadEnsGTF = function(f,features=NULL){
+  r = read.table(f,sep='\t')
+  if(!is.null(features ))
+    r = r[r$V3 %in% features,]
+  a = lapply(strsplit(r$V9,';\\s?',perl=T),function(x){x=strsplit(x,'[ =]');setNames(sapply(x,'[',2),sapply(x,'[',1))})
+  names = unique(unlist(lapply(a,names)))
+  a = do.call(rbind,lapply(a,'[',names))
+  colnames(a) = names
+  r = r[,c(1:5,7)]
+  colnames(r) = c('chr_id','type','feature','start','stop','strand')
+  cbind(r,a)
 }
 
 
-filter.data = function(condition.cov.list, xlim, min.junc.cov,plot.junc.only.within, min.junc.cov.f){
-  #print(condition.cov.list)
-  # choosing only x inside the range of interest
-  x.in.range.tf = condition.cov.list$x >= xlim[1]-500 &
-    condition.cov.list$x <= xlim[2]+500
-  #??? x is from 1 to what?
+gtf = loadEnsGTF('/home/an/Manananggal/Input/ref_annotation/filtered_ann_v26.gtf')
+gtf[gtf$gene_name=='ABI1',]
+
+plotTranscripts = function(a,
+                           ylim=c(0,length(unique(a$transcript_id))),
+                           xlim=c(ifelse(a$strand[1]=='+',min(a$start),max(a$stop)),ifelse(a$strand[1]=='+',max(a$stop),min(a$start))),
+                           xlab=a$chr_id[1],
+                           new=TRUE,yspace=0.8,exon.col='black',cds.col='black',
+                           text.cex = 0.7,
+                           ...){
   
-  condition.cov.list$x = condition.cov.list$x[x.in.range.tf]
-  condition.cov.list$cov = condition.cov.list$cov[x.in.range.tf]
+  if(!is.na(exon.col))
+    a$exon.col = exon.col
+  if(!is.na(cds.col))
+    a$cds.col = cds.col
   
-  condition.cov.list$juncs =
-    condition.cov.list$juncs[(condition.cov.list$juncs$start == xlim[1] |
-                                condition.cov.list$juncs$end == xlim[2]) &
-                               condition.cov.list$juncs$counts > min.junc.cov.f,]
+  transc = split(a,a$transcript_id)
+  transc = transc[order(sapply(transc,function(x){max(x$stop)-min(x$start)}))]
+  if(new)
+    plot(1,t='n',xlim=xlim,ylim=ylim,yaxt='n',ylab='',xlab=xlab,...)
+  ystep = (ylim[2]-ylim[1])/length(transc)
   
-  condition.cov.list$cov[c(1,length(condition.cov.list$cov))] = 0 # assigning cov 0 to first and last elements of cov
-  condition.cov.list
+  for(i in 1:length(transc)){
+    y = ylim[1] + ystep*i - ystep/2
+    t = transc[[i]]
+    lines(c(min(t$start),max(t$stop)),c(y,y))
+    f = t$feature == 'exon'
+    if(sum(f)>0)
+      rect(t$start[f],y-ystep/2*yspace,t$stop[f],y+ystep/2*yspace,col = 'white',border = t$exon.col[f])
+    f = t$feature == 'CDS'
+    if(sum(f)>0)
+      rect(t$start[f],y-ystep/2*yspace,t$stop[f],y+ystep/2*yspace,col = t$cds.col[f],border = t$cds.col[f])
+  }
+  text(par('usr')[1],seq(ylim[1]+ystep/2,by = ystep,length.out = length(transc)),sapply(transc,function(x)x$transcript_name[1]),
+       adj = c(1,0.5),xpd=T,cex=text.cex)
 }
 
-prepareCovs = function(gene, rse.gene.cytosk, tissue){
-  # gene.grange is needed by rtracklayer to filter bw files
-  gene.grange = rse.gene.cytosk@rowRanges[rse.gene.cytosk@rowRanges$gene_name==gene,]
-  rse.gene = rse.gene.cytosk[rse.gene.cytosk@rowRanges$gene_name==gene,]
-  rse.gene = rse.gene[,rse.gene@colData$tissue==tissue]
-  
-  rse.gene = rse.gene[,rse.gene@colData$age_group %in% c('fetus','adult')]
-  adult.samples.ids = rownames(rse.gene@colData[rse.gene@colData$age_group == 'adult',])
-  fetus.samples.ids = rownames(rse.gene@colData[rse.gene@colData$age_group == 'fetus',])
-  
-  all.samples.ids = c(adult.samples.ids, fetus.samples.ids)
-  # -- coverages
-  # covearge for each sample, output is a list of lists with read coverages, start:end positions, juncs df
-  # gene.cov.all.samples.list - named list for each tissue sample
-  gene.cov.all.samples.list = 
-    lapply(all.samples.ids, function(samples.id){getRecountCov(samples.id, rse.gene, gene.grange)}) 
-  # assigning elements of the list sample ids names
-  names(gene.cov.all.samples.list) = all.samples.ids
-  
-  # --- merging
-  # sum coverage in each condition
-  fetus.covs.summed.gene = sumCovs(gene.cov.all.samples.list[fetus.samples.ids])
-  adult.covs.summed.gene = sumCovs(gene.cov.all.samples.list[adult.samples.ids])
-  
-  list(fetus.covs.summed.gene=fetus.covs.summed.gene, adult.covs.summed.gene=adult.covs.summed.gene)
-} 
 
 
 #============================================
@@ -136,45 +138,53 @@ set.colors = function(jxn, covs){
 #'
 #' @export
 
-plotReadCov = function(condition.cov.list,
-                       min.junc.cov=0,
-                       min.junc.cov.f=0,
-                       plot.junc.only.within=FALSE,
-                       xlim,
-                       reverse=FALSE,
-                       #    junc.col='blue',
-                       junc.lwd=3,
-                       bottom.mar=0,...){
-  
-  condition.cov.list = filter.data(condition.cov.list, xlim, min.junc.cov,plot.junc.only.within, min.junc.cov.f)
-  
-  # create a graph
-  plot(condition.cov.list$x,
-       condition.cov.list$cov,
-       t='n',
-       xlab = 'Chromosome coordinate',
-       ylab = 'Coverage',
-       cex.axis = 0.7,
-       cex.lab = 0.9,
-       xlim=c(xlim[1]-500, xlim[2]+500),
-       ...)
-  
-  # plot verticale lines
-  polygon(condition.cov.list$x,
-          condition.cov.list$cov,
-          col = 'gray',
-          border=NA)
-  
-  if(nrow(condition.cov.list$juncs)>0) {
-    for(i in 1:nrow(condition.cov.list$juncs)){
-      plotArc(condition.cov.list$juncs$start[i],
-              condition.cov.list$juncs$end[i],
-              condition.cov.list$juncs$counts[i],
-              col=condition.cov.list$juncs$cols[i],
-              lwd=junc.lwd)
+plotReadCov = function(r,min.junc.cov=0,min.junc.cov.f=0,plot.junc.only.within=FALSE,ylim=NULL,
+                       xlim=range(r$x),reverse=FALSE,junc.col='blue',junc.lwd=3,bottom.mar=0,...){
+  f = r$x >= xlim[1] & r$x <=xlim[2]
+  r$x = r$x[f]
+  r$cov = r$cov[f]
+  if(nrow(r$juncs)>0)
+    r$juncs$col = junc.col
+  r$juncs = r$juncs[r$juncs$start <= xlim[2] & r$juncs$end >=xlim[1] & r$juncs$score >= min.junc.cov,]
+  if(!is.na(plot.junc.only.within)){
+    if(plot.junc.only.within){
+      r$juncs = r$juncs[r$juncs$start > xlim[1] & r$juncs$end < xlim[2],]
+    }else{
+      r$juncs = r$juncs[(r$juncs$start > xlim[1] & r$juncs$start < xlim[2]) | (r$juncs$end > xlim[1] & r$juncs$end < xlim[2]),]
     }
   }
+  
+  start = r$x[1]
+  end = r$x[length(r$x)]
+  r$cov[c(1,length(r$cov))] = 0
+  if(is.null(ylim)){
+    ylim = c(0,max(r$cov,ifelse(nrow(r$juncs)>0,max(r$juncs$score),1)))
+    ylim = c(-bottom.mar*ylim[2],ylim[2])
+  }
+  r$juncs = r$juncs[r$juncs$score >= min.junc.cov.f * ylim[2],]
+  if(reverse)
+    xlim=rev(xlim)
+  plot(r$x,r$cov,t='n',ylim=ylim,xlim=xlim,yaxt='n',...)
+  axis(2,at=c(0,ylim[2]),labels = c('',ylim[2]))
+  polygon(r$x,r$cov,col = 'gray',border=NA)
+  if(nrow(r$juncs)>0)
+    for(i in 1:nrow(r$juncs)){
+      start = r$juncs$start[i]
+      stop = r$juncs$end[i]
+      # to make junction max height always within region
+      if(start<xlim[1] & stop >= xlim[2]){
+        start = xlim[1] - mean(xlim)
+        stop = xlim[2] + mean(xlim)
+      }else if (start < xlim[1]){
+        start = max(start,xlim[1] - (stop - xlim[1]))
+      }else if (stop > xlim[2]){
+        stop = min(stop,xlim[2] + (xlim[2]-start))
+      }
+      plotArc(start,stop,r$juncs$score[i],col=r$juncs$col[i],lwd=junc.lwd)
+    }
+  invisible(ylim)
 }
+
 
 #' Plots parabolic arc
 #'
@@ -191,57 +201,3 @@ plotArc = function(from,to,top,n=100,y.base=0,...){
   lines(x+from,y+y.base,...)
 }
 
-# for every gene
-runJunxtionPlot = function(common_sign_jxns){
-  for (jxn in unique(common_sign_jxns$junction_id)){
-    # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
-    # selecting significant junctions for the GENE in both, development and cancer
-    sign.jxn.df = common_sign_jxns[common_sign_jxns$junction_id==jxn,]
-    gene = unique(sign.jxn.df$gene_name)
-    par(mfrow = c(min(length(unique(sign.jxn.df$tissue)),4),2), bty='n')
-    # for every tissue where any of selected junctions are significant
-    for (tissue in (unique(sign.jxn.df$tissue))){ 
-      covs.summed.gene = prepareCovs(gene,rse.jxn.cytosk,tissue)
-      
-      fetus.covs.summed.gene =  covs.summed.gene[['fetus.covs.summed.gene']]
-      adult.covs.summed.gene = covs.summed.gene[['adult.covs.summed.gene']]
-      
-      gene.region.coords = strsplit(jxn,'[:-]')
-      gene.region.coords = as.integer(c(gene.region.coords[[1]][2], gene.region.coords[[1]][3]))
-      gene.region.coords = c(gene.region.coords[1], gene.region.coords[2])
-      
-      fetus.covs.summed.gene = set.colors(jxn, fetus.covs.summed.gene)
-      adult.covs.summed.gene = set.colors(jxn, adult.covs.summed.gene)
-      
-      sign.jxn.tissue = sign.jxn.df[sign.jxn.df$tissue==tissue,]
-      
-      text = paste(paste(tissue,gene, jxn), " \n(",
-                   'dPSI.sajr=',round(sign.jxn.tissue$dPSI_sajr, digits=2), 
-                   ', FDR.sajr=', round(sign.jxn.tissue$FDR_sajr, digits=2),
-                   ', logFC.dje=', round(sign.jxn.tissue$logFC_dje, digits=2),
-                   ', FDR.dje=', round(sign.jxn.tissue$FDR_dje, digits=2),
-                   ', sign.diego=', round(sign.jxn.tissue$abund_change_diego, digits=2),
-                   ', FDR.diego=', round(sign.jxn.tissue$FDR_diego, digits=2), "\n",
-                   ' dPSI_gtex2tum =',round(sign.jxn.tissue$dPSI_gtex2tum, digits=2),
-                   ', FDR_gtex2tum =',round(sign.jxn.tissue$FDR_gtex2tum, digits=2),
-                   ', dPSI_norm2tum =',round(sign.jxn.tissue$dPSI_norm2tum, digits=2),
-                   ', FDR_norm2tum =',round(sign.jxn.tissue$FDR_norm2tum, digits=2), ")")
-      
-      plotReadCov(fetus.covs.summed.gene,
-                  junc.col = fetus.covs.summed.gene$cols,
-                  xlim=gene.region.coords,
-                  plot.junc.only.within = F,
-                  min.junc.cov.f = 0.05,
-                  sub='Before birth'
-      )
-      mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
-      
-      plotReadCov(adult.covs.summed.gene,
-                  junc.col = fetus.covs.summed.gene$cols,
-                  xlim=gene.region.coords,
-                  plot.junc.only.within = F,
-                  min.junc.cov.f = 0.05,
-                  sub='After birth')
-    }
-  }
-}

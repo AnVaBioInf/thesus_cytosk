@@ -2,6 +2,7 @@ source("downloadRseData.R")
 source("findSignificantEvents.R")
 source('plotToolsResults.R')
 source('plotGenesExpression.R')
+source('plotCoverageFunctions.R')
 source('runTools.R')
 library(SummarizedExperiment)
 
@@ -94,112 +95,279 @@ rse.jxn.brca.cytosk = readRDS('rds/rse.jxn.brca.cytosk.rds')
 outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
 # 
 # 
-
-# #================================= tumor =====================================
-outputs_gtex2tum = downloadExternalOutputs(file='gtex2tum')
-outputs_norm2tum = downloadExternalOutputs(file='norm2tum')
+# # #================================= tumor =====================================
+# outputs_gtex2tum = downloadExternalOutputs(file='gtex2tum')
+# outputs_norm2tum = downloadExternalOutputs(file='norm2tum')
 
 #===============================================================================
 #========================= FINDING SIGNIFICANT EVENTS ==========================
 #===============================================================================
 
 
-#================================= development =================================
-outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
-outputs_dev_sign_info = list()
-for (tissue in names(outputs_tissue)){
-  print(tissue)
-  outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
-                                                   logfc_threshold=logfc_threshold,
-                                                   dpsi_threshold=dpsi_threshold,
-                                                   abund_change_threshold=abund_change_threshold,
-                                                   fdr_threshold=fdr_threshold,
-                                                   add_external_data=FALSE, file='')
-}
-saveRDS(outputs_dev_sign_info,'rds/outputs_dev_sign_info.rds')
-
+# #================================= development =================================
+# outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
+# outputs_dev_sign_info = list()
+# for (tissue in names(outputs_tissue)){
+#   print(tissue)
+#   outputs_dev_sign_info[[tissue]] = getJxnSignInfo(tools.outputs.list=outputs_tissue[[tissue]],
+#                                                    logfc_threshold=logfc_threshold,
+#                                                    dpsi_threshold=dpsi_threshold,
+#                                                    abund_change_threshold=abund_change_threshold,
+#                                                    fdr_threshold=fdr_threshold,
+#                                                    add_external_data=FALSE, file='')
+# }
+# saveRDS(outputs_dev_sign_info,'rds/outputs_dev_sign_info.rds')
+# 
 outputs_dev_sign_info = readRDS('rds/outputs_dev_sign_info.rds', refhook = NULL)
-plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
+# plotResultsRepot(outputs_dev_sign_info, thresholds = thresholds)
 
 
-
-# #================================= tumor =====================================
-#-- reading files
-outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
-outputs_gtex2tum = list()
-outputs_norm2tum = list()
-
-for (tissue in names(outputs_tissue)){
-  print(tissue)
-  outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
-                                              logfc_threshold=logfc_threshold,
-                                              dpsi_threshold=dpsi_threshold,
-                                              abund_change_threshold=abund_change_threshold,
-                                              fdr_threshold=fdr_threshold,
-                                              add_external_data=TRUE, file='gtex2tum')
-  outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
-                                              logfc_threshold=logfc_threshold,
-                                              dpsi_threshold=dpsi_threshold,
-                                              abund_change_threshold=abund_change_threshold,
-                                              fdr_threshold=fdr_threshold,
-                                              add_external_data=TRUE, file='norm2tum')
-}
-saveRDS(outputs_gtex2tum,'rds/dev_vs_gtex2tum_tools.rds')
-saveRDS(outputs_norm2tum,'rds/dev_vs_norm2tum_tools.rds')
-
+# # #================================= tumor =====================================
+# #-- reading files
+# outputs_tissue = readRDS('rds/outputs_tissue.rds', refhook = NULL)
+# outputs_gtex2tum = list()
+# outputs_norm2tum = list()
+# 
+# for (tissue in names(outputs_tissue)){
+#   print(tissue)
+#   outputs_gtex2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
+#                                               logfc_threshold=logfc_threshold,
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='gtex2tum')
+#   outputs_norm2tum[[tissue]] = getJxnSignInfo(outputs_tissue[[tissue]],
+#                                               logfc_threshold=logfc_threshold,
+#                                               dpsi_threshold=dpsi_threshold,
+#                                               abund_change_threshold=abund_change_threshold,
+#                                               fdr_threshold=fdr_threshold,
+#                                               add_external_data=TRUE, file='norm2tum')
+# }
+# saveRDS(outputs_gtex2tum,'rds/dev_vs_gtex2tum_tools.rds')
+# saveRDS(outputs_norm2tum,'rds/dev_vs_norm2tum_tools.rds')
+# 
 outputs_gtex2tum = readRDS('rds/dev_vs_gtex2tum_tools.rds', refhook = NULL)
 outputs_norm2tum = readRDS('rds/dev_vs_norm2tum_tools.rds', refhook = NULL)
+# 
+# 
+# # ============================================================================
+# # =============================== METRICS PLOT ===============================
+# # ============================================================================
+# 
+# plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum', thresholds = thresholds)
+# plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', thresholds = thresholds)
 
 
-# ============================================================================
-# =============================== METRICS PLOT ===============================
-# ============================================================================
-
-plotResultsRepot(outputs_gtex2tum, tumor=TRUE, file='gtex2tum', thresholds = thresholds)
-plotResultsRepot(outputs_norm2tum, tumor=TRUE, file='norm2tum', thresholds = thresholds)
-
-
-# ==============================================================================
-# ============================= STATISTICAL TEST ===============================
-# ==============================================================================
-fisher_results_tissues_list = list()
-for (tissue in names(outputs_tissue)){
-  print(tissue)
-  fisher.df = data.frame(tool_pair=character(), odds_ratio = numeric(), p_val = numeric())
-  fisher.df = getFisher(fisher.df, outputs_dev_sign_info[[tissue]], one_to_all=FALSE,  ref_col='')
-  fisher.df = getFisher(fisher.df, outputs_gtex2tum[[tissue]], one_to_all=TRUE, ref_col='sajr_gtex2tum')
-  fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.gtex2tum",  fisher.df$tool_pair)
-  fisher.df = getFisher(fisher.df, outputs_norm2tum[[tissue]], one_to_all=TRUE, ref_col='sajr_norm2tum')
-  fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.norm2tum",  fisher.df$tool_pair)
-  fisher.df$q_val = p.adjust(fisher.df$p_val, method = "BH") 
-  fisher_results_tissues_list[[tissue]] = fisher.df
-}
-
-png('plots/fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
-plotFisherResults(fisher_results_tissues_list, thresholds=thresholds, log=TRUE)
-dev.off()
-
+# # ==============================================================================
+# # ============================= STATISTICAL TEST ===============================
+# # ==============================================================================
+# fisher_results_tissues_list = list()
+# for (tissue in names(outputs_tissue)){
+#   print(tissue)
+#   fisher.df = data.frame(tool_pair=character(), odds_ratio = numeric(), p_val = numeric())
+#   fisher.df = getFisher(fisher.df, outputs_dev_sign_info[[tissue]], one_to_all=FALSE,  ref_col='')
+#   fisher.df = getFisher(fisher.df, outputs_gtex2tum[[tissue]], one_to_all=TRUE, ref_col='sajr_gtex2tum')
+#   fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.gtex2tum",  fisher.df$tool_pair)
+#   fisher.df = getFisher(fisher.df, outputs_norm2tum[[tissue]], one_to_all=TRUE, ref_col='sajr_norm2tum')
+#   fisher.df$tool_pair = gsub("sajr.norm.tumor",  "sajr.norm2tum",  fisher.df$tool_pair)
+#   fisher.df$q_val = p.adjust(fisher.df$p_val, method = "BH") 
+#   fisher_results_tissues_list[[tissue]] = fisher.df
+# }
+# 
+# png('plots/fisher_plot.png', width = 20, height = 30, units = "cm", res = 700)
+# plotFisherResults(fisher_results_tissues_list, thresholds=thresholds, log=TRUE)
+# dev.off()
+# 
 
 # ==============================================================================
 # ============================= COVARIDGES POLTS ===============================
 # ==============================================================================
 dev.off()
-common_sign_jxns_outputs_gtex2tum = findCommonJxns(outputs_gtex2tum)
-common_sign_jxns_outputs_norm2tum = findCommonJxns(outputs_norm2tum)
+
+common_sign_jxns_outputs_gtex2tum = findCommonJxns(outputs_gtex2tum, rse.jxn.cytosk)
+common_sign_jxns_outputs_norm2tum = findCommonJxns(outputs_norm2tum, rse.jxn.cytosk)
 
 common_sign_jxns = merge(common_sign_jxns_outputs_gtex2tum,common_sign_jxns_outputs_norm2tum,
                          by = c('junction_id_sajr', 'tissue', 'junction_id', 'gene_name', 'gene_id',
                                 'dPSI_sajr', 'FDR_sajr', 'logFC_dje', 'FDR_dje',
-                                'abund_change_diego', 'FDR_diego'), all=TRUE)
+                                'abund_change_diego', 'FDR_diego', 'leftmost', 'rightmost',
+                                'lr_most'), all=FALSE)
 common_sign_jxns = 
   common_sign_jxns[order(common_sign_jxns$gene_name, 
-                         common_sign_jxns$junction_id,
-                         common_sign_jxns$tissue), ]
+                         common_sign_jxns$tissue,
+                         common_sign_jxns$lr_most), ]
 
 write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv",
             sep = ",",  row.names = TRUE, col.names = TRUE)
 
-# runJunxtionPlot(common_sign_jxns)
+
+#==================================PLOTS============================================
+# for every gene
+gtf = loadEnsGTF('/home/an/Manananggal/Input/ref_annotation/filtered_ann_v26.gtf')
+
+for (splice_region in unique(common_sign_jxns$lr_most)[1]){
+    # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
+    # selecting significant junctions for the GENE in both, development and cancer
+    sign.jxns.gene.region.df = common_sign_jxns[common_sign_jxns$lr_most==splice_region,]
+    gene = unique(sign.jxns.gene.region.df$gene_name)
+    
+    # region of gene where significant junctions of gene are located
+    print(sign.jxns.gene.region.df)
+    sign.gene.jxns.coords = strsplit(sign.jxns.gene.region.df$junction_id,'[:-]')
+    print(sign.gene.jxns.coords)
+    
+    gene.region.coords = c(min(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[2]))),
+                           max(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[3]))))
+    
+    gene.region.coords = as.integer(gene.region.coords)
+    margin = (gene.region.coords[2]-gene.region.coords[1])*0.05
+    
+    
+    hight = length(unique(sign.jxns.gene.region.df$tissue))*7
+    png(paste0('plots/coverage', "_", gene, "_", splice_region, '.png'),
+        width = 20, height = hight, units = "cm", res = 700)
+    par(mfrow = c(length(unique(sign.jxns.gene.region.df$tissue)),2), bty='n')
+    
+    
+    # for every tissue where any of selected junctions are significant
+    for (tissue in (unique(sign.jxns.gene.region.df$tissue))){ 
+      print(unique(sign.jxns.gene.region.df$tissue))
+      print(tissue)
+      print(gene)
+      print(splice_region)
+      
+      print(sign.jxns.gene.region.df)
+      
+      if (tissue=='Testis_fetus_infant'){
+        tissue='Testis'
+        age_group=c(reference="fetus", test="infant")
+      } else if  (tissue=='Testis_infant_adult'){
+        tissue='Testis'
+        age_group=c(reference="infant", test="adult")
+      } else age_group=c(reference="fetus", test="adult")
+      
+      rse.jxn = rse.jxn.cytosk[,!is.na(rse.jxn.cytosk@colData$age_group)]
+      rse.jxn.filtered = rse.jxn[rse.jxn@rowRanges$gene_name==gene,
+                                 (rse.jxn@colData$tissue==tissue) &
+                                   (rse.jxn@colData$age_group %in% age_group)]
+      gene.grange = rse.jxn.filtered@rowRanges
+      
+      reference.samples.ids = 
+        rownames(rse.jxn.filtered@colData[rse.jxn.filtered@colData$age_group == age_group['reference'],])
+      test.samples.ids = 
+        rownames(rse.jxn.filtered@colData[rse.jxn.filtered@colData$age_group == age_group['test'],])
+      all.samples.ids = rownames(rse.jxn.filtered@colData)
+      # -- coverages
+      # covearge for each sample, output is a list of lists with read coverages, start:end positions, juncs df
+      # gene.cov.all.samples.list - named list for each tissue sample
+      gene.cov.all.samples.list = 
+        lapply(all.samples.ids, function(sample.id){getRecountCov(sample.id, rse.jxn.filtered)}) 
+      # assigning elements of the list sample ids names
+      names(gene.cov.all.samples.list) = all.samples.ids
+      
+      # --- merging
+      # sum coverage in each condition
+      fetus.covs.summed.gene = sumCovs(gene.cov.all.samples.list[reference.samples.ids])
+      adult.covs.summed.gene = sumCovs(gene.cov.all.samples.list[test.samples.ids])
+      
+      print('here')
+
+      all.sign.jxns = unique(sign.jxns.gene.region.df$junction_id)
+      
+      fetus.covs.summed.gene$cols = 
+        ifelse(sub(':.$', '', rownames(fetus.covs.summed.gene$juncs)) %in% all.sign.jxns,
+                    'orange2', '#377EB8')
+      
+      adult.covs.summed.gene$cols = 
+        ifelse(sub(':.$', '', rownames(adult.covs.summed.gene$juncs)) %in% all.sign.jxns,
+               'orange2', '#377EB8')
+      
+      sign.jxn.tissue = 
+        sign.jxns.gene.region.df[sign.jxns.gene.region.df$tissue==tissue,][[1]]
+      print(sign.jxn.tissue)
+      text = print(paste(tissue,gene, gene.region.coords))   #, " \n(",
+      #              'dPSI.sajr=',round(sign.jxn.tissue$dPSI_sajr, digits=2),
+      #              ', FDR.sajr=', round(sign.jxn.tissue$FDR_sajr, digits=2),
+      #              ', logFC.dje=', round(sign.jxn.tissue$logFC_dje, digits=2),
+      #              ', FDR.dje=', round(sign.jxn.tissue$FDR_dje, digits=2),
+      #              ', sign.diego=', round(sign.jxn.tissue$abund_change_diego, digits=2),
+      #              ', FDR.diego=', round(sign.jxn.tissue$FDR_diego, digits=2), "\n",
+      #              ' dPSI_gtex2tum =',round(sign.jxn.tissue$dPSI_sajr_gtex2tum, digits=2),
+      #              ', FDR_gtex2tum =',round(sign.jxn.tissue$FDR_sajr_gtex2tum, digits=2),
+      #              ', dPSI_norm2tum =',round(sign.jxn.tissue$dPSI_sajr_norm2tum, digits=2),
+      #              ', FDR_norm2tum =',round(sign.jxn.tissue$FDR_sajr_norm2tum, digits=2), ")")
+      if (tissue=='Testis'){
+        if (age_group['reference'] == 'fetus') age_group['reference']='Before birth'
+        ymax=max(max(fetus.covs.summed.gene$juncs$score),max(fetus.covs.summed.gene$cov))
+        plotReadCov(fetus.covs.summed.gene,
+                    junc.col = fetus.covs.summed.gene$cols,
+                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                    plot.junc.only.within = F,
+                    min.junc.cov.f = 0.05,
+                    sub=paste(age_group['reference']))
+        # plotReadCov(cov,ylim=c(-0.4*ymax,ymax),bty='n',min.junc.cov.f = 0.05,xlab='chr7',main='COL1A2',ylab='Coverage') # ylim to leave space for annotation
+        plotTranscripts(gtf[gtf$gene_name==gene,], 
+                        ylim=c(-0.4*ymax,ymax),
+                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+        
+        ymax=max(max(adult.covs.summed.gene$juncs$score),max(adult.covs.summed.gene$cov))
+        plotReadCov(adult.covs.summed.gene,
+                    junc.col = fetus.covs.summed.gene$cols,
+                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                    plot.junc.only.within = F,
+                    min.junc.cov.f = 0.05,
+                    sub=age_group['test'])
+        plotTranscripts(gtf[gtf$gene_name==gene,], 
+                        ylim=c(-0.4*ymax,ymax),
+                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+        
+      } else {
+        ymax=max(max(fetus.covs.summed.gene$juncs$score),max(fetus.covs.summed.gene$cov))
+        plotReadCov(fetus.covs.summed.gene,
+                    junc.col = fetus.covs.summed.gene$cols,
+                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                    plot.junc.only.within = F,
+                    min.junc.cov.f = 0.05,
+                    sub='Before birth'
+        )
+        plotTranscripts(gtf[gtf$gene_name==gene,], 
+                        ylim=c(-0.4*ymax,ymax),
+                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+        
+        ymax=max(max(adult.covs.summed.gene$juncs$score),max(adult.covs.summed.gene$cov))
+        plotReadCov(adult.covs.summed.gene,
+                    junc.col = fetus.covs.summed.gene$cols,
+                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                    plot.junc.only.within = F,
+                    min.junc.cov.f = 0.05,
+                    sub='After birth')
+        plotTranscripts(gtf[gtf$gene_name==gene,], 
+                        ylim=c(-0.4*ymax,ymax),
+                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+      }
+      
+
+      # 
+      # mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
+      
+
+      plotTranscripts(gtf[gtf$gene_name==gene,], 
+                      xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+    }
+  dev.off()
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 #=========================significant only in one tool
 all.jxns.info = outputs_dev_sign_info[['Testis']]$all.jxns.info
