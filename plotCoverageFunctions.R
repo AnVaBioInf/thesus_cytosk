@@ -5,6 +5,8 @@
 # jxn - rse object
 # gene.grange - granges of genes of interest
 
+
+
 bigWig2Cov = function(bw){
   bw = as.data.frame(bw) # columns: seqnames, start, end, width, strand, score
   bw = bw[order(bw$start),] # ordering bw df my start coordinate column
@@ -27,14 +29,12 @@ getRecountCov = function(sample.id, rse.jxn.filtered,
   sample.path = paste0(path, sample.id, '.bw')
   # download and subset bw file
   bw = rtracklayer::import.bw(sample.path, which=rse.jxn.filtered@rowRanges) 
-  print("BigWig files imported and filtered for gene")
   # coverage on a gene, start:stop 
   r = bigWig2Cov(bw) 
   
   r$juncs =  
     cbind(as.data.frame(rse.jxn.filtered@rowRanges)[,c('start','end','strand')],
                      score=rse.jxn.filtered@assays@data$counts[,sample.id])
-  print('Junction counts added')
   r
 }
 
@@ -106,8 +106,12 @@ plotTranscripts = function(a,
     if(sum(f)>0)
       rect(t$start[f],y-ystep/2*yspace,t$stop[f],y+ystep/2*yspace,col = t$cds.col[f],border = t$cds.col[f])
   }
-  text(par('usr')[1],seq(ylim[1]+ystep/2,by = ystep,length.out = length(transc)),sapply(transc,function(x)x$transcript_name[1]),
-       adj = c(1,0.5),xpd=T,cex=text.cex)
+  text(par('usr')[2], # Use the right x-coordinate of the plotting region
+       seq(ylim[1] + ystep/2, by = ystep, length.out = length(transc)),
+       sapply(transc, function(x) x$transcript_name[1]),
+       adj = c(0, 0.5), # Adjust text to the left (0) and center vertically (0.5)
+       xpd = TRUE, 
+       cex = text.cex)
 }
 
 
@@ -159,13 +163,13 @@ plotReadCov = function(r,min.junc.cov=0,min.junc.cov.f=0,plot.junc.only.within=F
   r$cov[c(1,length(r$cov))] = 0
   if(is.null(ylim)){
     ylim = c(0,max(r$cov,ifelse(nrow(r$juncs)>0,max(r$juncs$score),1)))
-    ylim = c(-bottom.mar*ylim[2],ylim[2])
   }
   r$juncs = r$juncs[r$juncs$score >= min.junc.cov.f * ylim[2],]
   if(reverse)
     xlim=rev(xlim)
-  plot(r$x,r$cov,t='n',ylim=ylim,xlim=xlim,yaxt='n',...)
+  plot(r$x,r$cov,t='n',ylim=ylim,xlim=xlim,yaxt='n', ...)
   axis(2,at=c(0,ylim[2]),labels = c('',ylim[2]))
+
   polygon(r$x,r$cov,col = 'gray',border=NA)
   if(nrow(r$juncs)>0)
     for(i in 1:nrow(r$juncs)){

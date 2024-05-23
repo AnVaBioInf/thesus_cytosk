@@ -182,8 +182,6 @@ outputs_norm2tum = readRDS('rds/dev_vs_norm2tum_tools.rds', refhook = NULL)
 # ==============================================================================
 # ============================= COVARIDGES POLTS ===============================
 # ==============================================================================
-dev.off()
-
 common_sign_jxns_outputs_gtex2tum = findCommonJxns(outputs_gtex2tum, rse.jxn.cytosk)
 common_sign_jxns_outputs_norm2tum = findCommonJxns(outputs_norm2tum, rse.jxn.cytosk)
 
@@ -205,7 +203,7 @@ write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv",
 # for every gene
 gtf = loadEnsGTF('/home/an/Manananggal/Input/ref_annotation/filtered_ann_v26.gtf')
 
-for (splice_region in unique(common_sign_jxns$lr_most)[1]){
+for (splice_region in unique(common_sign_jxns$lr_most)){
     # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
     # selecting significant junctions for the GENE in both, development and cancer
     sign.jxns.gene.region.df = common_sign_jxns[common_sign_jxns$lr_most==splice_region,]
@@ -213,20 +211,23 @@ for (splice_region in unique(common_sign_jxns$lr_most)[1]){
     
     # region of gene where significant junctions of gene are located
     print(sign.jxns.gene.region.df)
-    sign.gene.jxns.coords = strsplit(sign.jxns.gene.region.df$junction_id,'[:-]')
-    print(sign.gene.jxns.coords)
-    
-    gene.region.coords = c(min(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[2]))),
-                           max(unlist(lapply(sign.gene.jxns.coords, function(jxn.coord) jxn.coord[3]))))
-    
+    gene.region.coords = unlist(strsplit(splice_region,'[:-]'))
+
     gene.region.coords = as.integer(gene.region.coords)
-    margin = (gene.region.coords[2]-gene.region.coords[1])*0.05
+    margin = (gene.region.coords[2]-gene.region.coords[1])*0.005
     
+    chr = unlist(strsplit(sign.jxns.gene.region.df$junction_id_sajr[1],'[:-]'))[1]
+    
+    print('hereherehere')
+    print(chr)
     
     hight = length(unique(sign.jxns.gene.region.df$tissue))*7
     png(paste0('plots/coverage', "_", gene, "_", splice_region, '.png'),
         width = 20, height = hight, units = "cm", res = 700)
-    par(mfrow = c(length(unique(sign.jxns.gene.region.df$tissue)),2), bty='n')
+    par(mfrow = c(length(unique(sign.jxns.gene.region.df$tissue)),2), bty='n',
+        mgp = c(2.2, 1, 0),
+        mar = c(5, 4, 4, 4) + 0.1,
+        oma = c(1, 1, 1, 1))
     
     
     # for every tissue where any of selected junctions are significant
@@ -235,7 +236,6 @@ for (splice_region in unique(common_sign_jxns$lr_most)[1]){
       print(tissue)
       print(gene)
       print(splice_region)
-      
       print(sign.jxns.gene.region.df)
       
       if (tissue=='Testis_fetus_infant'){
@@ -270,8 +270,6 @@ for (splice_region in unique(common_sign_jxns$lr_most)[1]){
       fetus.covs.summed.gene = sumCovs(gene.cov.all.samples.list[reference.samples.ids])
       adult.covs.summed.gene = sumCovs(gene.cov.all.samples.list[test.samples.ids])
       
-      print('here')
-
       all.sign.jxns = unique(sign.jxns.gene.region.df$junction_id)
       
       fetus.covs.summed.gene$cols = 
@@ -296,66 +294,57 @@ for (splice_region in unique(common_sign_jxns$lr_most)[1]){
       #              ', FDR_gtex2tum =',round(sign.jxn.tissue$FDR_sajr_gtex2tum, digits=2),
       #              ', dPSI_norm2tum =',round(sign.jxn.tissue$dPSI_sajr_norm2tum, digits=2),
       #              ', FDR_norm2tum =',round(sign.jxn.tissue$FDR_sajr_norm2tum, digits=2), ")")
-      if (tissue=='Testis'){
-        if (age_group['reference'] == 'fetus') age_group['reference']='Before birth'
-        ymax=max(max(fetus.covs.summed.gene$juncs$score),max(fetus.covs.summed.gene$cov))
-        plotReadCov(fetus.covs.summed.gene,
-                    junc.col = fetus.covs.summed.gene$cols,
-                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
-                    plot.junc.only.within = F,
-                    min.junc.cov.f = 0.05,
-                    sub=paste(age_group['reference']))
-        # plotReadCov(cov,ylim=c(-0.4*ymax,ymax),bty='n',min.junc.cov.f = 0.05,xlab='chr7',main='COL1A2',ylab='Coverage') # ylim to leave space for annotation
-        plotTranscripts(gtf[gtf$gene_name==gene,], 
-                        ylim=c(-0.4*ymax,ymax),
-                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
-        
-        ymax=max(max(adult.covs.summed.gene$juncs$score),max(adult.covs.summed.gene$cov))
-        plotReadCov(adult.covs.summed.gene,
-                    junc.col = fetus.covs.summed.gene$cols,
-                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
-                    plot.junc.only.within = F,
-                    min.junc.cov.f = 0.05,
-                    sub=age_group['test'])
-        plotTranscripts(gtf[gtf$gene_name==gene,], 
-                        ylim=c(-0.4*ymax,ymax),
-                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
-        
-      } else {
-        ymax=max(max(fetus.covs.summed.gene$juncs$score),max(fetus.covs.summed.gene$cov))
-        plotReadCov(fetus.covs.summed.gene,
-                    junc.col = fetus.covs.summed.gene$cols,
-                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
-                    plot.junc.only.within = F,
-                    min.junc.cov.f = 0.05,
-                    sub='Before birth'
-        )
-        plotTranscripts(gtf[gtf$gene_name==gene,], 
-                        ylim=c(-0.4*ymax,ymax),
-                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
-        
-        ymax=max(max(adult.covs.summed.gene$juncs$score),max(adult.covs.summed.gene$cov))
-        plotReadCov(adult.covs.summed.gene,
-                    junc.col = fetus.covs.summed.gene$cols,
-                    xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
-                    plot.junc.only.within = F,
-                    min.junc.cov.f = 0.05,
-                    sub='After birth')
-        plotTranscripts(gtf[gtf$gene_name==gene,], 
-                        ylim=c(-0.4*ymax,ymax),
-                        xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
-      }
       
+      if (age_group['reference'] == 'fetus') age_group['reference']='Before birth'
+      if ((tissue=='Testis') & (age_group['test'] == 'adult')) { age_group['test'] = 'Adult'
+      } else if (age_group['test'] == 'adult') age_group['test'] = 'After birth'
 
-      # 
-      # mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
+      plotReadCov(fetus.covs.summed.gene,
+                  junc.col = fetus.covs.summed.gene$cols,
+                  xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                  plot.junc.only.within = F,
+                  min.junc.cov.f = 0.05,
+                  xlab=chr,ylab='Coverage'
+      )
       
-
-      plotTranscripts(gtf[gtf$gene_name==gene,], 
+      plotTranscripts(gtf[gtf$gene_name==gene,],
+                      ylim <- par("usr")[3:4],
                       xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+      sub = paste0(toupper(substring(age_group['reference'], 1, 1)), substring(age_group['reference'], 2))
+      title(sub = sub, cex.sub=1.5) 
+
+
+      plotReadCov(adult.covs.summed.gene,
+                  junc.col = fetus.covs.summed.gene$cols,
+                  xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
+                  plot.junc.only.within = F,
+                  min.junc.cov.f = 0.05,
+                  xlab=chr,ylab='Coverage'
+      )
+      plotTranscripts(gtf[gtf$gene_name==gene,], 
+                      ylim <- par("usr")[3:4],
+                      xlim = c(gene.region.coords[1]-margin, gene.region.coords[2]+margin), new = F)
+      sub = paste0(toupper(substring(age_group['test'], 1, 1)), substring(age_group['test'], 2))
+      title(sub = sub, cex.sub=1.5) 
+      
+      
+      jxns = paste( unique(sign.jxns.gene.region.df$junction_id), collapse = ", ")
+      title = paste(gene, tissue, "(", jxns, ")")
+      left_edge <- grconvertX(0, from = "ndc", to = "user")
+      
+      # title(main = title, adj = 0)  # Left-justify title
+      mtext(title, cex = 1, line = 2, at=left_edge, adj=-0.1, outer=F) 
+
+
     }
   dev.off()
 }
+
+
+
+
+
+
 
 
 
@@ -406,6 +395,7 @@ for (tool in all.jxns.df){
     
     gene.region.coords = strsplit(jxn,'[:-]')
     gene.region.coords = as.integer(c(gene.region.coords[[1]][2], gene.region.coords[[1]][3]))
+
     gene.region.coords = c(gene.region.coords[1], gene.region.coords[2])
     
     fetus.covs.summed.gene = set.colors(jxn, fetus.covs.summed.gene)
@@ -426,7 +416,9 @@ for (tool in all.jxns.df){
                 xlim=gene.region.coords,
                 plot.junc.only.within = F,
                 min.junc.cov.f = 0.05,
-                sub='Before birth'
+                sub='Before birth',
+                xlab=chr,main=paste(gene, tissue),ylab='Coverage'
+                
     )
     mtext(text, side=3, line=0.5, cex=0.7, adj=0) 
     
@@ -435,7 +427,9 @@ for (tool in all.jxns.df){
                 xlim=gene.region.coords,
                 plot.junc.only.within = F,
                 min.junc.cov.f = 0.05,
-                sub='After birth')
+                sub='After birth', 
+                xlab=chr,main=paste(gene, tissue),ylab='Coverage'
+    )
   }
 }
 
