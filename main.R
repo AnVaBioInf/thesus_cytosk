@@ -203,18 +203,29 @@ write.table(common_sign_jxns, file = "jxns_common_dev_cancer.csv",
 # for every gene
 gtf = loadEnsGTF('/home/an/Manananggal/Input/ref_annotation/filtered_ann_v26.gtf')
 
-for (splice_region in unique(common_sign_jxns$lr_most)){
+for (gene_region in unique(common_sign_jxns$lr_most)){
     # setting number of plot rows to number of tissues where selected gene junctions were significant, but no more than 3
     # selecting significant junctions for the GENE in both, development and cancer
-    sign.jxns.gene.region.df = common_sign_jxns[common_sign_jxns$lr_most==splice_region,]
+  
+    sign.jxns.gene.region.df = common_sign_jxns[common_sign_jxns$lr_most==gene_region,]
     gene = unique(sign.jxns.gene.region.df$gene_name)
     
+    sign = unlist(strsplit(sign.jxns.gene.region.df$junction_id_sajr[1], ":"))[3]
+    chr = unlist(strsplit(sign.jxns.gene.region.df$junction_id_sajr[1],'[:-]'))[1]
+
+
     # region of gene where significant junctions of gene are located
     print(sign.jxns.gene.region.df)
-    gene.region.coords = unlist(strsplit(splice_region,'[:-]'))
+    if (sign =='+'){
+      gene.region.coords = c(max(sign.jxns.gene.region.df$leftmost), min(sign.jxns.gene.region.df$rightmost))
+    } else {
+      gene.region.coords = c(min(sign.jxns.gene.region.df$leftmost), max(sign.jxns.gene.region.df$rightmost))
+    }
 
     gene.region.coords = as.integer(gene.region.coords)
-    margin = (gene.region.coords[2]-gene.region.coords[1])*0.005
+    margin = (gene.region.coords[2]-gene.region.coords[1])*0.05
+    print('margin')
+    print(margin)
     
     chr = unlist(strsplit(sign.jxns.gene.region.df$junction_id_sajr[1],'[:-]'))[1]
     
@@ -274,11 +285,11 @@ for (splice_region in unique(common_sign_jxns$lr_most)){
       
       fetus.covs.summed.gene$cols = 
         ifelse(sub(':.$', '', rownames(fetus.covs.summed.gene$juncs)) %in% all.sign.jxns,
-                    'orange2', '#377EB8')
+                    'orange2', 'black')
       
       adult.covs.summed.gene$cols = 
         ifelse(sub(':.$', '', rownames(adult.covs.summed.gene$juncs)) %in% all.sign.jxns,
-               'orange2', '#377EB8')
+               'orange2', 'black')
       
       sign.jxn.tissue = 
         sign.jxns.gene.region.df[sign.jxns.gene.region.df$tissue==tissue,][[1]]
@@ -303,7 +314,7 @@ for (splice_region in unique(common_sign_jxns$lr_most)){
                   junc.col = fetus.covs.summed.gene$cols,
                   xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
                   plot.junc.only.within = F,
-                  min.junc.cov.f = 0.05,
+                  min.junc.cov.f = 0.02,
                   xlab=chr,ylab='Coverage'
       )
       
@@ -318,7 +329,7 @@ for (splice_region in unique(common_sign_jxns$lr_most)){
                   junc.col = fetus.covs.summed.gene$cols,
                   xlim=c(gene.region.coords[1]-margin, gene.region.coords[2]+margin),
                   plot.junc.only.within = F,
-                  min.junc.cov.f = 0.05,
+                  min.junc.cov.f = 0.02,
                   xlab=chr,ylab='Coverage'
       )
       plotTranscripts(gtf[gtf$gene_name==gene,], 
@@ -333,7 +344,7 @@ for (splice_region in unique(common_sign_jxns$lr_most)){
       left_edge <- grconvertX(0, from = "ndc", to = "user")
       
       # title(main = title, adj = 0)  # Left-justify title
-      mtext(title, cex = 1, line = 2, at=left_edge, adj=-0.1, outer=F) 
+      mtext(title, cex = 0.7, line = 2, at=left_edge, adj=0,outer=F) 
 
 
     }

@@ -203,12 +203,28 @@ getFisher = function(fisher.df, outputs_tissue, one_to_all=FALSE, ref_col=''){
 #===================================
 #===================================
 #================================================================================
+filterRse = function(rse, tissue, age_group=c('fetus', 'adult'), mim_row_sum=10, min_variance=0){
+  rse = rse[, (rse@colData$tissue %in% tissue) & (rse@colData$age_group %in% age_group)]
+  rse = rse[apply(rse@assays@data$counts, 1, sum) >= mim_row_sum &
+              apply(rse@assays@data$counts, 1, var) >= min_variance, ]
+  rse
+}
 
-addLeftmostRightmostCoord = function(common_sign_jxns_dev_tum, rse.jxn){
-  sites = makeSites(rse.jxn@rowRanges)
+addLeftmostRightmostCoord = function(common_sign_jxns_dev_tum, rse.jxn, tissue){
+  age_group=c('fetus', 'adult')
+  if (tissue=='Testis_infant_adult') {
+    tissue = 'Testis'
+    age_group = c('infant', 'adult')
+  } else if (tissue=='Testis_fetus_infant'){
+    tissue = 'Testis'
+    age_group = c('fetus', 'infant')
+  }
+  rse_filtered = filterRse(rse.jxn, tissue, age_group)
+  sites = makeSites(rse_filtered@rowRanges)
   lefmost_rightmost_info_df = 
     sites$jxns.same.start.or.end.info[,c('gene_id', 'gene_name', 'leftmost', 'rightmost')]
   lefmost_rightmost_info_df$junction_id_sajr = rownames(lefmost_rightmost_info_df)
+  print(head(lefmost_rightmost_info_df))
   
   common_sign_jxns_dev_tum = 
     merge(common_sign_jxns_dev_tum, lefmost_rightmost_info_df, 
@@ -237,6 +253,8 @@ findCommonJxns = function(outputs_tum, rse.jxn){
     
     intersections = intersections[order(abs(intersections$dPSI_sajr), decreasing = TRUE), ]
     intersections = intersections[!duplicated(intersections$junction_id), ]
+    
+    intersections = addLeftmostRightmostCoord(intersections, rse.jxn, tissue)
     if (nrow(intersections) > 0) {
       intersections$tissue = tissue
     }
@@ -244,9 +262,7 @@ findCommonJxns = function(outputs_tum, rse.jxn){
     
   }
   common_sign_jxns_dev_tum = do.call(rbind, common_sign_jxns_dev_tum)
-  
-  common_sign_jxns_dev_tum = addLeftmostRightmostCoord(common_sign_jxns_dev_tum, rse.jxn)
-  
+
   common_sign_jxns_dev_tum = 
     common_sign_jxns_dev_tum[order(
       common_sign_jxns_dev_tum$gene_name,
