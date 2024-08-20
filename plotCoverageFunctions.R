@@ -1,36 +1,25 @@
-#=================================
-#######################-----coverage
-#=================================
-# sid - sample id
-# jxn - rse object
-# gene.grange - granges of genes of interest
+#====================================
+#--------------coverage plots--------
+#====================================
 
-
-
+# converting bigwig file to junction coverage
 bigWig2Cov = function(bw){
   bw = as.data.frame(bw) # columns: seqnames, start, end, width, strand, score
   bw = bw[order(bw$start),] # ordering bw df my start coordinate column
   start = bw$start[1] # starting coordinate of the gene
   stop = bw$end[nrow(bw)] # end coordinate of the gene
-  
-  r = rep(0,stop-start+1) # vector with 0s with length of the gene
-  
+  r = rep(0,stop-start+1) # null vector with the length of a gene
   for(i in 1:nrow(bw)){ # for every record in bw
-    r[(bw$start[i]:bw$end[i])-start+1] = bw$score[i] # assigning score to every position of gene
-    # every position of a range is asigned with the same score
+    r[(bw$start[i]:bw$end[i])-start+1] = bw$score[i] # assigning score (coverage) to every position of gene
   }
   list(cov=r,x=start:stop) # coverage, start and end gene coordinates on a chromosome
 }
 
-# что такое gene.grange here?
-getRecountCov = function(sample.id, rse.jxn.filtered,
-                           path='/home/an/Manananggal/Input/bigWig/'){
-  # rse for one sample
-  sample.path = paste0(path, sample.id, '.bw')
-  # download and subset bw file
-  bw = rtracklayer::import.bw(sample.path, which=rse.jxn.filtered@rowRanges) 
-  # coverage on a gene, start:stop 
-  r = bigWig2Cov(bw) 
+
+getRecountCov = function(sample.id, rse.jxn.filtered, path='/home/an/Manananggal/Input/bigWig/'){
+  sample.path = paste0(path, sample.id, '.bw') # bw file name for a sample
+  bw = rtracklayer::import.bw(sample.path, which=rse.jxn.filtered@rowRanges) # download and subset bw file for a sample
+  r = bigWig2Cov(bw)  # get juntion coverage, start:stop gene coordinates on a chromosome
   
   r$juncs =  
     cbind(as.data.frame(rse.jxn.filtered@rowRanges)[,c('start','end','strand')],
@@ -39,9 +28,6 @@ getRecountCov = function(sample.id, rse.jxn.filtered,
 }
 
 sumCovs = function(l){
-  # launched for each of the conditions (2ce)
-  # launched for every tissue where significant junction was found
-  # creating a template of merged object
   r = l[[1]] # read coverages for the first sample
   juncs = 
     unique(do.call(rbind,unname(lapply(l,function(c)c$juncs[,1:3]))))
